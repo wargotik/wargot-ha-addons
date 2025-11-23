@@ -176,12 +176,14 @@ class Database:
             return False
 
     def delete_product(self, product_id: str) -> bool:
-        """Delete product and its page."""
+        """Delete product, its page and history."""
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            # Delete page first (foreign key constraint)
+            # Delete history first
+            cursor.execute("DELETE FROM fetch_history WHERE product_id = ?", (product_id,))
+            # Delete page
             cursor.execute("DELETE FROM pages WHERE product_id = ?", (product_id,))
             # Delete product
             cursor.execute("DELETE FROM products WHERE id = ?", (product_id,))
