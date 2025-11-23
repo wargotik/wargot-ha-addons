@@ -1,6 +1,6 @@
 {
   "name": "Ozon",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "slug": "ozon",
   "description": "Ozon integration for Home Assistant",
   "url": "https://github.com/wargot/ha-ozon",
@@ -17,7 +17,6 @@
   },
   "ports": {},
   "ports_description": {},
-  "image": "wargot/ozon-{arch}",
   "map": ["config:rw"]
 }
 
