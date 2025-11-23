@@ -79,6 +79,18 @@ class Database:
                 )
             """)
 
+            # Create cron_history table for storing last execution times
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cron_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    job_name TEXT NOT NULL UNIQUE,
+                    last_execution TEXT NOT NULL,
+                    duration REAL,
+                    status TEXT,
+                    notes TEXT
+                )
+            """)
+
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_products_url ON products(url)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_pages_timestamp ON pages(timestamp)")
@@ -86,6 +98,7 @@ class Database:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fetch_history_timestamp ON fetch_history(timestamp)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_product ON price_history(product_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_timestamp ON price_history(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cron_history_job ON cron_history(job_name)")
 
             conn.commit()
             conn.close()
@@ -410,4 +423,69 @@ class Database:
         except Exception as err:
             _LOGGER.error("Error getting last fetch any: %s", err)
             return None
+
+    def set_cron_last_execution(self, job_name: str, duration: float | None = None, status: str | None = None, notes: str | None = None) -> bool:
+        """Set last execution time for a cron job."""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            timestamp = datetime.now().isoformat()
+            cursor.execute("""
+                INSERT OR REPLACE INTO cron_history (job_name, last_execution, duration, status, notes)
+                VALUES (?, ?, ?, ?, ?)
+            """, (job_name, timestamp, duration, status, notes))
+
+            conn.commit()
+            conn.close()
+            _LOGGER.debug("Cron execution saved: %s at %s, duration: %s", job_name, timestamp, duration)
+            return True
+        except Exception as err:
+            _LOGGER.error("Error saving cron execution: %s", err)
+            return False
+
+    def get_cron_last_execution(self, job_name: str) -> dict[str, Any] | None:
+        """Get last execution time for a cron job."""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM cron_history WHERE job_name = ?", (job_name,))
+            row = cursor.fetchone()
+            conn.close()
+
+            if row:
+                return {
+                    "job_name": row["job_name"],
+                    "last_execution": row["last_execution"],
+                    "duration": row["duration"],
+                    "status": row["status"],
+                    "notes": row["notes"]
+                }
+            return None
+        except Exception as err:
+            _LOGGER.error("Error getting cron execution: %s", err)
+            return None
+
+    def get_all_cron_history(self) -> list[dict[str, Any]]:
+        """Get all cron execution history."""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM cron_history ORDER BY last_execution DESC")
+            rows = cursor.fetchall()
+            conn.close()
+
+            history = []
+            for row in rows:
+                history.append({
+                    "job_name": row["job_name"],
+                    "last_execution": row["last_execution"],
+                    "duration": row["duration"],
+                    "status": row["status"],
+                    "notes": row["notes"]
+                })
+            return history
+        except Exception as err:
+            _LOGGER.error("Error getting cron history: %s", err)
+            return []
 
