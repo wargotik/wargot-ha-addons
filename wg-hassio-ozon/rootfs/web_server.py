@@ -1,144 +1,26 @@
 """Web server for Ozon add-on."""
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
-from datetime import datetime
 from aiohttp import web, ClientSession
-from pathlib import Path
+
+from database import Database
 
 _LOGGER = logging.getLogger(__name__)
 
-STORAGE_FILE = "/data/ozon_storage.json"
-PAGES_FILE = "/data/ozon_pages.json"
+# Initialize database
+db = Database()
 
 
-def load_favorites_from_storage() -> list:
-    """Load favorites from storage file."""
-    storage_path = Path(STORAGE_FILE)
-    favorites = []
-    
-    if storage_path.exists():
-        try:
-            with open(storage_path, "r", encoding="utf-8") as f:
-                content = f.read().strip()
-                if not content:
-                    return []
-                
-                # Try to find valid JSON in content (in case there's extra text)
-                # Look for first { and last }
-                first_brace = content.find('{')
-                last_brace = content.rfind('}')
-                
-                if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-                    json_content = content[first_brace:last_brace + 1]
-                    data = json.loads(json_content)
-                    favorites = data.get("favorites", [])
-                else:
-                    # Try direct parse
-                    data = json.loads(content)
-                    favorites = data.get("favorites", [])
-        except json.JSONDecodeError as json_err:
-            _LOGGER.error("Invalid JSON in storage file: %s. File will be reset.", json_err)
-            # Try to restore from backup
-            backup_path = Path(f"{STORAGE_FILE}.backup")
-            if backup_path.exists():
-                try:
-                    import shutil
-                    shutil.copy2(backup_path, storage_path)
-                    _LOGGER.info("Restored from backup, retrying load")
-                    return load_favorites_from_storage()  # Retry after restore
-                except Exception:
-                    pass
-            # Reset file if backup restore failed
-            save_favorites_to_storage([])
-            favorites = []
-        except Exception as read_err:
-            _LOGGER.error("Error reading storage file: %s", read_err)
-            favorites = []
-    
-    return favorites
-
-
-def save_favorites_to_storage(favorites: list) -> bool:
-    """Save favorites to storage file."""
-    try:
-        storage_path = Path(STORAGE_FILE)
-        storage_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Create backup before writing
-        backup_path = Path(f"{STORAGE_FILE}.backup")
-        if storage_path.exists():
-            try:
-                import shutil
-                shutil.copy2(storage_path, backup_path)
-            except Exception:
-                pass  # Ignore backup errors
-        
-        # Write to temporary file first, then rename (atomic write)
-        temp_path = Path(f"{STORAGE_FILE}.tmp")
-        data = {"favorites": favorites}
-        
-        with open(temp_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        # Atomic rename
-        temp_path.replace(storage_path)
-        
-        return True
-    except Exception as err:
-        _LOGGER.error("Error saving storage: %s", err)
-        # Try to restore from backup if exists
-        backup_path = Path(f"{STORAGE_FILE}.backup")
-        if backup_path.exists():
-            try:
-                import shutil
-                shutil.copy2(backup_path, storage_path)
-                _LOGGER.info("Restored from backup")
-            except Exception:
-                pass
-        return False
-
-
-def load_pages_from_storage() -> dict:
-    """Load pages from storage file."""
-    pages_path = Path(PAGES_FILE)
-    if pages_path.exists():
-        try:
-            with open(pages_path, "r", encoding="utf-8") as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-        except Exception as err:
-            _LOGGER.error("Error loading pages: %s", err)
-    return {}
-
-
-def save_page_to_storage(product_id: str, html: str) -> bool:
-    """Save page HTML to storage file."""
-    try:
-        pages_path = Path(PAGES_FILE)
-        pages_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        pages = load_pages_from_storage()
-        pages[product_id] = {
-            "html": html,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        with open(pages_path, "w", encoding="utf-8") as f:
-            json.dump(pages, f, indent=2, ensure_ascii=False)
-        return True
-    except Exception as err:
-        _LOGGER.error("Error saving page: %s", err)
-        return False
 
 
 async def get_favorites(request: web.Request) -> web.Response:
-    """Get favorites from storage."""
+    """Get favorites from database."""
     try:
-        favorites = load_favorites_from_storage()
+        favorites = db.get_all_products()
         
         return web.json_response({
             "success": True,
@@ -173,11 +55,8 @@ async def add_favorite(request: web.Request) -> web.Response:
                 "error": "URL is required"
             }, status=400)
         
-        # Load existing favorites
-        favorites = load_favorites_from_storage()
-        
         # Check if URL already exists
-        if any(item.get("url") == url for item in favorites):
+        if db.product_exists(url):
             return web.json_response({
                 "success": False,
                 "error": "Товар с такой ссылкой уже существует"
@@ -185,36 +64,29 @@ async def add_favorite(request: web.Request) -> web.Response:
         
         # Extract product ID from URL if possible
         product_id_match = re.search(r'/product/([^/]+)', url)
-        product_id = product_id_match.group(1) if product_id_match else str(len(favorites) + 1)
+        if product_id_match:
+            product_id = product_id_match.group(1)
+        else:
+            # Generate ID from URL hash
+            product_id = hashlib.md5(url.encode()).hexdigest()[:16]
         
-        # Create new item
-        new_item = {
-            "id": product_id,
-            "url": url,
-            "name": f"Товар {product_id}",  # Will be updated when fetched
-            "price": 0  # Will be updated when fetched
-        }
-        
-        favorites.append(new_item)
-        
-        # Save to storage
-        try:
-            if save_favorites_to_storage(favorites):
-                return web.json_response({
-                    "success": True,
-                    "message": "Товар добавлен",
-                    "item": new_item
-                })
-            else:
-                return web.json_response({
-                    "success": False,
-                    "error": "Ошибка сохранения"
-                }, status=500)
-        except Exception as save_err:
-            _LOGGER.error("Error saving favorites: %s", save_err)
+        # Add product to database
+        if db.add_product(product_id, url, f"Товар {product_id}", 0):
+            new_item = {
+                "id": product_id,
+                "url": url,
+                "name": f"Товар {product_id}",
+                "price": 0
+            }
+            return web.json_response({
+                "success": True,
+                "message": "Товар добавлен",
+                "item": new_item
+            })
+        else:
             return web.json_response({
                 "success": False,
-                "error": f"Ошибка сохранения: {str(save_err)}"
+                "error": "Ошибка сохранения в базу данных"
             }, status=500)
             
     except json.JSONDecodeError as json_err:
@@ -264,8 +136,11 @@ async def fetch_product_page(request: web.Request) -> web.Response:
                     if response.status == 200:
                         html = await response.text()
                         
-                        # Save to storage
-                        if save_page_to_storage(product_id, html):
+                        # Save to database
+                        if db.save_page(product_id, html):
+                            # Record successful fetch in history
+                            db.add_fetch_history(product_id, "success", None, len(html))
+                            
                             _LOGGER.info("Page saved for product: %s", product_id)
                             return web.json_response({
                                 "success": True,
@@ -274,20 +149,32 @@ async def fetch_product_page(request: web.Request) -> web.Response:
                                 "html_length": len(html)
                             })
                         else:
+                            # Record error in history
+                            db.add_fetch_history(product_id, "error", "Ошибка сохранения страницы в базу данных")
+                            
                             return web.json_response({
                                 "success": False,
-                                "error": "Ошибка сохранения страницы"
+                                "error": "Ошибка сохранения страницы в базу данных"
                             }, status=500)
                     else:
+                        error_msg = f"HTTP {response.status}: Не удалось загрузить страницу"
+                        # Record error in history
+                        db.add_fetch_history(product_id, "error", error_msg)
+                        
                         return web.json_response({
                             "success": False,
-                            "error": f"HTTP {response.status}: Не удалось загрузить страницу"
+                            "error": error_msg
                         }, status=response.status)
         except Exception as fetch_err:
+            error_msg = f"Ошибка загрузки: {str(fetch_err)}"
             _LOGGER.error("Error fetching page: %s", fetch_err)
+            
+            # Record error in history
+            db.add_fetch_history(product_id, "error", error_msg)
+            
             return web.json_response({
                 "success": False,
-                "error": f"Ошибка загрузки: {str(fetch_err)}"
+                "error": error_msg
             }, status=500)
             
     except Exception as err:
