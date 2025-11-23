@@ -1,4 +1,13 @@
-# Ozon Add-on для Home Assistant
+# Ozon Add-on for Home Assistant
+[![GitHub Release][releases-shield]][releases]
+![Project Stage][project-stage-shield]
+
+![Supports aarch64 Architecture][aarch64-shield]
+![Supports amd64 Architecture][amd64-shield]
+
+[![Github Actions][github-actions-shield]][github-actions]
+![Project Maintenance][maintenance-shield]
+[![GitHub Activity][commits-shield]][commits]
 
 Интеграция с Ozon для получения избранных товаров и сохранения их в локальную базу данных.
 
