@@ -189,6 +189,112 @@ async def get_last_fetch_info(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def parse_all_products(request: web.Request) -> web.Response:
+    """Parse all product pages."""
+    try:
+        _LOGGER.info("Starting parse_all_products - fetching all product pages")
+        
+        # Get all products from database
+        products = db.get_all_products()
+        
+        if not products:
+            return web.json_response({
+                "success": True,
+                "message": "Нет товаров для парсинга",
+                "total": 0,
+                "success_count": 0,
+                "error_count": 0
+            })
+        
+        success_count = 0
+        error_count = 0
+        results = []
+        
+        async with ClientSession() as session:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            
+            for product in products:
+                product_id = product.get("id", "")
+                url = product.get("url", "")
+                
+                if not url or url == "#":
+                    error_count += 1
+                    results.append({
+                        "product_id": product_id,
+                        "status": "error",
+                        "error": "Нет ссылки на товар"
+                    })
+                    continue
+                
+                try:
+                    _LOGGER.debug("Fetching page for product: %s, URL: %s", product_id, url)
+                    
+                    async with session.get(url, headers=headers, timeout=30) as response:
+                        if response.status == 200:
+                            html = await response.text()
+                            
+                            # Save to database
+                            if db.save_page(product_id, html):
+                                # Record successful fetch in history
+                                db.add_fetch_history(product_id, "success", None, len(html))
+                                
+                                success_count += 1
+                                results.append({
+                                    "product_id": product_id,
+                                    "status": "success",
+                                    "html_length": len(html)
+                                })
+                                _LOGGER.info("Page saved for product: %s", product_id)
+                            else:
+                                error_msg = "Ошибка сохранения страницы в базу данных"
+                                db.add_fetch_history(product_id, "error", error_msg)
+                                error_count += 1
+                                results.append({
+                                    "product_id": product_id,
+                                    "status": "error",
+                                    "error": error_msg
+                                })
+                        else:
+                            error_msg = f"HTTP {response.status}: Не удалось загрузить страницу"
+                            db.add_fetch_history(product_id, "error", error_msg)
+                            error_count += 1
+                            results.append({
+                                "product_id": product_id,
+                                "status": "error",
+                                "error": error_msg
+                            })
+                except Exception as fetch_err:
+                    error_msg = f"Ошибка загрузки: {str(fetch_err)}"
+                    _LOGGER.error("Error fetching page for product %s: %s", product_id, fetch_err)
+                    db.add_fetch_history(product_id, "error", error_msg)
+                    error_count += 1
+                    results.append({
+                        "product_id": product_id,
+                        "status": "error",
+                        "error": error_msg
+                    })
+        
+        _LOGGER.info("parse_all_products completed: %d success, %d errors", success_count, error_count)
+        
+        return web.json_response({
+            "success": True,
+            "message": f"Парсинг завершен: {success_count} успешно, {error_count} ошибок",
+            "total": len(products),
+            "success_count": success_count,
+            "error_count": error_count,
+            "results": results
+        })
+        
+    except Exception as err:
+        _LOGGER.error("Error in parse_all_products: %s", err)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def fetch_product_page(request: web.Request) -> web.Response:
     """Fetch HTML page for a product."""
     try:
@@ -446,6 +552,22 @@ async def index(request: web.Request) -> web.Response:
             .add-btn:hover {
                 background: #45a049;
             }
+            .parse-all-btn {
+                background: #ff9800;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            .parse-all-btn:hover {
+                background: #f57c00;
+            }
+            .parse-all-btn:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
             .modal {
                 display: none;
                 position: fixed;
@@ -545,7 +667,10 @@ async def index(request: web.Request) -> web.Response:
                 Товары из базы
                 <span class="last-fetch-badge" id="last-fetch-badge">Загрузка...</span>
             </h1>
-            <button class="add-btn" onclick="openModal()">+ Добавить товар</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="add-btn" onclick="openModal()">+ Добавить товар</button>
+                <button class="parse-all-btn" onclick="parseAllProducts()" id="parse-all-btn">Парсить все товары</button>
+            </div>
             <div class="favorites-list" id="favorites-list">
                 <div class="loading">Загрузка...</div>
             </div>
@@ -789,6 +914,40 @@ async def index(request: web.Request) -> web.Response:
                 }
             }
             
+            // Parse all products function
+            async function parseAllProducts() {
+                const button = document.getElementById('parse-all-btn');
+                const originalText = button.textContent;
+                
+                button.disabled = true;
+                button.textContent = 'Парсинг...';
+                
+                try {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/parse-all';
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`Парсинг завершен!\nВсего: ${data.total}\nУспешно: ${data.success_count}\nОшибок: ${data.error_count}`);
+                        loadFavorites(); // Reload list to show updated fetch times
+                        loadLastFetchInfo(); // Update last fetch badge
+                    } else {
+                        alert('Ошибка при парсинге: ' + (data.error || 'Неизвестная ошибка'));
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                } finally {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+            
             // Load on page load
             loadFavorites();
             loadLastFetchInfo();
@@ -806,6 +965,7 @@ def create_app() -> web.Application:
     app.router.add_get("/api/favorites", get_favorites)
     app.router.add_post("/api/favorites", add_favorite)
     app.router.add_post("/api/fetch-page", fetch_product_page)
+    app.router.add_post("/api/parse-all", parse_all_products)
     app.router.add_get("/api/last-fetch", get_last_fetch_info)
     return app
 
