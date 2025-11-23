@@ -1,9 +1,9 @@
 {
   "name": "Ozon",
-  "version": "0.1.14",
-  "slug": "ozon",
+  "version": "0.1.15",
+  "slug": "Ozon, ozon.by, ozon.ru",
   "description": "Ozon integration for Home Assistant",
-  "url": "https://github.com/wargot/ha-ozon",
+  "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",
   "arch": ["aarch64", "amd64", "armhf", "armv7", "i386"],
   "startup": "application",
   "boot": "auto",
