@@ -128,14 +128,7 @@ async def index(request: web.Request) -> web.Response:
     </head>
     <body>
         <div class="container">
-            <h1>Ozon Add-on</h1>
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="total-count">-</div>
-                    <div class="stat-label">Всего товаров</div>
-                </div>
-            </div>
-            <button class="refresh-btn" onclick="loadFavorites()">Обновить</button>
+            <h1>Товары из базы</h1>
             <div class="favorites-list" id="favorites-list">
                 <div class="loading">Загрузка...</div>
             </div>
@@ -143,7 +136,6 @@ async def index(request: web.Request) -> web.Response:
         <script>
             async function loadFavorites() {
                 const list = document.getElementById('favorites-list');
-                const count = document.getElementById('total-count');
                 
                 list.innerHTML = '<div class="loading">Загрузка...</div>';
                 
@@ -152,10 +144,8 @@ async def index(request: web.Request) -> web.Response:
                     const data = await response.json();
                     
                     if (data.success) {
-                        count.textContent = data.count;
-                        
                         if (data.favorites.length === 0) {
-                            list.innerHTML = '<div class="loading">Нет избранных товаров</div>';
+                            list.innerHTML = '<div class="loading">Нет товаров в базе</div>';
                         } else {
                             list.innerHTML = data.favorites.map(item => `
                                 <div class="favorite-item">
@@ -184,9 +174,6 @@ async def index(request: web.Request) -> web.Response:
             
             // Load on page load
             loadFavorites();
-            
-            // Auto-refresh every 5 minutes
-            setInterval(loadFavorites, 300000);
         </script>
     </body>
     </html>
