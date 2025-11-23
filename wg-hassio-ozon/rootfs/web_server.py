@@ -1,10 +1,12 @@
 """Web server for Ozon add-on."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import re
+import time
 from aiohttp import web, ClientSession
 
 from database import Database
@@ -220,6 +222,7 @@ async def parse_all_products(request: web.Request) -> web.Response:
                 url = product.get("url", "")
                 
                 if not url or url == "#":
+                    _LOGGER.warning("Product %s: No URL provided, skipping", product_id)
                     error_count += 1
                     results.append({
                         "product_id": product_id,
@@ -229,26 +232,35 @@ async def parse_all_products(request: web.Request) -> web.Response:
                     continue
                 
                 try:
-                    _LOGGER.debug("Fetching page for product: %s, URL: %s", product_id, url)
+                    start_time = time.time()
+                    _LOGGER.info("Fetching page for product ID=%s, URL=%s", product_id, url)
                     
                     async with session.get(url, headers=headers, timeout=30) as response:
+                        elapsed_time = time.time() - start_time
+                        _LOGGER.info("Response received for product ID=%s: status=%d, elapsed=%.2fs, headers=%s", 
+                                   product_id, response.status, elapsed_time, dict(response.headers))
+                        
                         if response.status == 200:
                             html = await response.text()
+                            html_size = len(html)
+                            _LOGGER.info("HTML content received for product ID=%s: size=%d bytes", product_id, html_size)
                             
                             # Save to database
                             if db.save_page(product_id, html):
                                 # Record successful fetch in history
-                                db.add_fetch_history(product_id, "success", None, len(html))
+                                db.add_fetch_history(product_id, "success", None, html_size)
                                 
                                 success_count += 1
                                 results.append({
                                     "product_id": product_id,
                                     "status": "success",
-                                    "html_length": len(html)
+                                    "html_length": html_size
                                 })
-                                _LOGGER.info("Page saved for product: %s", product_id)
+                                _LOGGER.info("Page saved successfully for product ID=%s: size=%d bytes, total_time=%.2fs", 
+                                           product_id, html_size, time.time() - start_time)
                             else:
                                 error_msg = "Ошибка сохранения страницы в базу данных"
+                                _LOGGER.error("Failed to save page to database for product ID=%s", product_id)
                                 db.add_fetch_history(product_id, "error", error_msg)
                                 error_count += 1
                                 results.append({
@@ -257,6 +269,15 @@ async def parse_all_products(request: web.Request) -> web.Response:
                                     "error": error_msg
                                 })
                         else:
+                            # Try to read error response body for debugging
+                            try:
+                                error_body = await response.text()
+                                _LOGGER.error("HTTP error for product ID=%s: status=%d, response_body (first 500 chars)=%s", 
+                                            product_id, response.status, error_body[:500])
+                            except:
+                                _LOGGER.error("HTTP error for product ID=%s: status=%d, could not read response body", 
+                                            product_id, response.status)
+                            
                             error_msg = f"HTTP {response.status}: Не удалось загрузить страницу"
                             db.add_fetch_history(product_id, "error", error_msg)
                             error_count += 1
@@ -265,9 +286,20 @@ async def parse_all_products(request: web.Request) -> web.Response:
                                 "status": "error",
                                 "error": error_msg
                             })
+                except asyncio.TimeoutError as timeout_err:
+                    error_msg = f"Timeout: запрос превысил 30 секунд"
+                    _LOGGER.error("Timeout error for product ID=%s, URL=%s: %s", product_id, url, timeout_err)
+                    db.add_fetch_history(product_id, "error", error_msg)
+                    error_count += 1
+                    results.append({
+                        "product_id": product_id,
+                        "status": "error",
+                        "error": error_msg
+                    })
                 except Exception as fetch_err:
                     error_msg = f"Ошибка загрузки: {str(fetch_err)}"
-                    _LOGGER.error("Error fetching page for product %s: %s", product_id, fetch_err)
+                    _LOGGER.error("Exception while fetching page for product ID=%s, URL=%s: %s (type=%s)", 
+                                 product_id, url, fetch_err, type(fetch_err).__name__, exc_info=True)
                     db.add_fetch_history(product_id, "error", error_msg)
                     error_count += 1
                     results.append({
@@ -316,39 +348,61 @@ async def fetch_product_page(request: web.Request) -> web.Response:
             else:
                 product_id = "unknown"
         
-        _LOGGER.info("Fetching page for product: %s, URL: %s", product_id, url)
+        _LOGGER.info("Fetching page for product ID=%s, URL=%s", product_id, url)
         
         # Fetch HTML page
+        start_time = time.time()
         try:
             async with ClientSession() as session:
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
                 }
+                _LOGGER.debug("Sending GET request to URL=%s with headers=%s", url, headers)
+                
                 async with session.get(url, headers=headers, timeout=30) as response:
+                    elapsed_time = time.time() - start_time
+                    _LOGGER.info("Response received for product ID=%s: status=%d, elapsed=%.2fs, headers=%s", 
+                               product_id, response.status, elapsed_time, dict(response.headers))
+                    
                     if response.status == 200:
                         html = await response.text()
+                        html_size = len(html)
+                        _LOGGER.info("HTML content received for product ID=%s: size=%d bytes", product_id, html_size)
                         
                         # Save to database
                         if db.save_page(product_id, html):
                             # Record successful fetch in history
-                            db.add_fetch_history(product_id, "success", None, len(html))
+                            db.add_fetch_history(product_id, "success", None, html_size)
                             
-                            _LOGGER.info("Page saved for product: %s", product_id)
+                            total_time = time.time() - start_time
+                            _LOGGER.info("Page saved successfully for product ID=%s: size=%d bytes, total_time=%.2fs", 
+                                       product_id, html_size, total_time)
                             return web.json_response({
                                 "success": True,
                                 "message": "Страница успешно загружена и сохранена",
                                 "product_id": product_id,
-                                "html_length": len(html)
+                                "html_length": html_size
                             })
                         else:
                             # Record error in history
-                            db.add_fetch_history(product_id, "error", "Ошибка сохранения страницы в базу данных")
+                            error_msg = "Ошибка сохранения страницы в базу данных"
+                            _LOGGER.error("Failed to save page to database for product ID=%s", product_id)
+                            db.add_fetch_history(product_id, "error", error_msg)
                             
                             return web.json_response({
                                 "success": False,
-                                "error": "Ошибка сохранения страницы в базу данных"
+                                "error": error_msg
                             }, status=500)
                     else:
+                        # Try to read error response body for debugging
+                        try:
+                            error_body = await response.text()
+                            _LOGGER.error("HTTP error for product ID=%s: status=%d, response_body (first 500 chars)=%s", 
+                                        product_id, response.status, error_body[:500])
+                        except:
+                            _LOGGER.error("HTTP error for product ID=%s: status=%d, could not read response body", 
+                                        product_id, response.status)
+                        
                         error_msg = f"HTTP {response.status}: Не удалось загрузить страницу"
                         # Record error in history
                         db.add_fetch_history(product_id, "error", error_msg)
@@ -357,9 +411,19 @@ async def fetch_product_page(request: web.Request) -> web.Response:
                             "success": False,
                             "error": error_msg
                         }, status=response.status)
+        except asyncio.TimeoutError as timeout_err:
+            error_msg = f"Timeout: запрос превысил 30 секунд"
+            _LOGGER.error("Timeout error for product ID=%s, URL=%s: %s", product_id, url, timeout_err)
+            db.add_fetch_history(product_id, "error", error_msg)
+            
+            return web.json_response({
+                "success": False,
+                "error": error_msg
+            }, status=500)
         except Exception as fetch_err:
             error_msg = f"Ошибка загрузки: {str(fetch_err)}"
-            _LOGGER.error("Error fetching page: %s", fetch_err)
+            _LOGGER.error("Exception while fetching page for product ID=%s, URL=%s: %s (type=%s)", 
+                         product_id, url, fetch_err, type(fetch_err).__name__, exc_info=True)
             
             # Record error in history
             db.add_fetch_history(product_id, "error", error_msg)
