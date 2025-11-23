@@ -23,11 +23,36 @@ def load_favorites_from_storage() -> list:
         try:
             with open(storage_path, "r", encoding="utf-8") as f:
                 content = f.read().strip()
-                if content:
+                if not content:
+                    return []
+                
+                # Try to find valid JSON in content (in case there's extra text)
+                # Look for first { and last }
+                first_brace = content.find('{')
+                last_brace = content.rfind('}')
+                
+                if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                    json_content = content[first_brace:last_brace + 1]
+                    data = json.loads(json_content)
+                    favorites = data.get("favorites", [])
+                else:
+                    # Try direct parse
                     data = json.loads(content)
                     favorites = data.get("favorites", [])
         except json.JSONDecodeError as json_err:
-            _LOGGER.error("Invalid JSON in storage file: %s", json_err)
+            _LOGGER.error("Invalid JSON in storage file: %s. File will be reset.", json_err)
+            # Try to restore from backup
+            backup_path = Path(f"{STORAGE_FILE}.backup")
+            if backup_path.exists():
+                try:
+                    import shutil
+                    shutil.copy2(backup_path, storage_path)
+                    _LOGGER.info("Restored from backup, retrying load")
+                    return load_favorites_from_storage()  # Retry after restore
+                except Exception:
+                    pass
+            # Reset file if backup restore failed
+            save_favorites_to_storage([])
             favorites = []
         except Exception as read_err:
             _LOGGER.error("Error reading storage file: %s", read_err)
@@ -42,12 +67,37 @@ def save_favorites_to_storage(favorites: list) -> bool:
         storage_path = Path(STORAGE_FILE)
         storage_path.parent.mkdir(parents=True, exist_ok=True)
         
+        # Create backup before writing
+        backup_path = Path(f"{STORAGE_FILE}.backup")
+        if storage_path.exists():
+            try:
+                import shutil
+                shutil.copy2(storage_path, backup_path)
+            except Exception:
+                pass  # Ignore backup errors
+        
+        # Write to temporary file first, then rename (atomic write)
+        temp_path = Path(f"{STORAGE_FILE}.tmp")
         data = {"favorites": favorites}
-        with open(storage_path, "w", encoding="utf-8") as f:
+        
+        with open(temp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # Atomic rename
+        temp_path.replace(storage_path)
+        
         return True
     except Exception as err:
         _LOGGER.error("Error saving storage: %s", err)
+        # Try to restore from backup if exists
+        backup_path = Path(f"{STORAGE_FILE}.backup")
+        if backup_path.exists():
+            try:
+                import shutil
+                shutil.copy2(backup_path, storage_path)
+                _LOGGER.info("Restored from backup")
+            except Exception:
+                pass
         return False
 
 
@@ -106,7 +156,15 @@ async def get_favorites(request: web.Request) -> web.Response:
 async def add_favorite(request: web.Request) -> web.Response:
     """Add favorite item to storage."""
     try:
-        data = await request.json()
+        # Try to parse JSON with better error handling
+        try:
+            data = await request.json()
+        except json.JSONDecodeError as json_err:
+            _LOGGER.error("Invalid JSON in request: %s", json_err)
+            return web.json_response({
+                "success": False,
+                "error": f"Неверный формат данных: {str(json_err)}"
+            }, status=400)
         url = data.get("url", "").strip()
         
         if not url:
@@ -140,18 +198,31 @@ async def add_favorite(request: web.Request) -> web.Response:
         favorites.append(new_item)
         
         # Save to storage
-        if save_favorites_to_storage(favorites):
-            return web.json_response({
-                "success": True,
-                "message": "Товар добавлен",
-                "item": new_item
-            })
-        else:
+        try:
+            if save_favorites_to_storage(favorites):
+                return web.json_response({
+                    "success": True,
+                    "message": "Товар добавлен",
+                    "item": new_item
+                })
+            else:
+                return web.json_response({
+                    "success": False,
+                    "error": "Ошибка сохранения"
+                }, status=500)
+        except Exception as save_err:
+            _LOGGER.error("Error saving favorites: %s", save_err)
             return web.json_response({
                 "success": False,
-                "error": "Ошибка сохранения"
+                "error": f"Ошибка сохранения: {str(save_err)}"
             }, status=500)
             
+    except json.JSONDecodeError as json_err:
+        _LOGGER.error("JSON decode error in add_favorite: %s", json_err)
+        return web.json_response({
+            "success": False,
+            "error": f"Ошибка парсинга данных: {str(json_err)}"
+        }, status=400)
     except Exception as err:
         _LOGGER.error("Error adding favorite: %s", err)
         return web.json_response({
