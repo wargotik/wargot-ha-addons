@@ -17,10 +17,7 @@
     "site": "ozon.ru"
   },
   "schema": {
-    "site": {
-      "type": "select",
-      "options": ["ozon.ru", "ozon.by"]
-    }
+    "site": "str"
   },
   "ports": {
     "8099/tcp": 8099
