@@ -4,12 +4,14 @@ from __future__ import annotations
 import json
 import logging
 import re
-from aiohttp import web
+from datetime import datetime
+from aiohttp import web, ClientSession
 from pathlib import Path
 
 _LOGGER = logging.getLogger(__name__)
 
 STORAGE_FILE = "/data/ozon_storage.json"
+PAGES_FILE = "/data/ozon_pages.json"
 
 
 def load_favorites_from_storage() -> list:
@@ -46,6 +48,40 @@ def save_favorites_to_storage(favorites: list) -> bool:
         return True
     except Exception as err:
         _LOGGER.error("Error saving storage: %s", err)
+        return False
+
+
+def load_pages_from_storage() -> dict:
+    """Load pages from storage file."""
+    pages_path = Path(PAGES_FILE)
+    if pages_path.exists():
+        try:
+            with open(pages_path, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+        except Exception as err:
+            _LOGGER.error("Error loading pages: %s", err)
+    return {}
+
+
+def save_page_to_storage(product_id: str, html: str) -> bool:
+    """Save page HTML to storage file."""
+    try:
+        pages_path = Path(PAGES_FILE)
+        pages_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        pages = load_pages_from_storage()
+        pages[product_id] = {
+            "html": html,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        with open(pages_path, "w", encoding="utf-8") as f:
+            json.dump(pages, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as err:
+        _LOGGER.error("Error saving page: %s", err)
         return False
 
 
@@ -124,6 +160,73 @@ async def add_favorite(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def fetch_product_page(request: web.Request) -> web.Response:
+    """Fetch HTML page for a product."""
+    try:
+        data = await request.json()
+        url = data.get("url", "").strip()
+        product_id = data.get("product_id", "")
+        
+        if not url:
+            return web.json_response({
+                "success": False,
+                "error": "URL is required"
+            }, status=400)
+        
+        if not product_id:
+            # Extract product ID from URL
+            product_id_match = re.search(r'/product/([^/]+)', url)
+            if product_id_match:
+                product_id = product_id_match.group(1)
+            else:
+                product_id = "unknown"
+        
+        _LOGGER.info("Fetching page for product: %s, URL: %s", product_id, url)
+        
+        # Fetch HTML page
+        try:
+            async with ClientSession() as session:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                }
+                async with session.get(url, headers=headers, timeout=30) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        
+                        # Save to storage
+                        if save_page_to_storage(product_id, html):
+                            _LOGGER.info("Page saved for product: %s", product_id)
+                            return web.json_response({
+                                "success": True,
+                                "message": "Страница успешно загружена и сохранена",
+                                "product_id": product_id,
+                                "html_length": len(html)
+                            })
+                        else:
+                            return web.json_response({
+                                "success": False,
+                                "error": "Ошибка сохранения страницы"
+                            }, status=500)
+                    else:
+                        return web.json_response({
+                            "success": False,
+                            "error": f"HTTP {response.status}: Не удалось загрузить страницу"
+                        }, status=response.status)
+        except Exception as fetch_err:
+            _LOGGER.error("Error fetching page: %s", fetch_err)
+            return web.json_response({
+                "success": False,
+                "error": f"Ошибка загрузки: {str(fetch_err)}"
+            }, status=500)
+            
+    except Exception as err:
+        _LOGGER.error("Error in fetch_product_page: %s", err)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def index(request: web.Request) -> web.Response:
     """Serve index page."""
     html = """
@@ -182,6 +285,27 @@ async def index(request: web.Request) -> web.Response:
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+            }
+            .item-actions {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            .fetch-btn {
+                background: #ff9800;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+            .fetch-btn:hover {
+                background: #f57c00;
+            }
+            .fetch-btn:disabled {
+                background: #ccc;
+                cursor: not-allowed;
             }
             .favorite-item:last-child {
                 border-bottom: none;
@@ -373,12 +497,16 @@ async def index(request: web.Request) -> web.Response:
                                 const name = escapeHtml(item.name || 'Unknown');
                                 const url = item.url || '#';
                                 const price = formatPrice(item.price || 0);
+                                const itemId = item.id || 'unknown';
                                 return `
                                 <div class="favorite-item">
                                     <div class="item-name">
                                         ${url !== '#' ? `<a href="${escapeHtml(url)}" target="_blank">${name}</a>` : name}
                                     </div>
-                                    <div class="item-price">${price} ₽</div>
+                                    <div class="item-actions">
+                                        <div class="item-price">${price} ₽</div>
+                                        <button class="fetch-btn" onclick="fetchProductPage('${escapeHtml(itemId)}', '${escapeHtml(url)}', this)">Загрузить страницу</button>
+                                    </div>
                                 </div>
                             `;
                             }).join('');
@@ -467,6 +595,43 @@ async def index(request: web.Request) -> web.Response:
                 }
             }
             
+            // Fetch product page function
+            async function fetchProductPage(productId, url, button) {
+                if (!url || url === '#') {
+                    alert('Нет ссылки на товар');
+                    return;
+                }
+                
+                button.disabled = true;
+                button.textContent = 'Загрузка...';
+                
+                try {
+                    const response = await fetch('/api/fetch-page', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: url,
+                            product_id: productId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('Страница успешно загружена и сохранена!');
+                    } else {
+                        alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                    }
+                } catch (error) {
+                    alert('Ошибка: ' + error.message);
+                } finally {
+                    button.disabled = false;
+                    button.textContent = 'Загрузить страницу';
+                }
+            }
+            
             // Load on page load
             loadFavorites();
         </script>
@@ -482,6 +647,7 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/api/favorites", get_favorites)
     app.router.add_post("/api/favorites", add_favorite)
+    app.router.add_post("/api/fetch-page", fetch_product_page)
     return app
 
 
