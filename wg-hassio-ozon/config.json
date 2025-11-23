@@ -1,7 +1,7 @@
 {
   "name": "Ozon",
-  "version": "0.1.20",
-  "slug": "Ozon",
+  "version": "0.1.22",
+  "slug": "wg-hassio-ozon",
   "description": "Ozon integration for Home Assistant",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",
   "arch": ["aarch64", "amd64", "armhf", "armv7", "i386"],
@@ -17,7 +17,7 @@
     "site": "ozon.ru"
   },
   "schema": {
-    "site": "match(^(ozon\\.ru|ozon\\.by)$)"
+    "site": ["ozon.ru", "ozon.by"]
   },
   "ports": {
     "8099/tcp": 8099
