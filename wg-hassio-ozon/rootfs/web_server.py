@@ -17,6 +17,31 @@ _LOGGER = logging.getLogger(__name__)
 db = Database()
 
 
+def get_browser_headers(url: str = "") -> dict[str, str]:
+    """Get browser-like headers for HTTP requests."""
+    # Determine referer based on URL
+    referer = "https://www.ozon.ru/"
+    if url:
+        if "ozon.by" in url:
+            referer = "https://www.ozon.by/"
+        elif "ozon.ru" in url:
+            referer = "https://www.ozon.ru/"
+    
+    return {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+        "DNT": "1",
+        "Referer": referer
+    }
 
 
 async def get_favorites(request: web.Request) -> web.Response:
@@ -213,10 +238,6 @@ async def parse_all_products(request: web.Request) -> web.Response:
         results = []
         
         async with ClientSession() as session:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-            
             for product in products:
                 product_id = product.get("id", "")
                 url = product.get("url", "")
@@ -235,6 +256,7 @@ async def parse_all_products(request: web.Request) -> web.Response:
                     start_time = time.time()
                     _LOGGER.info("Fetching page for product ID=%s, URL=%s", product_id, url)
                     
+                    headers = get_browser_headers(url)
                     async with session.get(url, headers=headers, timeout=30) as response:
                         elapsed_time = time.time() - start_time
                         _LOGGER.info("Response received for product ID=%s: status=%d, elapsed=%.2fs, headers=%s", 
@@ -354,9 +376,7 @@ async def fetch_product_page(request: web.Request) -> web.Response:
         start_time = time.time()
         try:
             async with ClientSession() as session:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                }
+                headers = get_browser_headers(url)
                 _LOGGER.debug("Sending GET request to URL=%s with headers=%s", url, headers)
                 
                 async with session.get(url, headers=headers, timeout=30) as response:
