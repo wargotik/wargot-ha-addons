@@ -39,8 +39,18 @@ class OzonAPI:
             
             # Temporary mock data for testing
             return [
-                {"name": "Test Item 1", "price": 1000, "id": "1"},
-                {"name": "Test Item 2", "price": 2000, "id": "2"},
+                {
+                    "name": "Test Item 1",
+                    "price": 1000,
+                    "id": "1",
+                    "url": f"{self.base_url}/product/test-item-1/"
+                },
+                {
+                    "name": "Test Item 2",
+                    "price": 2000,
+                    "id": "2",
+                    "url": f"{self.base_url}/product/test-item-2/"
+                },
             ]
         except Exception as err:
             _LOGGER.error("Error fetching favorites: %s", err)

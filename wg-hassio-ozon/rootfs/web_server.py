@@ -101,6 +101,13 @@ async def index(request: web.Request) -> web.Response:
                 font-weight: 500;
                 color: #333;
             }
+            .item-name a {
+                color: #03a9f4;
+                text-decoration: none;
+            }
+            .item-name a:hover {
+                text-decoration: underline;
+            }
             .item-price {
                 font-size: 18px;
                 font-weight: bold;
@@ -147,12 +154,19 @@ async def index(request: web.Request) -> web.Response:
                         if (data.favorites.length === 0) {
                             list.innerHTML = '<div class="loading">Нет товаров в базе</div>';
                         } else {
-                            list.innerHTML = data.favorites.map(item => `
+                            list.innerHTML = data.favorites.map(item => {
+                                const name = escapeHtml(item.name || 'Unknown');
+                                const url = item.url || '#';
+                                const price = formatPrice(item.price || 0);
+                                return `
                                 <div class="favorite-item">
-                                    <div class="item-name">${escapeHtml(item.name || 'Unknown')}</div>
-                                    <div class="item-price">${formatPrice(item.price || 0)} ₽</div>
+                                    <div class="item-name">
+                                        ${url !== '#' ? `<a href="${escapeHtml(url)}" target="_blank">${name}</a>` : name}
+                                    </div>
+                                    <div class="item-price">${price} ₽</div>
                                 </div>
-                            `).join('');
+                            `;
+                            }).join('');
                         }
                     } else {
                         list.innerHTML = '<div class="loading">Ошибка: ' + escapeHtml(data.error) + '</div>';
