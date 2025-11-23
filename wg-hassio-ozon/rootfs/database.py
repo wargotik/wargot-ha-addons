@@ -68,11 +68,24 @@ class Database:
                 )
             """)
 
+            # Create price_history table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS price_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    product_id TEXT NOT NULL,
+                    price REAL NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    FOREIGN KEY (product_id) REFERENCES products(id)
+                )
+            """)
+
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_products_url ON products(url)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_pages_timestamp ON pages(timestamp)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fetch_history_product ON fetch_history(product_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fetch_history_timestamp ON fetch_history(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_product ON price_history(product_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_timestamp ON price_history(timestamp)")
 
             conn.commit()
             conn.close()
@@ -154,7 +167,20 @@ class Database:
                 updates.append("name = ?")
                 params.append(name)
 
+            old_price = None
+            price_changed = False
             if price is not None:
+                # Get old price before update
+                cursor.execute("SELECT price FROM products WHERE id = ?", (product_id,))
+                old_row = cursor.fetchone()
+                if old_row:
+                    old_price = old_row["price"]
+                    if old_price != price:
+                        price_changed = True
+                else:
+                    # Product doesn't exist yet, but we'll add price history anyway
+                    price_changed = True
+                
                 updates.append("price = ?")
                 params.append(price)
 
@@ -170,6 +196,11 @@ class Database:
 
             conn.commit()
             conn.close()
+            
+            # Add to price history if price changed (after commit)
+            if price_changed and price is not None:
+                self.add_price_history(product_id, price)
+            
             return True
         except Exception as err:
             _LOGGER.error("Error updating product: %s", err)
@@ -183,6 +214,8 @@ class Database:
 
             # Delete history first
             cursor.execute("DELETE FROM fetch_history WHERE product_id = ?", (product_id,))
+            # Delete price history
+            cursor.execute("DELETE FROM price_history WHERE product_id = ?", (product_id,))
             # Delete page
             cursor.execute("DELETE FROM pages WHERE product_id = ?", (product_id,))
             # Delete product

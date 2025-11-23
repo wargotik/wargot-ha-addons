@@ -18,9 +18,21 @@ db = Database()
 
 
 async def get_favorites(request: web.Request) -> web.Response:
-    """Get favorites from database."""
+    """Get favorites from database with last fetch info."""
     try:
         favorites = db.get_all_products()
+        
+        # Add last fetch info for each product
+        for item in favorites:
+            last_fetch = db.get_last_fetch(item["id"])
+            if last_fetch:
+                item["last_fetch"] = {
+                    "timestamp": last_fetch["timestamp"],
+                    "status": last_fetch["status"],
+                    "error_message": last_fetch.get("error_message")
+                }
+            else:
+                item["last_fetch"] = None
         
         return web.json_response({
             "success": True,
@@ -284,6 +296,36 @@ async def index(request: web.Request) -> web.Response:
                 font-weight: bold;
                 color: #03a9f4;
             }
+            .item-info {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                font-size: 12px;
+                color: #666;
+            }
+            .last-fetch {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .status-badge {
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 500;
+            }
+            .status-success {
+                background: #4caf50;
+                color: white;
+            }
+            .status-error {
+                background: #f44336;
+                color: white;
+            }
+            .status-unknown {
+                background: #ccc;
+                color: #333;
+            }
             .refresh-btn {
                 background: #03a9f4;
                 color: white;
@@ -456,10 +498,40 @@ async def index(request: web.Request) -> web.Response:
                                 const url = item.url || '#';
                                 const price = formatPrice(item.price || 0);
                                 const itemId = item.id || 'unknown';
+                                const lastFetch = item.last_fetch;
+                                
+                                let lastFetchHtml = '';
+                                if (lastFetch) {
+                                    const status = lastFetch.status || 'unknown';
+                                    const timestamp = lastFetch.timestamp ? new Date(lastFetch.timestamp).toLocaleString('ru-RU') : '';
+                                    const statusClass = status === 'success' ? 'status-success' : (status === 'error' ? 'status-error' : 'status-unknown');
+                                    const statusText = status === 'success' ? 'Успешно' : (status === 'error' ? 'Ошибка' : 'Неизвестно');
+                                    
+                                    lastFetchHtml = `
+                                        <div class="item-info">
+                                            <div class="last-fetch">
+                                                <span class="status-badge ${statusClass}">${statusText}</span>
+                                                <span>${timestamp || ''}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    lastFetchHtml = `
+                                        <div class="item-info">
+                                            <div class="last-fetch">
+                                                <span class="status-badge status-unknown">Не загружалось</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                
                                 return `
                                 <div class="favorite-item">
-                                    <div class="item-name">
-                                        ${url !== '#' ? `<a href="${escapeHtml(url)}" target="_blank">${name}</a>` : name}
+                                    <div>
+                                        <div class="item-name">
+                                            ${url !== '#' ? `<a href="${escapeHtml(url)}" target="_blank">${name}</a>` : name}
+                                        </div>
+                                        ${lastFetchHtml}
                                     </div>
                                     <div class="item-actions">
                                         <div class="item-price">${price} ₽</div>
