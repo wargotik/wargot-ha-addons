@@ -15,12 +15,22 @@ async def get_favorites(request: web.Request) -> web.Response:
     """Get favorites from storage."""
     try:
         storage_path = Path(STORAGE_FILE)
+        favorites = []
+        
         if storage_path.exists():
-            with open(storage_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                favorites = data.get("favorites", [])
-        else:
-            favorites = []
+            try:
+                with open(storage_path, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                    if content:
+                        data = json.loads(content)
+                        favorites = data.get("favorites", [])
+            except json.JSONDecodeError as json_err:
+                _LOGGER.error("Invalid JSON in storage file: %s", json_err)
+                # Try to fix or return empty list
+                favorites = []
+            except Exception as read_err:
+                _LOGGER.error("Error reading storage file: %s", read_err)
+                favorites = []
         
         return web.json_response({
             "success": True,

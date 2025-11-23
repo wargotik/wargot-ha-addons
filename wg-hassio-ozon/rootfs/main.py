@@ -70,7 +70,7 @@ async def main():
     
     # Load configuration
     config = load_config()
-    site = config.get("site", "ozon.ru")
+    site = config.get("site", "ozon.by")
     
     if not site:
         _LOGGER.error("Site must be configured (ozon.ru or ozon.by)")

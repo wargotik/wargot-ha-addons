@@ -25,8 +25,16 @@ class OzonStorage:
         try:
             if self.storage_path.exists():
                 with open(self.storage_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                    content = f.read().strip()
+                    if not content:
+                        return {"favorites": []}
+                    data = json.loads(content)
                     return data
+            return {"favorites": []}
+        except json.JSONDecodeError as json_err:
+            _LOGGER.error("Invalid JSON in storage file: %s. Resetting file.", json_err)
+            # Reset file with empty data
+            self.save({"favorites": []})
             return {"favorites": []}
         except Exception as err:
             _LOGGER.error("Error loading storage: %s", err)
