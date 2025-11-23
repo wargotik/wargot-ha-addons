@@ -384,3 +384,30 @@ class Database:
             _LOGGER.error("Error getting fetch history: %s", err)
             return []
 
+    def get_last_fetch_any(self) -> dict[str, Any] | None:
+        """Get last fetch history for any product."""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM fetch_history 
+                ORDER BY timestamp DESC 
+                LIMIT 1
+            """)
+            row = cursor.fetchone()
+            conn.close()
+
+            if row:
+                return {
+                    "id": row["id"],
+                    "product_id": row["product_id"],
+                    "timestamp": row["timestamp"],
+                    "status": row["status"],
+                    "error_message": row["error_message"],
+                    "html_length": row["html_length"]
+                }
+            return None
+        except Exception as err:
+            _LOGGER.error("Error getting last fetch any: %s", err)
+            return None
+

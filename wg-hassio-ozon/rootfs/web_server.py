@@ -162,6 +162,33 @@ async def add_favorite(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def get_last_fetch_info(request: web.Request) -> web.Response:
+    """Get last fetch info for any product."""
+    try:
+        last_fetch = db.get_last_fetch_any()
+        
+        if last_fetch:
+            return web.json_response({
+                "success": True,
+                "last_fetch": {
+                    "timestamp": last_fetch["timestamp"],
+                    "status": last_fetch["status"],
+                    "product_id": last_fetch["product_id"]
+                }
+            })
+        else:
+            return web.json_response({
+                "success": True,
+                "last_fetch": None
+            })
+    except Exception as err:
+        _LOGGER.error("Error getting last fetch info: %s", err)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def fetch_product_page(request: web.Request) -> web.Response:
     """Fetch HTML page for a product."""
     try:
@@ -271,6 +298,21 @@ async def index(request: web.Request) -> web.Response:
             h1 {
                 color: #03a9f4;
                 margin-top: 0;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            .last-fetch-badge {
+                font-size: 12px;
+                padding: 4px 12px;
+                background: #e3f2fd;
+                color: #1976d2;
+                border-radius: 12px;
+                font-weight: normal;
+            }
+            .last-fetch-badge.empty {
+                background: #f5f5f5;
+                color: #999;
             }
             .stats {
                 display: flex;
@@ -499,7 +541,10 @@ async def index(request: web.Request) -> web.Response:
     </head>
     <body>
         <div class="container">
-            <h1>Товары из базы</h1>
+            <h1>
+                Товары из базы
+                <span class="last-fetch-badge" id="last-fetch-badge">Загрузка...</span>
+            </h1>
             <button class="add-btn" onclick="openModal()">+ Добавить товар</button>
             <div class="favorites-list" id="favorites-list">
                 <div class="loading">Загрузка...</div>
@@ -533,10 +578,13 @@ async def index(request: web.Request) -> web.Response:
                 list.innerHTML = '<div class="loading">Загрузка...</div>';
                 
                 try {
-                    const response = await fetch('/api/favorites');
+                    // Use relative path for Ingress
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/favorites';
+                    const response = await fetch(apiUrl);
                     console.log('Response:', response);
                     console.log('Response status:', response.status);
                     console.log('Response ok:', response.ok);
+                    console.log('API URL:', apiUrl);
                     
                     const data = await response.json();
                     console.log('Data:', data);
@@ -655,7 +703,8 @@ async def index(request: web.Request) -> web.Response:
                 errorDiv.style.display = 'none';
                 
                 try {
-                    const response = await fetch('/api/favorites', {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/favorites';
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -689,7 +738,8 @@ async def index(request: web.Request) -> web.Response:
                 button.textContent = 'Загрузка...';
                 
                 try {
-                    const response = await fetch('/api/fetch-page', {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/fetch-page';
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -715,8 +765,33 @@ async def index(request: web.Request) -> web.Response:
                 }
             }
             
+            // Load last fetch info
+            async function loadLastFetchInfo() {
+                try {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/last-fetch';
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    const badge = document.getElementById('last-fetch-badge');
+                    if (data.success && data.last_fetch) {
+                        const timestamp = new Date(data.last_fetch.timestamp);
+                        const formatted = timestamp.toLocaleString('ru-RU');
+                        badge.textContent = `Последний запрос: ${formatted}`;
+                        badge.classList.remove('empty');
+                    } else {
+                        badge.textContent = 'Запросов ещё не было';
+                        badge.classList.add('empty');
+                    }
+                } catch (error) {
+                    const badge = document.getElementById('last-fetch-badge');
+                    badge.textContent = 'Ошибка загрузки';
+                    badge.classList.add('empty');
+                }
+            }
+            
             // Load on page load
             loadFavorites();
+            loadLastFetchInfo();
         </script>
     </body>
     </html>
@@ -731,6 +806,7 @@ def create_app() -> web.Application:
     app.router.add_get("/api/favorites", get_favorites)
     app.router.add_post("/api/favorites", add_favorite)
     app.router.add_post("/api/fetch-page", fetch_product_page)
+    app.router.add_get("/api/last-fetch", get_last_fetch_info)
     return app
 
 
