@@ -9,6 +9,7 @@ from pathlib import Path
 
 from ozon_api import OzonAPI
 from storage import OzonStorage
+from web_server import run_web_server
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ logging.basicConfig(
 
 CONFIG_FILE = "/data/options.json"
 SCAN_INTERVAL = 3600  # 1 hour in seconds
+WEB_PORT = 8099
 
 
 def load_config() -> dict:
@@ -39,24 +41,8 @@ def load_config() -> dict:
         sys.exit(1)
 
 
-async def main():
-    """Main function."""
-    _LOGGER.info("Starting Ozon add-on")
-    
-    # Load configuration
-    config = load_config()
-    username = config.get("username", "")
-    password = config.get("password", "")
-    
-    if not username or not password:
-        _LOGGER.error("Username and password must be configured")
-        sys.exit(1)
-    
-    # Initialize API and storage
-    api = OzonAPI(username, password)
-    storage = OzonStorage()
-    
-    # Main loop
+async def fetch_loop(api: OzonAPI, storage: OzonStorage):
+    """Main fetch loop."""
     while True:
         try:
             _LOGGER.info("Fetching favorites from Ozon...")
@@ -76,6 +62,45 @@ async def main():
         
         # Wait before next update
         await asyncio.sleep(SCAN_INTERVAL)
+
+
+async def main():
+    """Main function."""
+    _LOGGER.info("Starting Ozon add-on")
+    
+    # Load configuration
+    config = load_config()
+    username = config.get("username", "")
+    password = config.get("password", "")
+    
+    if not username or not password:
+        _LOGGER.error("Username and password must be configured")
+        sys.exit(1)
+    
+    # Initialize API and storage
+    api = OzonAPI(username, password)
+    storage = OzonStorage()
+    
+    # Start web server
+    _LOGGER.info("Starting web server on port %d", WEB_PORT)
+    web_runner = await run_web_server(WEB_PORT)
+    
+    # Start fetch loop as background task
+    fetch_task = asyncio.create_task(fetch_loop(api, storage))
+    
+    try:
+        # Keep running - wait for fetch loop (which runs forever)
+        # Web server is already running in background
+        await fetch_task
+    except KeyboardInterrupt:
+        _LOGGER.info("Shutting down...")
+        fetch_task.cancel()
+        try:
+            await fetch_task
+        except asyncio.CancelledError:
+            pass
+    finally:
+        await web_runner.cleanup()
 
 
 if __name__ == "__main__":

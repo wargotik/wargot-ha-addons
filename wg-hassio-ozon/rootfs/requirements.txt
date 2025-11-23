@@ -1,3 +1,2 @@
-# No external dependencies required yet
-# Add dependencies here when implementing Ozon API
+aiohttp>=3.9.0
 

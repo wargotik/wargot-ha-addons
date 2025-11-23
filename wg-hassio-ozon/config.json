@@ -1,16 +1,18 @@
 {
   "name": "Ozon",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "slug": "ozon",
   "description": "Ozon integration for Home Assistant",
   "url": "https://github.com/wargot/ha-ozon",
   "arch": ["aarch64", "amd64", "armhf", "armv7", "i386"],
   "startup": "application",
   "boot": "auto",
-  "hassio_api": false,
+  "hassio_api": true,
   "hassio_role": "default",
   "homeassistant_api": false,
   "host_network": false,
+  "ingress": true,
+  "ingress_port": 8099,
   "options": {
     "username": "",
     "password": ""
@@ -19,8 +21,12 @@
     "username": "str",
     "password": "password"
   },
-  "ports": {},
-  "ports_description": {},
+  "ports": {
+    "8099/tcp": 8099
+  },
+  "ports_description": {
+    "8099/tcp": "Web interface"
+  },
   "map": ["config:rw"]
 }
 
