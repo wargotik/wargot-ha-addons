@@ -1,6 +1,6 @@
 {
   "name": "Ozon",
-  "version": "0.1.32",
+  "version": "0.1.34",
   "slug": "wg-hassio-ozon",
   "description": "Ozon integration for Home Assistant",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",

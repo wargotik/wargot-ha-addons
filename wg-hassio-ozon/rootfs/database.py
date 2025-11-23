@@ -105,15 +105,25 @@ class Database:
 
             products = []
             for row in rows:
+                # Ensure all values are properly converted
+                price = row["price"]
+                if price is None:
+                    price = 0.0
+                else:
+                    try:
+                        price = float(price)
+                    except (ValueError, TypeError):
+                        price = 0.0
+                
                 products.append({
-                    "id": row["id"],
-                    "url": row["url"],
-                    "name": row["name"] or f"Товар {row['id']}",
-                    "price": row["price"] or 0
+                    "id": str(row["id"]) if row["id"] else "",
+                    "url": str(row["url"]) if row["url"] else "",
+                    "name": str(row["name"]) if row["name"] else f"Товар {row['id']}",
+                    "price": price
                 })
             return products
         except Exception as err:
-            _LOGGER.error("Error getting products: %s", err)
+            _LOGGER.error("Error getting products: %s", err, exc_info=True)
             return []
 
     def add_product(self, product_id: str, url: str, name: str | None = None, price: float = 0) -> bool:

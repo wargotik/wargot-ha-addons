@@ -20,31 +20,78 @@ db = Database()
 async def get_favorites(request: web.Request) -> web.Response:
     """Get favorites from database with last fetch info."""
     try:
+        _LOGGER.debug("Getting favorites from database")
+        
+        # Get products from database
         favorites = db.get_all_products()
+        _LOGGER.debug("Retrieved %d products from database", len(favorites))
         
-        # Add last fetch info for each product
+        # Ensure all items have required fields
+        result = []
         for item in favorites:
-            last_fetch = db.get_last_fetch(item["id"])
-            if last_fetch:
-                item["last_fetch"] = {
-                    "timestamp": last_fetch["timestamp"],
-                    "status": last_fetch["status"],
-                    "error_message": last_fetch.get("error_message")
+            try:
+                product_id = str(item.get("id", "")) if item.get("id") else ""
+                
+                # Add last fetch info for each product
+                last_fetch = None
+                if product_id:
+                    try:
+                        last_fetch = db.get_last_fetch(product_id)
+                    except Exception as fetch_err:
+                        _LOGGER.warning("Error getting last fetch for product %s: %s", product_id, fetch_err)
+                
+                # Ensure price is a valid number
+                price = item.get("price", 0)
+                try:
+                    price = float(price) if price is not None else 0.0
+                except (ValueError, TypeError):
+                    price = 0.0
+                
+                product_data = {
+                    "id": product_id,
+                    "url": str(item.get("url", "")) if item.get("url") else "",
+                    "name": str(item.get("name", "")) if item.get("name") else f"Товар {product_id}",
+                    "price": price
                 }
-            else:
-                item["last_fetch"] = None
+                
+                if last_fetch:
+                    product_data["last_fetch"] = {
+                        "timestamp": str(last_fetch.get("timestamp", "")),
+                        "status": str(last_fetch.get("status", "")),
+                        "error_message": str(last_fetch.get("error_message", "")) if last_fetch.get("error_message") else None
+                    }
+                else:
+                    product_data["last_fetch"] = None
+                
+                result.append(product_data)
+            except Exception as item_err:
+                _LOGGER.warning("Error processing product item: %s, item: %s", item_err, item)
+                continue
         
-        return web.json_response({
+        response_data = {
             "success": True,
-            "favorites": favorites,
-            "count": len(favorites)
-        })
+            "favorites": result,
+            "count": len(result)
+        }
+        
+        _LOGGER.debug("Returning %d products", len(result))
+        return web.json_response(response_data)
     except Exception as err:
-        _LOGGER.error("Error getting favorites: %s", err)
-        return web.json_response({
-            "success": False,
-            "error": str(err)
-        }, status=500)
+        _LOGGER.error("Error getting favorites: %s", err, exc_info=True)
+        try:
+            return web.json_response({
+                "success": False,
+                "error": str(err),
+                "favorites": [],
+                "count": 0
+            }, status=500)
+        except Exception as json_err:
+            _LOGGER.error("Error creating error response: %s", json_err)
+            return web.Response(
+                text=f'{{"success": false, "error": "Internal server error"}}',
+                content_type="application/json",
+                status=500
+            )
 
 
 async def add_favorite(request: web.Request) -> web.Response:
