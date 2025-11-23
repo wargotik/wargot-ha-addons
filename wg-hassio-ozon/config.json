@@ -1,6 +1,6 @@
 {
   "name": "Ozon",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "slug": "ozon",
   "description": "Ozon integration for Home Assistant",
   "url": "https://github.com/wargot/ha-ozon",
@@ -14,10 +14,12 @@
   "ingress": true,
   "ingress_port": 8099,
   "options": {
+    "site": "ozon.ru",
     "username": "",
     "password": ""
   },
   "schema": {
+    "site": "match(^(ozon\\.ru|ozon\\.by)$)",
     "username": "str",
     "password": "password"
   },

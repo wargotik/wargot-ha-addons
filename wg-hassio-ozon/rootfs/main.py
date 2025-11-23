@@ -70,15 +70,22 @@ async def main():
     
     # Load configuration
     config = load_config()
+    site = config.get("site", "ozon.ru")
     username = config.get("username", "")
     password = config.get("password", "")
+    
+    if not site:
+        _LOGGER.error("Site must be configured (ozon.ru or ozon.by)")
+        sys.exit(1)
     
     if not username or not password:
         _LOGGER.error("Username and password must be configured")
         sys.exit(1)
     
+    _LOGGER.info("Using Ozon site: %s", site)
+    
     # Initialize API and storage
-    api = OzonAPI(username, password)
+    api = OzonAPI(site, username, password)
     storage = OzonStorage()
     
     # Start web server

@@ -10,8 +10,10 @@ _LOGGER = logging.getLogger(__name__)
 class OzonAPI:
     """Class to interact with Ozon API."""
 
-    def __init__(self, username: str, password: str) -> None:
+    def __init__(self, site: str, username: str, password: str) -> None:
         """Initialize Ozon API client."""
+        self.site = site
+        self.base_url = f"https://{site}"
         self.username = username
         self.password = password
         self.session = None
@@ -27,10 +29,10 @@ class OzonAPI:
             # - Get session token/cookies
             # - Store authentication state
             
-            _LOGGER.debug("Authenticating with Ozon for user: %s", self.username)
+            _LOGGER.debug("Authenticating with Ozon (%s) for user: %s", self.site, self.username)
             
             # Placeholder - replace with actual API call
-            # response = await self._make_request("POST", "/auth/login", {
+            # response = await self._make_request("POST", f"{self.base_url}/auth/login", {
             #     "username": self.username,
             #     "password": self.password
             # })
@@ -57,10 +59,10 @@ class OzonAPI:
             # - Parse response
             # - Return list of items with name and price
             
-            _LOGGER.debug("Fetching favorites from Ozon")
+            _LOGGER.debug("Fetching favorites from Ozon (%s)", self.site)
             
             # Placeholder - replace with actual API call
-            # response = await self._make_request("GET", "/favorites")
+            # response = await self._make_request("GET", f"{self.base_url}/favorites")
             # items = []
             # for item in response.get("items", []):
             #     items.append({
