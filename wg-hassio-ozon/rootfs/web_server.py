@@ -534,7 +534,13 @@ async def index(request: web.Request) -> web.Response:
                 
                 try {
                     const response = await fetch('/api/favorites');
+                    console.log('Response:', response);
+                    console.log('Response status:', response.status);
+                    console.log('Response ok:', response.ok);
+                    
                     const data = await response.json();
+                    console.log('Data:', data);
+                    console.log('Data favorites:', data.favorites);
                     
                     if (data.success) {
                         if (data.favorites.length === 0) {
