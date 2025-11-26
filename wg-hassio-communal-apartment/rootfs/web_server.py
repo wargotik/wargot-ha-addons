@@ -13,6 +13,31 @@ _LOGGER = logging.getLogger(__name__)
 # Initialize database
 db = Database()
 
+# Payment types constants
+PAYMENT_TYPES = {
+    "electricity": {
+        "id": "electricity",
+        "system_name": "electricity",
+        "name": "Электроэнергия",
+        "description": "Оплата электроэнергии",
+        "is_system": True
+    },
+    "gas": {
+        "id": "gas",
+        "system_name": "gas",
+        "name": "Газ",
+        "description": "Оплата газа",
+        "is_system": True
+    },
+    "water": {
+        "id": "water",
+        "system_name": "water",
+        "name": "Вода",
+        "description": "Оплата воды",
+        "is_system": True
+    }
+}
+
 
 async def get_payments(request: web.Request) -> web.Response:
     """Get all payments from database."""
@@ -86,9 +111,43 @@ async def add_payment(request: web.Request) -> web.Response:
                 "error": "Период обязателен"
             }, status=400)
         
+        # Find or create payment type in database
+        # payment_type_id from frontend is system_name (e.g., "electricity", "gas", "water")
+        if payment_type_id not in PAYMENT_TYPES:
+            return web.json_response({
+                "success": False,
+                "error": "Неверный тип оплаты"
+            }, status=400)
+        
+        payment_type_info = PAYMENT_TYPES[payment_type_id]
+        
+        # Check if payment type exists in database, if not - create it
+        existing_types = db.get_all_payment_types(active_only=False)
+        db_payment_type_id = None
+        
+        for pt in existing_types:
+            if pt.get("system_name") == payment_type_info["system_name"]:
+                db_payment_type_id = pt["id"]
+                break
+        
+        if db_payment_type_id is None:
+            # Create payment type in database
+            db_payment_type_id = db.add_payment_type(
+                name=payment_type_info["name"],
+                system_name=payment_type_info["system_name"],
+                description=payment_type_info.get("description"),
+                is_active=True,
+                is_system=payment_type_info.get("is_system", True)
+            )
+            if db_payment_type_id is None:
+                return web.json_response({
+                    "success": False,
+                    "error": "Ошибка создания типа оплаты в базе данных"
+                }, status=500)
+        
         # Add payment to database
         payment_id = db.add_payment(
-            payment_type_id=int(payment_type_id),
+            payment_type_id=db_payment_type_id,
             amount=amount,
             payment_date=payment_date,
             period=period,
@@ -124,10 +183,10 @@ async def add_payment(request: web.Request) -> web.Response:
 
 
 async def get_payment_types(request: web.Request) -> web.Response:
-    """Get all payment types."""
+    """Get all payment types from constants."""
     try:
-        active_only = request.query.get("active_only", "false").lower() == "true"
-        types = db.get_all_payment_types(active_only=active_only)
+        # Return payment types from constants dictionary
+        types = list(PAYMENT_TYPES.values())
         
         return web.json_response({
             "success": True,
@@ -153,6 +212,7 @@ async def index(request: web.Request) -> web.Response:
         <title>Коммунальные платежи</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -171,27 +231,31 @@ async def index(request: web.Request) -> web.Response:
             h1 {
                 color: #03a9f4;
                 margin-top: 0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            h1 .mdi {
+                font-size: 32px;
             }
             .add-btn {
                 background: #4caf50;
                 color: white;
                 border: none;
-                padding: 12px 24px;
+                padding: 8px 16px;
                 border-radius: 4px;
                 cursor: pointer;
-                font-size: 16px;
+                font-size: 14px;
                 margin-bottom: 20px;
                 display: inline-flex;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
             }
             .add-btn:hover {
                 background: #45a049;
             }
-            .add-btn::before {
-                content: "+";
-                font-size: 20px;
-                font-weight: bold;
+            .add-btn .mdi {
+                font-size: 18px;
             }
             .payments-list {
                 margin-top: 30px;
@@ -244,14 +308,26 @@ async def index(request: web.Request) -> web.Response:
             }
             .modal-content {
                 background-color: white;
-                margin: 10% auto;
+                margin: 5% auto;
                 padding: 30px;
                 border-radius: 8px;
                 width: 90%;
-                max-width: 500px;
+                max-width: 800px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 max-height: 90vh;
                 overflow-y: auto;
+            }
+            .form-columns {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            .form-column {
+                display: flex;
+                flex-direction: column;
+            }
+            .form-group-full-width {
+                grid-column: 1 / -1;
             }
             .modal-header {
                 display: flex;
@@ -331,8 +407,8 @@ async def index(request: web.Request) -> web.Response:
     </head>
     <body>
         <div class="container">
-            <h1>Оплаты</h1>
-            <button class="add-btn" onclick="openModal()">Добавить оплату</button>
+            <h1><span class="mdi mdi-cash-multiple"></span>Оплаты</h1>
+            <button class="add-btn" onclick="openModal()"><span class="mdi mdi-pencil-plus"></span>Добавить оплату</button>
             <div class="payments-list" id="payments-list">
                 <div class="loading">Загрузка...</div>
             </div>
@@ -346,36 +422,44 @@ async def index(request: web.Request) -> web.Response:
                     <span class="close" onclick="closeModal()">&times;</span>
                 </div>
                 <form id="addForm" onsubmit="addPayment(event)">
-                    <div class="form-group">
+                    <div class="form-group form-group-full-width">
                         <label for="paymentType">Тип оплаты:</label>
                         <select id="paymentType" name="payment_type_id" required>
                             <option value="">Выберите тип оплаты</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="amount">Сумма:</label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="period">Период:</label>
-                        <input type="text" id="period" name="period" placeholder="2024-01" required>
-                        <small style="color: #666; font-size: 12px;">Формат: ГГГГ-ММ (например, 2024-01)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentDate">Дата оплаты:</label>
-                        <input type="date" id="paymentDate" name="payment_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="receiptNumber">Номер квитанции (необязательно):</label>
-                        <input type="text" id="receiptNumber" name="receipt_number" placeholder="">
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentMethod">Способ оплаты (необязательно):</label>
-                        <input type="text" id="paymentMethod" name="payment_method" placeholder="Наличные, карта, перевод">
-                    </div>
-                    <div class="form-group">
-                        <label for="notes">Заметки (необязательно):</label>
-                        <input type="text" id="notes" name="notes" placeholder="">
+                    <div class="form-columns">
+                        <div class="form-column">
+                            <h3 style="margin-top: 0; margin-bottom: 15px; color: #666; font-size: 14px; font-weight: 500;">Необязательные поля</h3>
+                            <div class="form-group">
+                                <label for="receiptNumber">Номер квитанции:</label>
+                                <input type="text" id="receiptNumber" name="receipt_number" placeholder="">
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentMethod">Способ оплаты:</label>
+                                <input type="text" id="paymentMethod" name="payment_method" placeholder="Наличные, карта, перевод">
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">Заметки:</label>
+                                <input type="text" id="notes" name="notes" placeholder="">
+                            </div>
+                        </div>
+                        <div class="form-column">
+                            <h3 style="margin-top: 0; margin-bottom: 15px; color: #333; font-size: 14px; font-weight: 500;">Обязательные поля</h3>
+                            <div class="form-group">
+                                <label for="amount">Сумма:</label>
+                                <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="period">Период:</label>
+                                <input type="text" id="period" name="period" placeholder="2024-01" required>
+                                <small style="color: #666; font-size: 12px;">Формат: ГГГГ-ММ (например, 2024-01)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentDate">Дата оплаты:</label>
+                                <input type="date" id="paymentDate" name="payment_date" required>
+                            </div>
+                        </div>
                     </div>
                     <div id="errorMessage" class="error-message" style="display: none;"></div>
                     <div class="modal-footer">
