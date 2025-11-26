@@ -58,11 +58,28 @@ class Database:
                     receipt_number TEXT,
                     payment_method TEXT,
                     notes TEXT,
+                    previous_reading REAL,
+                    current_reading REAL,
+                    volume REAL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     FOREIGN KEY (payment_type_id) REFERENCES payment_types(id)
                 )
             """)
+            
+            # Add new columns to existing table if they don't exist (for migration)
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN previous_reading REAL")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN current_reading REAL")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN volume REAL")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
 
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_type ON payments(payment_type_id)")
@@ -254,7 +271,9 @@ class Database:
 
     def add_payment(self, payment_type_id: int, amount: float, payment_date: str, period: str,
                    receipt_number: str | None = None,
-                   payment_method: str | None = None, notes: str | None = None) -> int | None:
+                   payment_method: str | None = None, notes: str | None = None,
+                   previous_reading: float | None = None, current_reading: float | None = None,
+                   volume: float | None = None) -> int | None:
         """Add a new payment. Returns the ID of the created payment."""
         try:
             conn = self._get_connection()
@@ -263,10 +282,11 @@ class Database:
             now = datetime.now().isoformat()
             cursor.execute("""
                 INSERT INTO payments (payment_type_id, amount, payment_date, period, receipt_number,
-                                    payment_method, notes, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    payment_method, notes, previous_reading, current_reading, volume,
+                                    created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (payment_type_id, amount, payment_date, period, receipt_number,
-                  payment_method, notes, now, now))
+                  payment_method, notes, previous_reading, current_reading, volume, now, now))
 
             payment_id = cursor.lastrowid
             conn.commit()

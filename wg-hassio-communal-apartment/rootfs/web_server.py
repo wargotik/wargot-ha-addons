@@ -430,21 +430,6 @@ async def index(request: web.Request) -> web.Response:
                     </div>
                     <div class="form-columns">
                         <div class="form-column">
-                            <h3 style="margin-top: 0; margin-bottom: 15px; color: #666; font-size: 14px; font-weight: 500;">Необязательные поля</h3>
-                            <div class="form-group">
-                                <label for="receiptNumber">Номер квитанции:</label>
-                                <input type="text" id="receiptNumber" name="receipt_number" placeholder="">
-                            </div>
-                            <div class="form-group">
-                                <label for="paymentMethod">Способ оплаты:</label>
-                                <input type="text" id="paymentMethod" name="payment_method" placeholder="Наличные, карта, перевод">
-                            </div>
-                            <div class="form-group">
-                                <label for="notes">Заметки:</label>
-                                <input type="text" id="notes" name="notes" placeholder="">
-                            </div>
-                        </div>
-                        <div class="form-column">
                             <h3 style="margin-top: 0; margin-bottom: 15px; color: #333; font-size: 14px; font-weight: 500;">Обязательные поля</h3>
                             <div class="form-group">
                                 <label for="amount">Сумма:</label>
@@ -458,6 +443,21 @@ async def index(request: web.Request) -> web.Response:
                             <div class="form-group">
                                 <label for="paymentDate">Дата оплаты:</label>
                                 <input type="date" id="paymentDate" name="payment_date" required>
+                            </div>
+                        </div>
+                        <div class="form-column">
+                            <h3 style="margin-top: 0; margin-bottom: 15px; color: #666; font-size: 14px; font-weight: 500;">Необязательные поля</h3>
+                            <div class="form-group">
+                                <label for="receiptNumber">Номер квитанции:</label>
+                                <input type="text" id="receiptNumber" name="receipt_number" placeholder="">
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentMethod">Способ оплаты:</label>
+                                <input type="text" id="paymentMethod" name="payment_method" placeholder="Наличные, карта, перевод">
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">Заметки:</label>
+                                <input type="text" id="notes" name="notes" placeholder="">
                             </div>
                         </div>
                     </div>
