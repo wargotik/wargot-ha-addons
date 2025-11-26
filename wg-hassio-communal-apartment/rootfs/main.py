@@ -4,8 +4,8 @@ import asyncio
 import logging
 import sys
 
-from web_server import run_web_server
 from database import Database
+from web_server import run_web_server
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,8 +16,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-WEB_PORT = 8099
-
 
 async def main():
     """Main function."""
@@ -25,20 +23,10 @@ async def main():
     
     # Initialize database
     db = Database()
+    _LOGGER.info("Database initialized")
     
     # Start web server
-    _LOGGER.info("Starting web server on port %d", WEB_PORT)
-    web_runner = await run_web_server(WEB_PORT)
-    
-    try:
-        # Keep running - web server is already running in background
-        # Wait forever until interrupted
-        while True:
-            await asyncio.sleep(3600)  # Sleep for 1 hour, then check again
-    except KeyboardInterrupt:
-        _LOGGER.info("Shutting down...")
-    finally:
-        await web_runner.cleanup()
+    await run_web_server(port=8099)
 
 
 if __name__ == "__main__":
