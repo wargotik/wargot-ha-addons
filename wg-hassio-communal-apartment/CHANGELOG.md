@@ -5,6 +5,14 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.3.7] - 2025-01-XX
+
+### Changed
+- Добавлена валидация поля "Объём": теперь объём должен быть обязательно больше нуля
+- Функция `calculateVolume()` не устанавливает значение 0, если объём равен нулю
+- Добавлена проверка объёма на фронтенде перед отправкой формы
+- Добавлена проверка объёма на бэкенде при сохранении оплаты
+
 ## [0.3.6] - 2025-01-XX
 
 ### Changed
@@ -121,6 +129,7 @@
 
 ---
 
+[0.3.7]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.3...v0.3.4

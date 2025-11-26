@@ -150,6 +150,12 @@ async def add_payment(request: web.Request) -> web.Response:
                 curr = float(current_reading) if current_reading else 0
                 if curr >= prev:
                     volume = curr - prev
+                    # Validate that volume is greater than 0
+                    if volume <= 0:
+                        return web.json_response({
+                            "success": False,
+                            "error": "Объём должен быть больше нуля. Проверьте показания счётчика."
+                        }, status=400)
             except (ValueError, TypeError):
                 pass
         
@@ -493,7 +499,7 @@ async def index(request: web.Request) -> web.Response:
                             </div>
                             <div class="form-group">
                                 <label for="volume">Объём:</label>
-                                <input type="number" id="volume" name="volume" step="0.001" min="0" placeholder="0.000" readonly>
+                                <input type="number" id="volume" name="volume" step="0.001" min="0.001" placeholder="0.000" readonly>
                             </div>
                         </div>
                         <div class="form-column">
@@ -553,8 +559,18 @@ async def index(request: web.Request) -> web.Response:
             function calculateVolume() {
                 const previous = parseFloat(document.getElementById('previousReading').value) || 0;
                 const current = parseFloat(document.getElementById('currentReading').value) || 0;
-                const volume = current >= previous ? (current - previous) : 0;
-                document.getElementById('volume').value = volume.toFixed(3);
+                const volumeInput = document.getElementById('volume');
+                
+                if (previous > 0 && current > 0 && current >= previous) {
+                    const volume = current - previous;
+                    if (volume > 0) {
+                        volumeInput.value = volume.toFixed(3);
+                    } else {
+                        volumeInput.value = '';
+                    }
+                } else {
+                    volumeInput.value = '';
+                }
             }
             
             function calculatePeriod() {
@@ -706,6 +722,20 @@ async def index(request: web.Request) -> web.Response:
                 errorDiv.style.display = 'none';
                 
                 const formData = new FormData(event.target);
+                const previousReading = formData.get('previous_reading');
+                const currentReading = formData.get('current_reading');
+                const volume = formData.get('volume');
+                
+                // Validate volume if readings are provided
+                if (previousReading && currentReading) {
+                    const volumeValue = parseFloat(volume);
+                    if (!volume || isNaN(volumeValue) || volumeValue <= 0) {
+                        errorDiv.textContent = 'Объём должен быть больше нуля. Проверьте показания счётчика.';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+                }
+                
                 const data = {
                     payment_type_id: formData.get('payment_type_id'),
                     amount: parseFloat(formData.get('amount')),
@@ -714,8 +744,8 @@ async def index(request: web.Request) -> web.Response:
                     receipt_number: formData.get('receipt_number') || null,
                     payment_method: formData.get('payment_method') || null,
                     notes: formData.get('notes') || null,
-                    previous_reading: formData.get('previous_reading') || null,
-                    current_reading: formData.get('current_reading') || null
+                    previous_reading: previousReading || null,
+                    current_reading: currentReading || null
                 };
                 
                 try {
