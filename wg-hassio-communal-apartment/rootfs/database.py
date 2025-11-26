@@ -333,7 +333,7 @@ class Database:
 
             payments = []
             for row in rows:
-                payments.append({
+                payment = {
                     "id": row["id"],
                     "payment_type_id": row["payment_type_id"],
                     "payment_type_name": row["payment_type_name"],
@@ -345,7 +345,17 @@ class Database:
                     "notes": row["notes"],
                     "created_at": row["created_at"],
                     "updated_at": row["updated_at"]
-                })
+                }
+                
+                # Add reading fields if they exist
+                if row.get("previous_reading") is not None:
+                    payment["previous_reading"] = float(row["previous_reading"])
+                if row.get("current_reading") is not None:
+                    payment["current_reading"] = float(row["current_reading"])
+                if row.get("volume") is not None:
+                    payment["volume"] = float(row["volume"])
+                
+                payments.append(payment)
             return payments
         except Exception as err:
             _LOGGER.error("Error getting payments: %s", err)
@@ -366,7 +376,7 @@ class Database:
             conn.close()
 
             if row:
-                return {
+                payment = {
                     "id": row["id"],
                     "payment_type_id": row["payment_type_id"],
                     "payment_type_name": row["payment_type_name"],
@@ -379,6 +389,16 @@ class Database:
                     "created_at": row["created_at"],
                     "updated_at": row["updated_at"]
                 }
+                
+                # Add reading fields if they exist
+                if row.get("previous_reading") is not None:
+                    payment["previous_reading"] = float(row["previous_reading"])
+                if row.get("current_reading") is not None:
+                    payment["current_reading"] = float(row["current_reading"])
+                if row.get("volume") is not None:
+                    payment["volume"] = float(row["volume"])
+                
+                return payment
             return None
         except Exception as err:
             _LOGGER.error("Error getting payment: %s", err)

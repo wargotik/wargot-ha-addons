@@ -77,6 +77,29 @@ async def add_payment(request: web.Request) -> web.Response:
         receipt_number = data.get("receipt_number")
         payment_method = data.get("payment_method")
         notes = data.get("notes")
+        previous_reading = data.get("previous_reading")
+        current_reading = data.get("current_reading")
+        volume = data.get("volume")
+        
+        # Calculate volume if readings are provided
+        if previous_reading is not None and current_reading is not None:
+            try:
+                prev = float(previous_reading) if previous_reading else 0.0
+                curr = float(current_reading) if current_reading else 0.0
+                if curr >= prev:
+                    calculated_volume = curr - prev
+                    if volume is None:
+                        volume = calculated_volume
+                else:
+                    return web.json_response({
+                        "success": False,
+                        "error": "Текущее показание не может быть меньше предыдущего"
+                    }, status=400)
+            except (ValueError, TypeError):
+                return web.json_response({
+                    "success": False,
+                    "error": "Неверный формат показаний счётчика"
+                }, status=400)
         
         # Validation
         if not payment_type_id:
@@ -145,6 +168,29 @@ async def add_payment(request: web.Request) -> web.Response:
                     "error": "Ошибка создания типа оплаты в базе данных"
                 }, status=500)
         
+        # Convert readings to float or None
+        prev_reading = None
+        curr_reading = None
+        volume_value = None
+        
+        if previous_reading is not None:
+            try:
+                prev_reading = float(previous_reading)
+            except (ValueError, TypeError):
+                prev_reading = None
+        
+        if current_reading is not None:
+            try:
+                curr_reading = float(current_reading)
+            except (ValueError, TypeError):
+                curr_reading = None
+        
+        if volume is not None:
+            try:
+                volume_value = float(volume)
+            except (ValueError, TypeError):
+                volume_value = None
+        
         # Add payment to database
         payment_id = db.add_payment(
             payment_type_id=db_payment_type_id,
@@ -153,7 +199,10 @@ async def add_payment(request: web.Request) -> web.Response:
             period=period,
             receipt_number=receipt_number,
             payment_method=payment_method,
-            notes=notes
+            notes=notes,
+            previous_reading=prev_reading,
+            current_reading=curr_reading,
+            volume=volume_value
         )
         
         if payment_id:
@@ -444,6 +493,18 @@ async def index(request: web.Request) -> web.Response:
                                 <label for="paymentDate">Дата оплаты:</label>
                                 <input type="date" id="paymentDate" name="payment_date" required>
                             </div>
+                            <div class="form-group">
+                                <label for="previousReading">Предыдущее показание счётчика:</label>
+                                <input type="number" id="previousReading" name="previous_reading" step="0.001" min="0" placeholder="0.000" oninput="calculateVolume()">
+                            </div>
+                            <div class="form-group">
+                                <label for="currentReading">Текущее показание счётчика:</label>
+                                <input type="number" id="currentReading" name="current_reading" step="0.001" min="0" placeholder="0.000" oninput="calculateVolume()">
+                            </div>
+                            <div class="form-group">
+                                <label for="volume">Объём (рассчитывается автоматически):</label>
+                                <input type="number" id="volume" name="volume" step="0.001" min="0" placeholder="0.000" readonly style="background-color: #f5f5f5;">
+                            </div>
                         </div>
                         <div class="form-column">
                             <h3 style="margin-top: 0; margin-bottom: 15px; color: #666; font-size: 14px; font-weight: 500;">Необязательные поля</h3>
@@ -581,6 +642,24 @@ async def index(request: web.Request) -> web.Response:
                 }
             }
             
+            // Calculate volume function
+            function calculateVolume() {
+                const previousReading = parseFloat(document.getElementById('previousReading').value) || 0;
+                const currentReading = parseFloat(document.getElementById('currentReading').value) || 0;
+                const volumeInput = document.getElementById('volume');
+                
+                if (currentReading >= previousReading && currentReading > 0) {
+                    const volume = currentReading - previousReading;
+                    volumeInput.value = volume.toFixed(3);
+                } else if (currentReading > 0 && previousReading > 0 && currentReading < previousReading) {
+                    volumeInput.value = '';
+                    volumeInput.placeholder = 'Ошибка: текущее < предыдущего';
+                } else {
+                    volumeInput.value = '';
+                    volumeInput.placeholder = '0.000';
+                }
+            }
+            
             // Add payment function
             async function addPayment(event) {
                 event.preventDefault();
@@ -593,7 +672,10 @@ async def index(request: web.Request) -> web.Response:
                     payment_date: document.getElementById('paymentDate').value,
                     receipt_number: document.getElementById('receiptNumber').value || null,
                     payment_method: document.getElementById('paymentMethod').value || null,
-                    notes: document.getElementById('notes').value || null
+                    notes: document.getElementById('notes').value || null,
+                    previous_reading: document.getElementById('previousReading').value || null,
+                    current_reading: document.getElementById('currentReading').value || null,
+                    volume: document.getElementById('volume').value || null
                 };
                 
                 if (!formData.payment_type_id) {
