@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from datetime import datetime
 from aiohttp import web
 
 from database import Database
@@ -19,6 +20,9 @@ PAYMENT_TYPES = {
     "gas": "Газ",
     "water": "Вода"
 }
+
+# Global currency (will be set from config)
+CURRENCY = "EUR"
 
 
 async def get_payments(request: web.Request) -> web.Response:
@@ -75,6 +79,21 @@ async def get_payment_types(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def get_config(request: web.Request) -> web.Response:
+    """Get add-on configuration."""
+    try:
+        return web.json_response({
+            "success": True,
+            "currency": CURRENCY
+        })
+    except Exception as err:
+        _LOGGER.error("Error getting config: %s", err)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def add_payment(request: web.Request) -> web.Response:
     """Add a new payment."""
     try:
@@ -115,11 +134,22 @@ async def add_payment(request: web.Request) -> web.Response:
         payment_date = data.get("payment_date")
         period = data.get("period")
         
-        if not payment_date or not period:
+        if not payment_date:
             return web.json_response({
                 "success": False,
-                "error": "Дата оплаты и период обязательны"
+                "error": "Дата оплаты обязательна"
             }, status=400)
+        
+        # Calculate period from payment_date if not provided
+        if not period and payment_date:
+            try:
+                date_obj = datetime.fromisoformat(payment_date.split('T')[0])
+                period = f"{date_obj.year}-{date_obj.month:02d}"
+            except (ValueError, AttributeError):
+                return web.json_response({
+                    "success": False,
+                    "error": "Неверный формат даты оплаты"
+                }, status=400)
         
         # Get optional fields
         receipt_number = data.get("receipt_number")
@@ -338,18 +368,25 @@ async def index(request: web.Request) -> web.Response:
                 font-weight: 500;
             }
             .form-group input,
-            .form-group select {
+            .form-group select,
+            .form-group textarea {
                 width: 100%;
                 padding: 10px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 font-size: 16px;
                 box-sizing: border-box;
+                font-family: inherit;
             }
             .form-group input:focus,
-            .form-group select:focus {
+            .form-group select:focus,
+            .form-group textarea:focus {
                 outline: none;
                 border-color: #03a9f4;
+            }
+            .form-group textarea {
+                resize: vertical;
+                min-height: 80px;
             }
             .form-group input[readonly] {
                 background-color: #f5f5f5;
@@ -445,17 +482,12 @@ async def index(request: web.Request) -> web.Response:
                         <div class="form-column">
                             <h3>Обязательные поля</h3>
                             <div class="form-group">
+                                <label for="paymentDate">Дата оплаты:</label>
+                                <input type="date" id="paymentDate" name="payment_date" required onchange="calculatePeriod()">
+                            </div>
+                            <div class="form-group">
                                 <label for="amount">Сумма:</label>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="period">Период:</label>
-                                <input type="text" id="period" name="period" placeholder="2024-01" required>
-                                <small>Формат: ГГГГ-ММ (например, 2024-01)</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="paymentDate">Дата оплаты:</label>
-                                <input type="date" id="paymentDate" name="payment_date" required>
                             </div>
                             <div class="form-group">
                                 <label for="previousReading">Предыдущее показание счётчика:</label>
@@ -473,6 +505,11 @@ async def index(request: web.Request) -> web.Response:
                         <div class="form-column">
                             <h3>Необязательные поля</h3>
                             <div class="form-group">
+                                <label for="period">Период:</label>
+                                <input type="text" id="period" name="period" placeholder="2024-01" readonly>
+                                <small>Автоматически рассчитывается на основе даты оплаты</small>
+                            </div>
+                            <div class="form-group">
                                 <label for="receiptNumber">Номер квитанции:</label>
                                 <input type="text" id="receiptNumber" name="receipt_number" placeholder="">
                             </div>
@@ -482,7 +519,7 @@ async def index(request: web.Request) -> web.Response:
                             </div>
                             <div class="form-group">
                                 <label for="notes">Заметки:</label>
-                                <input type="text" id="notes" name="notes" placeholder="">
+                                <textarea id="notes" name="notes" placeholder=""></textarea>
                             </div>
                         </div>
                     </div>
@@ -496,6 +533,21 @@ async def index(request: web.Request) -> web.Response:
         </div>
         <script>
             let paymentTypes = [];
+            let currency = 'EUR';
+            
+            async function loadConfig() {
+                try {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/config';
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currency = data.currency || 'EUR';
+                    }
+                } catch (error) {
+                    console.error('Error loading config:', error);
+                }
+            }
             
             async function loadPaymentTypes() {
                 try {
@@ -524,6 +576,20 @@ async def index(request: web.Request) -> web.Response:
                 const current = parseFloat(document.getElementById('currentReading').value) || 0;
                 const volume = current >= previous ? (current - previous) : 0;
                 document.getElementById('volume').value = volume.toFixed(3);
+            }
+            
+            function calculatePeriod() {
+                const dateInput = document.getElementById('paymentDate');
+                const periodInput = document.getElementById('period');
+                
+                if (dateInput.value) {
+                    const date = new Date(dateInput.value);
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    periodInput.value = `${year}-${month}`;
+                } else {
+                    periodInput.value = '';
+                }
             }
             
             async function loadPayments() {
@@ -613,7 +679,7 @@ async def index(request: web.Request) -> web.Response:
             function formatAmount(amount) {
                 return new Intl.NumberFormat('ru-RU', {
                     style: 'currency',
-                    currency: 'EUR',
+                    currency: currency,
                     minimumFractionDigits: 2
                 }).format(amount);
             }
@@ -625,6 +691,12 @@ async def index(request: web.Request) -> web.Response:
             }
             
             function openModal() {
+                // Set current date
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                document.getElementById('paymentDate').value = dateStr;
+                calculatePeriod();
+                
                 document.getElementById('addModal').style.display = 'block';
                 document.getElementById('paymentType').focus();
             }
@@ -634,6 +706,13 @@ async def index(request: web.Request) -> web.Response:
                 document.getElementById('addForm').reset();
                 document.getElementById('errorMessage').style.display = 'none';
                 document.getElementById('volume').value = '';
+                document.getElementById('period').value = '';
+                
+                // Reset to current date
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                document.getElementById('paymentDate').value = dateStr;
+                calculatePeriod();
             }
             
             window.onclick = function(event) {
@@ -687,8 +766,10 @@ async def index(request: web.Request) -> web.Response:
             }
             
             // Load data on page load
-            loadPaymentTypes();
-            loadPayments();
+            loadConfig().then(() => {
+                loadPaymentTypes();
+                loadPayments();
+            });
         </script>
     </body>
     </html>
@@ -702,12 +783,17 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/api/payments", get_payments)
     app.router.add_get("/api/payment-types", get_payment_types)
+    app.router.add_get("/api/config", get_config)
     app.router.add_post("/api/payments", add_payment)
     return app
 
 
-async def run_web_server(port: int = 8099):
+async def run_web_server(port: int = 8099, currency: str = "EUR"):
     """Run web server."""
+    global CURRENCY
+    CURRENCY = currency
+    _LOGGER.info("Web server currency set to: %s", CURRENCY)
+    
     app = create_app()
     runner = web.AppRunner(app)
     await runner.setup()
