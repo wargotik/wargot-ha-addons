@@ -5,6 +5,14 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.3.5] - 2025-01-XX
+
+### Changed
+- Поле `currency` возвращено к текстовому вводу с подсказкой о формате ISO 4217
+- Добавлена ссылка на официальный список кодов валют ISO 4217 в описании поля
+- Добавлена валидация кода валюты при загрузке конфигурации (формат: 3 заглавные буквы)
+- При невалидном коде валюты используется значение по умолчанию (EUR) с предупреждением в логах
+
 ## [0.3.4] - 2025-01-XX
 
 ### Changed
@@ -101,6 +109,7 @@
 
 ---
 
+[0.3.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.1...v0.3.2
