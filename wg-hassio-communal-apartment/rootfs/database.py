@@ -61,6 +61,7 @@ class Database:
                     previous_reading REAL,
                     current_reading REAL,
                     volume REAL,
+                    unit_price REAL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     FOREIGN KEY (payment_type_id) REFERENCES payment_types(id)
@@ -78,6 +79,10 @@ class Database:
                 pass  # Column already exists
             try:
                 cursor.execute("ALTER TABLE payments ADD COLUMN volume REAL")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN unit_price REAL")
             except sqlite3.OperationalError:
                 pass  # Column already exists
 
@@ -276,10 +281,18 @@ class Database:
                    volume: float | None = None) -> int | None:
         """Add a new payment. Returns the ID of the created payment."""
         try:
+            # Calculate unit price (cost per unit: amount / volume)
+            unit_price = None
+            if volume is not None and volume > 0:
+                try:
+                    unit_price = amount / volume
+                except (ZeroDivisionError, TypeError):
+                    unit_price = None
+            
             _LOGGER.info("Saving payment to database: type_id=%s, amount=%s, date=%s, period=%s, "
-                        "receipt_number=%s, payment_method=%s, previous_reading=%s, current_reading=%s, volume=%s",
+                        "receipt_number=%s, payment_method=%s, previous_reading=%s, current_reading=%s, volume=%s, unit_price=%s",
                         payment_type_id, amount, payment_date, period, receipt_number, payment_method,
-                        previous_reading, current_reading, volume)
+                        previous_reading, current_reading, volume, unit_price)
             
             conn = self._get_connection()
             cursor = conn.cursor()
@@ -287,19 +300,19 @@ class Database:
             now = datetime.now().isoformat()
             cursor.execute("""
                 INSERT INTO payments (payment_type_id, amount, payment_date, period, receipt_number,
-                                    payment_method, notes, previous_reading, current_reading, volume,
+                                    payment_method, notes, previous_reading, current_reading, volume, unit_price,
                                     created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (payment_type_id, amount, payment_date, period, receipt_number,
-                  payment_method, notes, previous_reading, current_reading, volume, now, now))
+                  payment_method, notes, previous_reading, current_reading, volume, unit_price, now, now))
 
             payment_id = cursor.lastrowid
             conn.commit()
             conn.close()
             
             _LOGGER.info("Payment successfully saved to database: id=%s, type_id=%s, amount=%s, period=%s, "
-                        "date=%s, volume=%s, readings=%s→%s",
-                        payment_id, payment_type_id, amount, period, payment_date, volume,
+                        "date=%s, volume=%s, unit_price=%s, readings=%s→%s",
+                        payment_id, payment_type_id, amount, period, payment_date, volume, unit_price,
                         previous_reading, current_reading)
             return payment_id
         except Exception as err:
@@ -381,9 +394,15 @@ class Database:
                 except (KeyError, TypeError, ValueError):
                     pass
                 
-                _LOGGER.debug("Payment: id=%s, type=%s, amount=%s, period=%s, volume=%s, readings=%s→%s",
+                try:
+                    if row["unit_price"] is not None:
+                        payment["unit_price"] = float(row["unit_price"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                _LOGGER.debug("Payment: id=%s, type=%s, amount=%s, period=%s, volume=%s, unit_price=%s, readings=%s→%s",
                              payment["id"], payment["payment_type_name"], payment["amount"], 
-                             payment["period"], payment.get("volume"), 
+                             payment["period"], payment.get("volume"), payment.get("unit_price"),
                              payment.get("previous_reading"), payment.get("current_reading"))
                 
                 payments.append(payment)
@@ -439,6 +458,12 @@ class Database:
                 try:
                     if row["volume"] is not None:
                         payment["volume"] = float(row["volume"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                try:
+                    if row["unit_price"] is not None:
+                        payment["unit_price"] = float(row["unit_price"])
                 except (KeyError, TypeError, ValueError):
                     pass
                 

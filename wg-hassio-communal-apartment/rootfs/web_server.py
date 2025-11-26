@@ -591,10 +591,18 @@ async def index(request: web.Request) -> web.Response:
                                     }
                                 }
                                 
+                                // Unit price
+                                let unitPriceText = '';
+                                if (payment.unit_price !== undefined && payment.unit_price !== null) {
+                                    const unitPrice = parseFloat(payment.unit_price);
+                                    unitPriceText = formatPrice(unitPrice);
+                                }
+                                
                                 let details = [];
                                 if (period) details.push(`Период: ${period}`);
                                 if (paymentDate) details.push(`Дата: ${paymentDate}`);
                                 if (volumeText) details.push(`Объём: ${volumeText}`);
+                                if (unitPriceText) details.push(`Цена за ед.: ${unitPriceText} ₽`);
                                 if (receiptNumber) details.push(`Квитанция: ${receiptNumber}`);
                                 if (paymentMethod) details.push(`Способ: ${paymentMethod}`);
                                 
