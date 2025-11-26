@@ -1,6 +1,6 @@
 {
   "name": "Коммуналка",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "slug": "wg-hassio-communal-apartment",
   "description": "...",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",
@@ -15,7 +15,7 @@
   "ingress_port": 8099,
   "options": {
     "site": "ozon.by",
-    "currency": "RUB"
+    "currency": "EUR"
   },
   "schema": {
     "site": "str",
