@@ -18,8 +18,7 @@
   },
   "schema": {
     "currency": {
-      "type": "str",
-      "description": "Код валюты в формате ISO 4217 (например: EUR, USD, RUB, UAH, PLN, BYN). Список всех кодов валют: https://www.iso.org/iso-4217-currency-codes.html"
+      "type": "str"
     }
   },
   "map": ["config:rw"]
