@@ -363,12 +363,23 @@ class Database:
                 }
                 
                 # Add reading fields if they exist
-                if row.get("previous_reading") is not None:
-                    payment["previous_reading"] = float(row["previous_reading"])
-                if row.get("current_reading") is not None:
-                    payment["current_reading"] = float(row["current_reading"])
-                if row.get("volume") is not None:
-                    payment["volume"] = float(row["volume"])
+                try:
+                    if row["previous_reading"] is not None:
+                        payment["previous_reading"] = float(row["previous_reading"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                try:
+                    if row["current_reading"] is not None:
+                        payment["current_reading"] = float(row["current_reading"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                try:
+                    if row["volume"] is not None:
+                        payment["volume"] = float(row["volume"])
+                except (KeyError, TypeError, ValueError):
+                    pass
                 
                 _LOGGER.debug("Payment: id=%s, type=%s, amount=%s, period=%s, volume=%s, readings=%s→%s",
                              payment["id"], payment["payment_type_name"], payment["amount"], 
@@ -413,12 +424,23 @@ class Database:
                 }
                 
                 # Add reading fields if they exist
-                if row.get("previous_reading") is not None:
-                    payment["previous_reading"] = float(row["previous_reading"])
-                if row.get("current_reading") is not None:
-                    payment["current_reading"] = float(row["current_reading"])
-                if row.get("volume") is not None:
-                    payment["volume"] = float(row["volume"])
+                try:
+                    if row["previous_reading"] is not None:
+                        payment["previous_reading"] = float(row["previous_reading"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                try:
+                    if row["current_reading"] is not None:
+                        payment["current_reading"] = float(row["current_reading"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+                
+                try:
+                    if row["volume"] is not None:
+                        payment["volume"] = float(row["volume"])
+                except (KeyError, TypeError, ValueError):
+                    pass
                 
                 return payment
             return None
