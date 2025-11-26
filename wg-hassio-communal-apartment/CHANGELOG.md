@@ -5,6 +5,18 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.3.6] - 2025-01-XX
+
+### Changed
+- Удалён параметр `currency` из конфигурации add-on'а
+- На UI вместо названия валюты отображается иконка `mdi:cash`
+- Суммы отображаются в числовом формате без указания валюты
+
+### Removed
+- Удалён API endpoint `/api/config`
+- Удалена логика загрузки и валидации валюты из конфигурации
+- Удалена функция `load_config()` и `validate_currency()` из `main.py`
+
 ## [0.3.5] - 2025-01-XX
 
 ### Changed
@@ -109,6 +121,7 @@
 
 ---
 
+[0.3.6]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.2...v0.3.3

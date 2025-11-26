@@ -21,9 +21,6 @@ PAYMENT_TYPES = {
     "water": "Вода"
 }
 
-# Global currency (will be set from config)
-CURRENCY = "EUR"
-
 
 async def get_payments(request: web.Request) -> web.Response:
     """Get all payments from database."""
@@ -73,21 +70,6 @@ async def get_payment_types(request: web.Request) -> web.Response:
         })
     except Exception as err:
         _LOGGER.error("Error getting payment types: %s", err)
-        return web.json_response({
-            "success": False,
-            "error": str(err)
-        }, status=500)
-
-
-async def get_config(request: web.Request) -> web.Response:
-    """Get add-on configuration."""
-    try:
-        return web.json_response({
-            "success": True,
-            "currency": CURRENCY
-        })
-    except Exception as err:
-        _LOGGER.error("Error getting config: %s", err)
         return web.json_response({
             "success": False,
             "error": str(err)
@@ -309,10 +291,22 @@ async def index(request: web.Request) -> web.Response:
                 font-size: 24px;
                 font-weight: bold;
                 color: #03a9f4;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .amount-value .mdi {
+                font-size: 20px;
             }
             .unit-price {
                 font-size: 12px;
                 color: #666;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .unit-price .mdi {
+                font-size: 14px;
             }
             .loading {
                 text-align: center;
@@ -533,21 +527,6 @@ async def index(request: web.Request) -> web.Response:
         </div>
         <script>
             let paymentTypes = [];
-            let currency = 'EUR';
-            
-            async function loadConfig() {
-                try {
-                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/config';
-                    const response = await fetch(apiUrl);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        currency = data.currency || 'EUR';
-                    }
-                } catch (error) {
-                    console.error('Error loading config:', error);
-                }
-            }
             
             async function loadPaymentTypes() {
                 try {
@@ -630,7 +609,7 @@ async def index(request: web.Request) -> web.Response:
                                 
                                 let unitPriceHtml = '';
                                 if (payment.unit_price !== undefined) {
-                                    unitPriceHtml = `<div class="unit-price">${formatAmount(payment.unit_price)} за ед.</div>`;
+                                    unitPriceHtml = `<div class="unit-price"><span class="mdi mdi-cash"></span>${formatAmount(payment.unit_price)} за ед.</div>`;
                                 }
                                 
                                 return `
@@ -655,7 +634,7 @@ async def index(request: web.Request) -> web.Response:
                                         </div>
                                     </div>
                                     <div class="payment-amount">
-                                        <div class="amount-value">${amount}</div>
+                                        <div class="amount-value"><span class="mdi mdi-cash"></span>${amount}</div>
                                         ${unitPriceHtml}
                                     </div>
                                 </div>
@@ -678,9 +657,8 @@ async def index(request: web.Request) -> web.Response:
             
             function formatAmount(amount) {
                 return new Intl.NumberFormat('ru-RU', {
-                    style: 'currency',
-                    currency: currency,
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                 }).format(amount);
             }
             
@@ -766,10 +744,8 @@ async def index(request: web.Request) -> web.Response:
             }
             
             // Load data on page load
-            loadConfig().then(() => {
-                loadPaymentTypes();
-                loadPayments();
-            });
+            loadPaymentTypes();
+            loadPayments();
         </script>
     </body>
     </html>
@@ -783,17 +759,12 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/api/payments", get_payments)
     app.router.add_get("/api/payment-types", get_payment_types)
-    app.router.add_get("/api/config", get_config)
     app.router.add_post("/api/payments", add_payment)
     return app
 
 
-async def run_web_server(port: int = 8099, currency: str = "EUR"):
+async def run_web_server(port: int = 8099):
     """Run web server."""
-    global CURRENCY
-    CURRENCY = currency
-    _LOGGER.info("Web server currency set to: %s", CURRENCY)
-    
     app = create_app()
     runner = web.AppRunner(app)
     await runner.setup()
