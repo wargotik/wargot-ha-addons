@@ -577,9 +577,24 @@ async def index(request: web.Request) -> web.Response:
                                 const receiptNumber = payment.receipt_number ? escapeHtml(payment.receipt_number) : '';
                                 const paymentMethod = payment.payment_method ? escapeHtml(payment.payment_method) : '';
                                 
+                                // Volume and readings
+                                let volumeText = '';
+                                if (payment.volume !== undefined && payment.volume !== null) {
+                                    const volume = parseFloat(payment.volume);
+                                    const prevReading = payment.previous_reading !== undefined && payment.previous_reading !== null ? parseFloat(payment.previous_reading).toFixed(3) : '';
+                                    const currReading = payment.current_reading !== undefined && payment.current_reading !== null ? parseFloat(payment.current_reading).toFixed(3) : '';
+                                    
+                                    if (prevReading && currReading) {
+                                        volumeText = `${volume.toFixed(3)} (${prevReading} → ${currReading})`;
+                                    } else {
+                                        volumeText = volume.toFixed(3);
+                                    }
+                                }
+                                
                                 let details = [];
                                 if (period) details.push(`Период: ${period}`);
                                 if (paymentDate) details.push(`Дата: ${paymentDate}`);
+                                if (volumeText) details.push(`Объём: ${volumeText}`);
                                 if (receiptNumber) details.push(`Квитанция: ${receiptNumber}`);
                                 if (paymentMethod) details.push(`Способ: ${paymentMethod}`);
                                 

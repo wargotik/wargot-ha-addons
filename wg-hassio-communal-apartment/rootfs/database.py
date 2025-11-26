@@ -276,6 +276,11 @@ class Database:
                    volume: float | None = None) -> int | None:
         """Add a new payment. Returns the ID of the created payment."""
         try:
+            _LOGGER.info("Saving payment to database: type_id=%s, amount=%s, date=%s, period=%s, "
+                        "receipt_number=%s, payment_method=%s, previous_reading=%s, current_reading=%s, volume=%s",
+                        payment_type_id, amount, payment_date, period, receipt_number, payment_method,
+                        previous_reading, current_reading, volume)
+            
             conn = self._get_connection()
             cursor = conn.cursor()
 
@@ -291,17 +296,24 @@ class Database:
             payment_id = cursor.lastrowid
             conn.commit()
             conn.close()
-            _LOGGER.info("Payment added: id=%s, type_id=%s, amount=%s, period=%s", 
-                        payment_id, payment_type_id, amount, period)
+            
+            _LOGGER.info("Payment successfully saved to database: id=%s, type_id=%s, amount=%s, period=%s, "
+                        "date=%s, volume=%s, readings=%s→%s",
+                        payment_id, payment_type_id, amount, period, payment_date, volume,
+                        previous_reading, current_reading)
             return payment_id
         except Exception as err:
-            _LOGGER.error("Error adding payment: %s", err)
+            _LOGGER.error("Error saving payment to database: %s, type_id=%s, amount=%s, period=%s", 
+                         err, payment_type_id, amount, period, exc_info=True)
             return None
 
     def get_all_payments(self, payment_type_id: int | None = None, period: str | None = None,
                         limit: int | None = None) -> list[dict[str, Any]]:
         """Get all payments with optional filters."""
         try:
+            _LOGGER.info("Getting payments from database: payment_type_id=%s, period=%s, limit=%s", 
+                        payment_type_id, period, limit)
+            
             conn = self._get_connection()
             cursor = conn.cursor()
 
@@ -327,9 +339,12 @@ class Database:
                 query += " LIMIT ?"
                 params.append(limit)
 
+            _LOGGER.debug("Executing query: %s with params: %s", query, params)
             cursor.execute(query, params)
             rows = cursor.fetchall()
             conn.close()
+
+            _LOGGER.info("Retrieved %d payments from database", len(rows))
 
             payments = []
             for row in rows:
@@ -355,7 +370,14 @@ class Database:
                 if row.get("volume") is not None:
                     payment["volume"] = float(row["volume"])
                 
+                _LOGGER.debug("Payment: id=%s, type=%s, amount=%s, period=%s, volume=%s, readings=%s→%s",
+                             payment["id"], payment["payment_type_name"], payment["amount"], 
+                             payment["period"], payment.get("volume"), 
+                             payment.get("previous_reading"), payment.get("current_reading"))
+                
                 payments.append(payment)
+            
+            _LOGGER.info("Returning %d payments", len(payments))
             return payments
         except Exception as err:
             _LOGGER.error("Error getting payments: %s", err)
