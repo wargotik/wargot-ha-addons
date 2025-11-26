@@ -5,6 +5,13 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.3.4] - 2025-01-XX
+
+### Changed
+- Поле `currency` в конфигурации изменено на выпадающий список с вариантами валют
+- Добавлены варианты: Евро, Доллар, Российский рубль, Украинская гривна, Злотый, Белорусский рубль
+- По умолчанию установлено значение "Евро" (EUR)
+
 ## [0.3.3] - 2025-01-XX
 
 ### Added
@@ -94,6 +101,7 @@
 
 ---
 
+[0.3.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.0...v0.3.1

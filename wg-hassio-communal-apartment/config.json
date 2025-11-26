@@ -1,6 +1,6 @@
 {
   "name": "Коммуналка",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "slug": "wg-hassio-communal-apartment",
   "description": "...",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",
@@ -17,7 +17,18 @@
     "currency": "EUR"
   },
   "schema": {
-    "currency": "str"
+    "currency": {
+      "type": "select",
+      "options": [
+        ["EUR", "Евро"],
+        ["USD", "Доллар"],
+        ["RUB", "Российский рубль"],
+        ["UAH", "Украинская гривна"],
+        ["PLN", "Злотый"],
+        ["BYN", "Белорусский рубль"]
+      ],
+      "default": "EUR"
+    }
   },
   "map": ["config:rw"]
 }
