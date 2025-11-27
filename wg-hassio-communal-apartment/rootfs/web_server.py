@@ -197,10 +197,14 @@ async def get_config(request: web.Request) -> web.Response:
             try:
                 import aiohttp
                 async with aiohttp.ClientSession() as session:
-                    headers = {"Authorization": f"Bearer {ha_token}"}
+                    # Use X-Supervisor-Token header for Supervisor API
+                    headers = {"X-Supervisor-Token": ha_token}
                     api_url = f"{ha_url}/api/config"
-                    _LOGGER.debug("Making request to HA API: %s", api_url)
+                    _LOGGER.debug("Making request to HA API: %s with X-Supervisor-Token header", api_url)
                     async with session.get(api_url, headers=headers) as resp:
+                        response_text = await resp.text()
+                        _LOGGER.debug("HA API response status: %s, body: %s", resp.status, response_text[:200])
+                        
                         if resp.status == 200:
                             config_data = await resp.json()
                             currency = config_data.get("currency", currency)
@@ -213,11 +217,11 @@ async def get_config(request: web.Request) -> web.Response:
                             _LOGGER.info("Successfully retrieved HA config - currency: %s, language: %s (from HA: %s)", 
                                        currency, language, ha_language)
                         else:
-                            _LOGGER.warning("HA API returned status %s, using defaults - currency: %s, language: %s", 
-                                          resp.status, currency, language)
+                            _LOGGER.warning("HA API returned status %s, response: %s, using defaults - currency: %s, language: %s", 
+                                          resp.status, response_text[:200], currency, language)
             except Exception as api_err:
                 _LOGGER.warning("Could not get config from HA API: %s, using defaults - currency: %s, language: %s", 
-                              api_err, currency, language)
+                              api_err, currency, language, exc_info=True)
         else:
             _LOGGER.info("SUPERVISOR_TOKEN not found, using defaults - currency: %s, language: %s", 
                         currency, language)

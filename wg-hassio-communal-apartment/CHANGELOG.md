@@ -5,6 +5,12 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.4] - 2025-01-27
+
+### Fixed
+- Исправлена авторизация при запросе к Home Assistant API: используется заголовок `X-Supervisor-Token` вместо `Authorization: Bearer`
+- Добавлено логирование тела ответа от HA API для диагностики ошибок
+
 ## [0.4.3] - 2025-01-27
 
 ### Added
@@ -200,6 +206,7 @@
 
 ---
 
+[0.4.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.0...v0.4.1
