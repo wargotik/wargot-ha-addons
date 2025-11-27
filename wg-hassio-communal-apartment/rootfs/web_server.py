@@ -26,6 +26,9 @@ PAYMENT_TYPES = {
 async def get_payments(request: web.Request) -> web.Response:
     """Get all payments from database."""
     try:
+        # Get language from query parameter or default to 'en'
+        lang = request.query.get("lang", "en")
+        
         payments = db.get_all_payments()
         
         # Map payment_type_id to system_name and translated name
@@ -34,10 +37,14 @@ async def get_payments(request: web.Request) -> web.Response:
             system_name = PAYMENT_TYPES.get(payment_type_id)
             if system_name:
                 payment["system_name"] = system_name
-                payment["payment_type_name"] = get_translation(system_name, "ru")
+                payment["payment_type_name"] = get_translation(system_name, lang)
             else:
                 payment["system_name"] = None
-                payment["payment_type_name"] = "Неизвестно"
+                # Translate "Unknown" based on language
+                if lang == "ru":
+                    payment["payment_type_name"] = "Неизвестно"
+                else:
+                    payment["payment_type_name"] = "Unknown"
         
         return web.json_response({
             "success": True,
@@ -79,14 +86,15 @@ async def get_payment_types(request: web.Request) -> web.Response:
 
 
 async def get_config(request: web.Request) -> web.Response:
-    """Get configuration including currency from Home Assistant."""
+    """Get configuration including currency and language from Home Assistant."""
     try:
         import os
         
-        # Try to get currency from Home Assistant API
-        currency = "EUR"  # Default
+        # Default values
+        currency = "EUR"
+        language = "en"  # Default to English
         
-        # Method 1: Try to get from Home Assistant API via supervisor
+        # Try to get from Home Assistant API via supervisor
         ha_token = os.environ.get("SUPERVISOR_TOKEN")
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         
@@ -99,20 +107,28 @@ async def get_config(request: web.Request) -> web.Response:
                         if resp.status == 200:
                             config_data = await resp.json()
                             currency = config_data.get("currency", currency)
-                            _LOGGER.info("Got currency from HA API: %s", currency)
+                            # Get language from HA config
+                            ha_language = config_data.get("language", "en")
+                            # Convert HA language code to our format (e.g., "ru" -> "ru", "en" -> "en")
+                            # HA uses full locale like "ru_RU" or "en_US", we need just language code
+                            if ha_language:
+                                language = ha_language.split("_")[0].lower() if "_" in ha_language else ha_language.lower()
+                            _LOGGER.info("Got currency from HA API: %s, language: %s", currency, language)
             except Exception as api_err:
-                _LOGGER.warning("Could not get currency from HA API: %s", api_err)
+                _LOGGER.warning("Could not get config from HA API: %s", api_err)
         
         return web.json_response({
             "success": True,
-            "currency": currency
+            "currency": currency,
+            "language": language
         })
     except Exception as err:
         _LOGGER.error("Error getting config: %s", err)
         return web.json_response({
             "success": False,
             "error": str(err),
-            "currency": "EUR"  # Fallback
+            "currency": "EUR",  # Fallback
+            "language": "en"  # Fallback
         }, status=500)
 
 
