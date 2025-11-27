@@ -141,9 +141,12 @@ async def add_payment(request: web.Request) -> web.Response:
         payment_type_id = data.get("payment_type_id")
         
         if not payment_type_id:
+            # Get language from query or default to 'en'
+            lang = request.query.get("lang", "en")
+            error_msg = "Payment type not specified" if lang == "en" else "Тип оплаты не указан"
             return web.json_response({
                 "success": False,
-                "error": "Тип оплаты не указан"
+                "error": error_msg
             }, status=400)
         
         # Validate that payment_type_id exists in PAYMENT_TYPES
@@ -167,9 +170,12 @@ async def add_payment(request: web.Request) -> web.Response:
         period = data.get("period")
         
         if not payment_date:
+            # Get language from query or default to 'en'
+            lang = request.query.get("lang", "en")
+            error_msg = "Payment date is required" if lang == "en" else "Дата оплаты обязательна"
             return web.json_response({
                 "success": False,
-                "error": "Дата оплаты обязательна"
+                "error": error_msg
             }, status=400)
         
         # Calculate period from payment_date if not provided
@@ -202,9 +208,12 @@ async def add_payment(request: web.Request) -> web.Response:
                     volume = curr - prev
                     # Validate that volume is greater than 0
                     if volume <= 0:
+                        # Get language from query or default to 'en'
+                        lang = request.query.get("lang", "en")
+                        error_msg = "Volume must be greater than zero. Check meter readings." if lang == "en" else "Объём должен быть больше нуля. Проверьте показания счётчика."
                         return web.json_response({
                             "success": False,
-                            "error": "Объём должен быть больше нуля. Проверьте показания счётчика."
+                            "error": error_msg
                         }, status=400)
             except (ValueError, TypeError):
                 pass
@@ -586,6 +595,80 @@ async def index(request: web.Request) -> web.Response:
             let currency = 'EUR'; // Default currency
             let language = 'en'; // Default language (English)
             
+            // Translations object
+            const translations = {
+                'ru': {
+                    'title': 'Оплаты',
+                    'addPayment': 'Добавить оплату',
+                    'loading': 'Загрузка...',
+                    'noPayments': 'Нет оплат в базе',
+                    'selectPaymentType': 'Выберите тип оплаты',
+                    'requiredFields': 'Обязательные поля',
+                    'optionalFields': 'Необязательные поля',
+                    'paymentType': 'Тип оплаты:',
+                    'paymentDate': 'Дата оплаты:',
+                    'amount': 'Сумма:',
+                    'previousReading': 'Предыдущее показание счётчика:',
+                    'currentReading': 'Текущее показание счётчика:',
+                    'volume': 'Объём:',
+                    'period': 'Период:',
+                    'periodHint': 'Автоматически рассчитывается на основе даты оплаты',
+                    'receiptNumber': 'Номер квитанции:',
+                    'paymentMethod': 'Способ оплаты:',
+                    'notes': 'Заметки:',
+                    'cancel': 'Отмена',
+                    'add': 'Добавить',
+                    'receipt': 'Квитанция',
+                    'method': 'Способ оплаты',
+                    'readings': 'Показания',
+                    'volumeLabel': 'Объём',
+                    'periodLabel': 'Период',
+                    'dateLabel': 'Дата оплаты',
+                    'perUnit': 'за ед.',
+                    'unknown': 'Неизвестно',
+                    'errorVolume': 'Объём должен быть больше нуля. Проверьте показания счётчика.',
+                    'errorPaymentType': 'Тип оплаты не указан',
+                    'errorDate': 'Дата оплаты обязательна'
+                },
+                'en': {
+                    'title': 'Payments',
+                    'addPayment': 'Add Payment',
+                    'loading': 'Loading...',
+                    'noPayments': 'No payments in database',
+                    'selectPaymentType': 'Select payment type',
+                    'requiredFields': 'Required fields',
+                    'optionalFields': 'Optional fields',
+                    'paymentType': 'Payment Type:',
+                    'paymentDate': 'Payment Date:',
+                    'amount': 'Amount:',
+                    'previousReading': 'Previous Meter Reading:',
+                    'currentReading': 'Current Meter Reading:',
+                    'volume': 'Volume:',
+                    'period': 'Period:',
+                    'periodHint': 'Automatically calculated based on payment date',
+                    'receiptNumber': 'Receipt Number:',
+                    'paymentMethod': 'Payment Method:',
+                    'notes': 'Notes:',
+                    'cancel': 'Cancel',
+                    'add': 'Add',
+                    'receipt': 'Receipt',
+                    'method': 'Payment Method',
+                    'readings': 'Readings',
+                    'volumeLabel': 'Volume',
+                    'periodLabel': 'Period',
+                    'dateLabel': 'Payment Date',
+                    'perUnit': 'per unit',
+                    'unknown': 'Unknown',
+                    'errorVolume': 'Volume must be greater than zero. Check meter readings.',
+                    'errorPaymentType': 'Payment type not specified',
+                    'errorDate': 'Payment date is required'
+                }
+            };
+            
+            function t(key) {
+                return translations[language]?.[key] || translations['en'][key] || key;
+            }
+            
             async function loadConfig() {
                 try {
                     const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/config';
@@ -600,9 +683,78 @@ async def index(request: web.Request) -> web.Response:
                             language = data.language;
                         }
                         console.log('Loaded config from HA - currency:', currency, 'language:', language);
+                        // Update UI text after language is loaded
+                        updateUIText();
                     }
                 } catch (error) {
                     console.error('Error loading config:', error);
+                }
+            }
+            
+            function updateUIText() {
+                // Update page title
+                const titleEl = document.querySelector('h1');
+                if (titleEl) {
+                    titleEl.innerHTML = '<span class="mdi mdi-cash-multiple"></span>' + t('title');
+                }
+                
+                // Update add button
+                const addBtn = document.querySelector('.add-btn');
+                if (addBtn) {
+                    addBtn.innerHTML = '<span class="mdi mdi-pencil-plus"></span>' + t('addPayment');
+                }
+                
+                // Update modal title
+                const modalTitle = document.querySelector('.modal-header h2');
+                if (modalTitle) {
+                    modalTitle.textContent = t('addPayment');
+                }
+                
+                // Update form labels
+                const labels = {
+                    'paymentType': t('paymentType'),
+                    'paymentDate': t('paymentDate'),
+                    'amount': t('amount'),
+                    'previousReading': t('previousReading'),
+                    'currentReading': t('currentReading'),
+                    'volume': t('volume'),
+                    'period': t('period'),
+                    'receiptNumber': t('receiptNumber'),
+                    'paymentMethod': t('paymentMethod'),
+                    'notes': t('notes')
+                };
+                
+                for (const [id, text] of Object.entries(labels)) {
+                    const label = document.querySelector(`label[for="${id}"]`);
+                    if (label) {
+                        label.textContent = text;
+                    }
+                }
+                
+                // Update column headers
+                const requiredHeader = document.querySelector('.form-column:first-child h3');
+                if (requiredHeader) {
+                    requiredHeader.textContent = t('requiredFields');
+                }
+                const optionalHeader = document.querySelector('.form-column:last-child h3');
+                if (optionalHeader) {
+                    optionalHeader.textContent = t('optionalFields');
+                }
+                
+                // Update buttons
+                const cancelBtn = document.querySelector('.btn-secondary');
+                if (cancelBtn) {
+                    cancelBtn.textContent = t('cancel');
+                }
+                const submitBtn = document.querySelector('.btn-primary[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.textContent = t('add');
+                }
+                
+                // Update period hint
+                const periodHint = document.querySelector('#period').nextElementSibling;
+                if (periodHint && periodHint.tagName === 'SMALL') {
+                    periodHint.textContent = t('periodHint');
                 }
             }
             
@@ -615,9 +767,7 @@ async def index(request: web.Request) -> web.Response:
                     if (data.success) {
                         paymentTypes = data.types;
                         const select = document.getElementById('paymentType');
-                        // Set placeholder based on language
-                        const placeholder = language === 'ru' ? 'Выберите тип оплаты' : 'Select payment type';
-                        select.innerHTML = '<option value="">' + placeholder + '</option>';
+                        select.innerHTML = '<option value="">' + t('selectPaymentType') + '</option>';
                         data.types.forEach(type => {
                             const option = document.createElement('option');
                             option.value = type.id;
@@ -663,8 +813,7 @@ async def index(request: web.Request) -> web.Response:
             
             async function loadPayments() {
                 const list = document.getElementById('payments-list');
-                const loadingText = language === 'ru' ? 'Загрузка...' : 'Loading...';
-                list.innerHTML = '<div class="loading">' + loadingText + '</div>';
+                list.innerHTML = '<div class="loading">' + t('loading') + '</div>';
                 
                 try {
                     const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/payments?lang=' + language;
@@ -672,36 +821,35 @@ async def index(request: web.Request) -> web.Response:
                     const data = await response.json();
                     
                     if (data.success) {
-                        const noPaymentsText = language === 'ru' ? 'Нет оплат в базе' : 'No payments in database';
                         if (data.payments.length === 0) {
-                            list.innerHTML = '<div class="loading">' + noPaymentsText + '</div>';
+                            list.innerHTML = '<div class="loading">' + t('noPayments') + '</div>';
                         } else {
                             list.innerHTML = data.payments.map(payment => {
-                                const typeName = payment.payment_type_name || 'Неизвестно';
+                                const typeName = payment.payment_type_name || t('unknown');
                                 const amount = formatAmount(payment.amount);
                                 const period = payment.period || '';
                                 const date = formatDate(payment.payment_date);
                                 
                                 let details = [];
                                 if (payment.receipt_number) {
-                                    details.push({label: 'Квитанция', value: payment.receipt_number});
+                                    details.push({label: t('receipt'), value: payment.receipt_number});
                                 }
                                 if (payment.payment_method) {
-                                    details.push({label: 'Способ оплаты', value: payment.payment_method});
+                                    details.push({label: t('method'), value: payment.payment_method});
                                 }
                                 if (payment.previous_reading !== undefined && payment.current_reading !== undefined) {
                                     details.push({
-                                        label: 'Показания',
+                                        label: t('readings'),
                                         value: `${payment.previous_reading} → ${payment.current_reading}`
                                     });
                                 }
                                 if (payment.volume !== undefined) {
-                                    details.push({label: 'Объём', value: payment.volume.toFixed(3)});
+                                    details.push({label: t('volumeLabel'), value: payment.volume.toFixed(3)});
                                 }
                                 
                                 let unitPriceHtml = '';
                                 if (payment.unit_price !== undefined) {
-                                    unitPriceHtml = `<div class="unit-price"><span class="mdi mdi-cash"></span>${formatAmount(payment.unit_price)} за ед.</div>`;
+                                    unitPriceHtml = `<div class="unit-price"><span class="mdi mdi-cash"></span>${formatAmount(payment.unit_price)} ${t('perUnit')}</div>`;
                                 }
                                 
                                 return `
@@ -710,11 +858,11 @@ async def index(request: web.Request) -> web.Response:
                                         <div class="payment-type">${escapeHtml(typeName)}</div>
                                         <div class="payment-details">
                                             <div class="payment-detail">
-                                                <span class="payment-detail-label">Период</span>
+                                                <span class="payment-detail-label">${t('periodLabel')}</span>
                                                 <span class="payment-detail-value">${escapeHtml(period)}</span>
                                             </div>
                                             <div class="payment-detail">
-                                                <span class="payment-detail-label">Дата оплаты</span>
+                                                <span class="payment-detail-label">${t('dateLabel')}</span>
                                                 <span class="payment-detail-value">${escapeHtml(date)}</span>
                                             </div>
                                             ${details.map(d => `
@@ -734,10 +882,12 @@ async def index(request: web.Request) -> web.Response:
                             }).join('');
                         }
                     } else {
-                        list.innerHTML = '<div class="loading">Ошибка: ' + escapeHtml(data.error) + '</div>';
+                        const errorText = language === 'ru' ? 'Ошибка: ' : 'Error: ';
+                        list.innerHTML = '<div class="loading">' + errorText + escapeHtml(data.error) + '</div>';
                     }
                 } catch (error) {
-                    list.innerHTML = '<div class="loading">Ошибка загрузки: ' + escapeHtml(error.message) + '</div>';
+                    const errorText = language === 'ru' ? 'Ошибка загрузки: ' : 'Loading error: ';
+                    list.innerHTML = '<div class="loading">' + errorText + escapeHtml(error.message) + '</div>';
                 }
             }
             
@@ -817,7 +967,7 @@ async def index(request: web.Request) -> web.Response:
                 if (previousReading && currentReading) {
                     const volumeValue = parseFloat(volume);
                     if (!volume || isNaN(volumeValue) || volumeValue <= 0) {
-                        errorDiv.textContent = 'Объём должен быть больше нуля. Проверьте показания счётчика.';
+                        errorDiv.textContent = t('errorVolume');
                         errorDiv.style.display = 'block';
                         return;
                     }

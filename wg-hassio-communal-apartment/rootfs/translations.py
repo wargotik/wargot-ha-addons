@@ -16,7 +16,7 @@ TRANSLATIONS = {
 }
 
 
-def get_translation(key: str, lang: str = "ru") -> str:
+def get_translation(key: str, lang: str = "en") -> str:
     """Get translation for a payment type key."""
-    return TRANSLATIONS.get(lang, TRANSLATIONS["ru"]).get(key, key)
+    return TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get(key, key)
 
