@@ -5,6 +5,11 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.5] - 2025-01-28
+
+### Changed
+- Добавлен endpoint `/api/sensors` для получения агрегированных данных сенсоров через REST API
+
 ## [0.4.4] - 2025-01-27
 
 ### Fixed
@@ -206,6 +211,7 @@
 
 ---
 
+[0.4.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.1...v0.4.2

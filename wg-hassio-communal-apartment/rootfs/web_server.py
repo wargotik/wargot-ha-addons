@@ -139,6 +139,74 @@ async def get_payment_types(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def get_sensors(request: web.Request) -> web.Response:
+    """Get aggregated sensor data for Home Assistant sensors."""
+    try:
+        payments = db.get_all_payments()
+        
+        # Calculate totals by payment type
+        sensors_data = {
+            "electricity": {
+                "total_volume": 0.0,
+                "total_amount": 0.0,
+                "last_payment_date": None,
+                "last_payment_amount": 0.0,
+                "last_payment_volume": 0.0,
+            },
+            "gas": {
+                "total_volume": 0.0,
+                "total_amount": 0.0,
+                "last_payment_date": None,
+                "last_payment_amount": 0.0,
+                "last_payment_volume": 0.0,
+            },
+            "water": {
+                "total_volume": 0.0,
+                "total_amount": 0.0,
+                "last_payment_date": None,
+                "last_payment_amount": 0.0,
+                "last_payment_volume": 0.0,
+            },
+        }
+        
+        # Process payments
+        for payment in payments:
+            payment_type_id = payment["payment_type_id"]
+            system_name = PAYMENT_TYPES.get(payment_type_id)
+            
+            if system_name and system_name in sensors_data:
+                amount = payment.get("amount", 0.0) or 0.0
+                volume = payment.get("volume") or 0.0
+                
+                sensors_data[system_name]["total_amount"] += amount
+                if volume:
+                    sensors_data[system_name]["total_volume"] += volume
+                
+                # Track last payment
+                payment_date = payment.get("payment_date")
+                if payment_date:
+                    if sensors_data[system_name]["last_payment_date"] is None:
+                        sensors_data[system_name]["last_payment_date"] = payment_date
+                        sensors_data[system_name]["last_payment_amount"] = amount
+                        sensors_data[system_name]["last_payment_volume"] = volume or 0.0
+                    else:
+                        if payment_date > sensors_data[system_name]["last_payment_date"]:
+                            sensors_data[system_name]["last_payment_date"] = payment_date
+                            sensors_data[system_name]["last_payment_amount"] = amount
+                            sensors_data[system_name]["last_payment_volume"] = volume or 0.0
+        
+        return web.json_response({
+            "success": True,
+            "sensors": sensors_data
+        })
+    except Exception as err:
+        _LOGGER.error("Error getting sensors data: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def get_translations(request: web.Request) -> web.Response:
     """Get translations for UI."""
     try:
@@ -1097,6 +1165,7 @@ def create_app() -> web.Application:
     app.router.add_get("/api/payment-types", get_payment_types)
     app.router.add_get("/api/config", get_config)
     app.router.add_get("/api/translations", get_translations)
+    app.router.add_get("/api/sensors", get_sensors)
     app.router.add_post("/api/payments", add_payment)
     return app
 
