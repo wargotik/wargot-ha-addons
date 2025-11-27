@@ -78,6 +78,44 @@ async def get_payment_types(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def get_config(request: web.Request) -> web.Response:
+    """Get configuration including currency from Home Assistant."""
+    try:
+        import os
+        
+        # Try to get currency from Home Assistant API
+        currency = "EUR"  # Default
+        
+        # Method 1: Try to get from Home Assistant API via supervisor
+        ha_token = os.environ.get("SUPERVISOR_TOKEN")
+        ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
+        
+        if ha_token:
+            try:
+                import aiohttp
+                async with aiohttp.ClientSession() as session:
+                    headers = {"Authorization": f"Bearer {ha_token}"}
+                    async with session.get(f"{ha_url}/api/config", headers=headers) as resp:
+                        if resp.status == 200:
+                            config_data = await resp.json()
+                            currency = config_data.get("currency", currency)
+                            _LOGGER.info("Got currency from HA API: %s", currency)
+            except Exception as api_err:
+                _LOGGER.warning("Could not get currency from HA API: %s", api_err)
+        
+        return web.json_response({
+            "success": True,
+            "currency": currency
+        })
+    except Exception as err:
+        _LOGGER.error("Error getting config: %s", err)
+        return web.json_response({
+            "success": False,
+            "error": str(err),
+            "currency": "EUR"  # Fallback
+        }, status=500)
+
+
 async def add_payment(request: web.Request) -> web.Response:
     """Add a new payment."""
     try:
@@ -529,6 +567,22 @@ async def index(request: web.Request) -> web.Response:
         </div>
         <script>
             let paymentTypes = [];
+            let currency = 'EUR'; // Default currency
+            
+            async function loadConfig() {
+                try {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/config';
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    if (data.success && data.currency) {
+                        currency = data.currency;
+                        console.log('Loaded currency from HA:', currency);
+                    }
+                } catch (error) {
+                    console.error('Error loading config:', error);
+                }
+            }
             
             async function loadPaymentTypes() {
                 try {
@@ -668,10 +722,21 @@ async def index(request: web.Request) -> web.Response:
             }
             
             function formatAmount(amount) {
-                return new Intl.NumberFormat('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(amount);
+                // Format amount with currency symbol
+                try {
+                    return new Intl.NumberFormat('ru-RU', {
+                        style: 'currency',
+                        currency: currency,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(amount);
+                } catch (e) {
+                    // Fallback if currency is not supported
+                    return new Intl.NumberFormat('ru-RU', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(amount) + ' ' + currency;
+                }
             }
             
             function formatDate(dateStr) {
@@ -770,8 +835,10 @@ async def index(request: web.Request) -> web.Response:
             }
             
             // Load data on page load
-            loadPaymentTypes();
-            loadPayments();
+            loadConfig().then(() => {
+                loadPaymentTypes();
+                loadPayments();
+            });
         </script>
     </body>
     </html>
@@ -785,6 +852,7 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/api/payments", get_payments)
     app.router.add_get("/api/payment-types", get_payment_types)
+    app.router.add_get("/api/config", get_config)
     app.router.add_post("/api/payments", add_payment)
     return app
 
