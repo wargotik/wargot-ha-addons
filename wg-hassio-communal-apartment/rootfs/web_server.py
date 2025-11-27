@@ -8,17 +8,18 @@ from datetime import datetime
 from aiohttp import web
 
 from database import Database
+from translations import get_translation
 
 _LOGGER = logging.getLogger(__name__)
 
 # Initialize database
 db = Database()
 
-# Payment types constants
+# Payment types constants (ID -> system_name)
 PAYMENT_TYPES = {
-    "electricity": "Электроэнергия",
-    "gas": "Газ",
-    "water": "Вода"
+    1: "electricity",
+    2: "gas",
+    3: "water"
 }
 
 
@@ -27,19 +28,16 @@ async def get_payments(request: web.Request) -> web.Response:
     try:
         payments = db.get_all_payments()
         
-        # Get payment type IDs for system names
-        payment_types = db.get_all_payment_types()
-        type_id_map = {}
-        for pt in payment_types:
-            type_id_map[pt["system_name"]] = pt["id"]
-        
-        # Map system_name to payment_type_id for each payment
+        # Map payment_type_id to system_name and translated name
         for payment in payments:
-            # Find system_name from payment_type_id
-            for pt in payment_types:
-                if pt["id"] == payment["payment_type_id"]:
-                    payment["system_name"] = pt["system_name"]
-                    break
+            payment_type_id = payment["payment_type_id"]
+            system_name = PAYMENT_TYPES.get(payment_type_id)
+            if system_name:
+                payment["system_name"] = system_name
+                payment["payment_type_name"] = get_translation(system_name, "ru")
+            else:
+                payment["system_name"] = None
+                payment["payment_type_name"] = "Неизвестно"
         
         return web.json_response({
             "success": True,
@@ -56,12 +54,16 @@ async def get_payments(request: web.Request) -> web.Response:
 async def get_payment_types(request: web.Request) -> web.Response:
     """Get payment types (from constants)."""
     try:
+        # Get language from query parameter or default to 'ru'
+        lang = request.query.get("lang", "ru")
+        
         # Return payment types from constants
         types = []
-        for system_name, name in PAYMENT_TYPES.items():
+        for type_id, system_name in PAYMENT_TYPES.items():
             types.append({
+                "id": type_id,
                 "system_name": system_name,
-                "name": name
+                "name": get_translation(system_name, lang)
             })
         
         return web.json_response({
@@ -81,35 +83,29 @@ async def add_payment(request: web.Request) -> web.Response:
     try:
         data = await request.json()
         
-        # Get payment_type_id from system_name
-        payment_type_id = None
-        system_name = data.get("payment_type_id")  # Actually system_name from frontend
+        # Get payment_type_id from request (should be numeric ID from PAYMENT_TYPES)
+        payment_type_id = data.get("payment_type_id")
         
-        if not system_name:
+        if not payment_type_id:
             return web.json_response({
                 "success": False,
                 "error": "Тип оплаты не указан"
             }, status=400)
         
-        # Find payment type by system_name
-        payment_types = db.get_all_payment_types()
-        for pt in payment_types:
-            if pt["system_name"] == system_name:
-                payment_type_id = pt["id"]
-                break
+        # Validate that payment_type_id exists in PAYMENT_TYPES
+        try:
+            payment_type_id = int(payment_type_id)
+        except (ValueError, TypeError):
+            return web.json_response({
+                "success": False,
+                "error": "Неверный тип оплаты"
+            }, status=400)
         
-        if not payment_type_id:
-            # Create payment type if it doesn't exist
-            payment_type_id = db.add_payment_type(
-                name=PAYMENT_TYPES.get(system_name, system_name),
-                system_name=system_name,
-                is_system=True
-            )
-            if not payment_type_id:
-                return web.json_response({
-                    "success": False,
-                    "error": "Не удалось создать тип оплаты"
-                }, status=500)
+        if payment_type_id not in PAYMENT_TYPES:
+            return web.json_response({
+                "success": False,
+                "error": "Неизвестный тип оплаты"
+            }, status=400)
         
         # Get required fields
         amount = float(data.get("amount", 0))
@@ -546,7 +542,7 @@ async def index(request: web.Request) -> web.Response:
                         select.innerHTML = '<option value="">Выберите тип оплаты</option>';
                         data.types.forEach(type => {
                             const option = document.createElement('option');
-                            option.value = type.system_name;
+                            option.value = type.id;
                             option.textContent = type.name;
                             select.appendChild(option);
                         });
