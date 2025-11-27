@@ -5,6 +5,12 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.3] - 2025-01-27
+
+### Added
+- Добавлено подробное логирование запросов на получение настроек Home Assistant (валюта и язык)
+- Логирование включает информацию о наличии SUPERVISOR_TOKEN, статусе запроса к HA API и полученных значениях
+
 ## [0.4.2] - 2025-01-27
 
 ### Fixed
@@ -194,6 +200,7 @@
 
 ---
 
+[0.4.3]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.8...v0.4.0

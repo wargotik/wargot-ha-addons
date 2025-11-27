@@ -182,6 +182,8 @@ async def get_config(request: web.Request) -> web.Response:
     try:
         import os
         
+        _LOGGER.info("Requesting HA configuration (currency and language)")
+        
         # Default values
         currency = "EUR"
         language = "en"  # Default to English
@@ -191,11 +193,14 @@ async def get_config(request: web.Request) -> web.Response:
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         
         if ha_token:
+            _LOGGER.debug("SUPERVISOR_TOKEN found, attempting to fetch config from HA API: %s", ha_url)
             try:
                 import aiohttp
                 async with aiohttp.ClientSession() as session:
                     headers = {"Authorization": f"Bearer {ha_token}"}
-                    async with session.get(f"{ha_url}/api/config", headers=headers) as resp:
+                    api_url = f"{ha_url}/api/config"
+                    _LOGGER.debug("Making request to HA API: %s", api_url)
+                    async with session.get(api_url, headers=headers) as resp:
                         if resp.status == 200:
                             config_data = await resp.json()
                             currency = config_data.get("currency", currency)
@@ -205,17 +210,26 @@ async def get_config(request: web.Request) -> web.Response:
                             # HA uses full locale like "ru_RU" or "en_US", we need just language code
                             if ha_language:
                                 language = ha_language.split("_")[0].lower() if "_" in ha_language else ha_language.lower()
-                            _LOGGER.info("Got currency from HA API: %s, language: %s", currency, language)
+                            _LOGGER.info("Successfully retrieved HA config - currency: %s, language: %s (from HA: %s)", 
+                                       currency, language, ha_language)
+                        else:
+                            _LOGGER.warning("HA API returned status %s, using defaults - currency: %s, language: %s", 
+                                          resp.status, currency, language)
             except Exception as api_err:
-                _LOGGER.warning("Could not get config from HA API: %s", api_err)
+                _LOGGER.warning("Could not get config from HA API: %s, using defaults - currency: %s, language: %s", 
+                              api_err, currency, language)
+        else:
+            _LOGGER.info("SUPERVISOR_TOKEN not found, using defaults - currency: %s, language: %s", 
+                        currency, language)
         
+        _LOGGER.info("Returning config - currency: %s, language: %s", currency, language)
         return web.json_response({
             "success": True,
             "currency": currency,
             "language": language
         })
     except Exception as err:
-        _LOGGER.error("Error getting config: %s", err)
+        _LOGGER.error("Error getting config: %s", err, exc_info=True)
         return web.json_response({
             "success": False,
             "error": str(err),
