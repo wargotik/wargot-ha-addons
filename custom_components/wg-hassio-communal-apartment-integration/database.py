@@ -111,4 +111,3 @@ class CommunalApartmentDatabase:
                 "updated_at": None,
             })
         return types
-

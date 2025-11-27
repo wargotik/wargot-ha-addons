@@ -1,5 +1,5 @@
 {
-  "domain": "communal_apartment",
+  "domain": "wg_hassio_communal_apartment_integration",
   "name": "Communal Apartment",
   "codeowners": ["@wargotik"],
   "config_flow": true,
@@ -10,4 +10,3 @@
   "requirements": [],
   "version": "0.1.1"
 }
-

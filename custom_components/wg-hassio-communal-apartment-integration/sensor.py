@@ -95,4 +95,3 @@ class CommunalApartmentEnergySensor(CoordinatorEntity, SensorEntity):
                 attrs["last_payment_period"] = last_payment.get("period")
         
         return attrs
-

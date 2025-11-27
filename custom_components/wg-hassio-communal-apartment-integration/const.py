@@ -1,7 +1,7 @@
 """Constants for Communal Apartment integration."""
 from __future__ import annotations
 
-DOMAIN = "communal_apartment"
+DOMAIN = "wg_hassio_communal_apartment_integration"
 PLATFORMS = ["sensor"]
 
 # Default database path
@@ -14,4 +14,3 @@ DEFAULT_DB_PATH = "/data/communal_apartment.db"
 PAYMENT_TYPE_ELECTRICITY = "electricity"
 PAYMENT_TYPE_GAS = "gas"
 PAYMENT_TYPE_WATER = "water"
-

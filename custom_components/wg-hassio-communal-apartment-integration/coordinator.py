@@ -101,4 +101,3 @@ class CommunalApartmentDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as err:
             _LOGGER.error("Error communicating with database: %s", err, exc_info=True)
             raise UpdateFailed(f"Error communicating with database: {err}")
-
