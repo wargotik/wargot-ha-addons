@@ -139,6 +139,44 @@ async def get_payment_types(request: web.Request) -> web.Response:
         }, status=500)
 
 
+async def get_translations(request: web.Request) -> web.Response:
+    """Get translations for UI."""
+    try:
+        from pathlib import Path
+        
+        # Get language from query parameter or default to 'en'
+        lang = request.query.get("lang", "en")
+        
+        # Path to translations directory (relative to web_server.py location)
+        translations_dir = Path(__file__).parent / "translations"
+        translation_file = translations_dir / f"{lang}.json"
+        
+        # Fallback to English if translation file doesn't exist
+        if not translation_file.exists():
+            _LOGGER.warning("Translation file not found for language '%s', falling back to English", lang)
+            translation_file = translations_dir / "en.json"
+        
+        # Read translation file
+        if translation_file.exists():
+            with open(translation_file, "r", encoding="utf-8") as f:
+                translations = json.load(f)
+        else:
+            _LOGGER.error("English translation file not found!")
+            translations = {}
+        
+        return web.json_response({
+            "success": True,
+            "translations": translations
+        })
+    except Exception as err:
+        _LOGGER.error("Error getting translations: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err),
+            "translations": {}
+        }, status=500)
+
+
 async def get_config(request: web.Request) -> web.Response:
     """Get configuration including currency and language from Home Assistant."""
     try:
@@ -644,178 +682,39 @@ async def index(request: web.Request) -> web.Response:
             let paymentTypes = [];
             let currency = 'EUR'; // Default currency
             let language = 'en'; // Default language (English)
-            
-            // Translations object
-            const translations = {
-                'ru': {
-                    'title': 'Оплаты',
-                    'addPayment': 'Добавить оплату',
-                    'loading': 'Загрузка...',
-                    'noPayments': 'Нет оплат в базе',
-                    'selectPaymentType': 'Выберите тип оплаты',
-                    'requiredFields': 'Обязательные поля',
-                    'optionalFields': 'Необязательные поля',
-                    'paymentType': 'Тип оплаты:',
-                    'paymentDate': 'Дата оплаты:',
-                    'amount': 'Сумма:',
-                    'previousReading': 'Предыдущее показание счётчика:',
-                    'currentReading': 'Текущее показание счётчика:',
-                    'volume': 'Объём:',
-                    'period': 'Период:',
-                    'periodHint': 'Автоматически рассчитывается на основе даты оплаты',
-                    'receiptNumber': 'Номер квитанции:',
-                    'paymentMethod': 'Способ оплаты:',
-                    'notes': 'Заметки:',
-                    'cancel': 'Отмена',
-                    'add': 'Добавить',
-                    'receipt': 'Квитанция',
-                    'method': 'Способ оплаты',
-                    'readings': 'Показания',
-                    'volumeLabel': 'Объём',
-                    'periodLabel': 'Период',
-                    'dateLabel': 'Дата оплаты',
-                    'perUnit': 'за ед.',
-                    'unknown': 'Неизвестно',
-                    'errorVolume': 'Объём должен быть больше нуля. Проверьте показания счётчика.',
-                    'errorPaymentType': 'Тип оплаты не указан',
-                    'errorDate': 'Дата оплаты обязательна'
-                },
-                'en': {
-                    'title': 'Payments',
-                    'addPayment': 'Add Payment',
-                    'loading': 'Loading...',
-                    'noPayments': 'No payments in database',
-                    'selectPaymentType': 'Select payment type',
-                    'requiredFields': 'Required fields',
-                    'optionalFields': 'Optional fields',
-                    'paymentType': 'Payment Type:',
-                    'paymentDate': 'Payment Date:',
-                    'amount': 'Amount:',
-                    'previousReading': 'Previous Meter Reading:',
-                    'currentReading': 'Current Meter Reading:',
-                    'volume': 'Volume:',
-                    'period': 'Period:',
-                    'periodHint': 'Automatically calculated based on payment date',
-                    'receiptNumber': 'Receipt Number:',
-                    'paymentMethod': 'Payment Method:',
-                    'notes': 'Notes:',
-                    'cancel': 'Cancel',
-                    'add': 'Add',
-                    'receipt': 'Receipt',
-                    'method': 'Payment Method',
-                    'readings': 'Readings',
-                    'volumeLabel': 'Volume',
-                    'periodLabel': 'Period',
-                    'dateLabel': 'Payment Date',
-                    'perUnit': 'per unit',
-                    'unknown': 'Unknown',
-                    'errorVolume': 'Volume must be greater than zero. Check meter readings.',
-                    'errorPaymentType': 'Payment type not specified',
-                    'errorDate': 'Payment date is required'
-                },
-                'uk': {
-                    'title': 'Платежі',
-                    'addPayment': 'Додати платіж',
-                    'loading': 'Завантаження...',
-                    'noPayments': 'Немає платежів у базі',
-                    'selectPaymentType': 'Виберіть тип платежу',
-                    'requiredFields': 'Обов\'язкові поля',
-                    'optionalFields': 'Необов\'язкові поля',
-                    'paymentType': 'Тип платежу:',
-                    'paymentDate': 'Дата платежу:',
-                    'amount': 'Сума:',
-                    'previousReading': 'Попереднє показання лічильника:',
-                    'currentReading': 'Поточне показання лічильника:',
-                    'volume': 'Об\'єм:',
-                    'period': 'Період:',
-                    'periodHint': 'Автоматично розраховується на основі дати платежу',
-                    'receiptNumber': 'Номер квитанції:',
-                    'paymentMethod': 'Спосіб оплати:',
-                    'notes': 'Примітки:',
-                    'cancel': 'Скасувати',
-                    'add': 'Додати',
-                    'receipt': 'Квитанція',
-                    'method': 'Спосіб оплати',
-                    'readings': 'Показання',
-                    'volumeLabel': 'Об\'єм',
-                    'periodLabel': 'Період',
-                    'dateLabel': 'Дата платежу',
-                    'perUnit': 'за од.',
-                    'unknown': 'Невідомо',
-                    'errorVolume': 'Об\'єм повинен бути більше нуля. Перевірте показання лічильника.',
-                    'errorPaymentType': 'Тип платежу не вказано',
-                    'errorDate': 'Дата платежу обов\'язкова'
-                },
-                'pl': {
-                    'title': 'Płatności',
-                    'addPayment': 'Dodaj płatność',
-                    'loading': 'Ładowanie...',
-                    'noPayments': 'Brak płatności w bazie',
-                    'selectPaymentType': 'Wybierz typ płatności',
-                    'requiredFields': 'Pola wymagane',
-                    'optionalFields': 'Pola opcjonalne',
-                    'paymentType': 'Typ płatności:',
-                    'paymentDate': 'Data płatności:',
-                    'amount': 'Kwota:',
-                    'previousReading': 'Poprzedni odczyt licznika:',
-                    'currentReading': 'Bieżący odczyt licznika:',
-                    'volume': 'Objętość:',
-                    'period': 'Okres:',
-                    'periodHint': 'Automatycznie obliczane na podstawie daty płatności',
-                    'receiptNumber': 'Numer paragonu:',
-                    'paymentMethod': 'Sposób płatności:',
-                    'notes': 'Uwagi:',
-                    'cancel': 'Anuluj',
-                    'add': 'Dodaj',
-                    'receipt': 'Paragon',
-                    'method': 'Sposób płatności',
-                    'readings': 'Odczyty',
-                    'volumeLabel': 'Objętość',
-                    'periodLabel': 'Okres',
-                    'dateLabel': 'Data płatności',
-                    'perUnit': 'za jednostkę',
-                    'unknown': 'Nieznane',
-                    'errorVolume': 'Objętość musi być większa od zera. Sprawdź odczyty licznika.',
-                    'errorPaymentType': 'Typ płatności nie został określony',
-                    'errorDate': 'Data płatności jest wymagana'
-                },
-                'be': {
-                    'title': 'Плацяжы',
-                    'addPayment': 'Дадаць плацяж',
-                    'loading': 'Загрузка...',
-                    'noPayments': 'Няма плацяжоў у базе',
-                    'selectPaymentType': 'Выберыце тып плацяжу',
-                    'requiredFields': 'Абавязковыя палі',
-                    'optionalFields': 'Неабавязковыя палі',
-                    'paymentType': 'Тып плацяжу:',
-                    'paymentDate': 'Дата плацяжу:',
-                    'amount': 'Сума:',
-                    'previousReading': 'Папярэдняе паказанне лічыльніка:',
-                    'currentReading': 'Бягучае паказанне лічыльніка:',
-                    'volume': 'Аб\'ём:',
-                    'period': 'Перыяд:',
-                    'periodHint': 'Аўтаматычна разлічваецца на аснове даты плацяжу',
-                    'receiptNumber': 'Нумар квітанцыі:',
-                    'paymentMethod': 'Спосаб аплаты:',
-                    'notes': 'Заўвагі:',
-                    'cancel': 'Адмяніць',
-                    'add': 'Дадаць',
-                    'receipt': 'Квітанцыя',
-                    'method': 'Спосаб аплаты',
-                    'readings': 'Паказанні',
-                    'volumeLabel': 'Аб\'ём',
-                    'periodLabel': 'Перыяд',
-                    'dateLabel': 'Дата плацяжу',
-                    'perUnit': 'за адз.',
-                    'unknown': 'Невядома',
-                    'errorVolume': 'Аб\'ём павінен быць больш за нуль. Праверце паказанні лічыльніка.',
-                    'errorPaymentType': 'Тып плацяжу не паказаны',
-                    'errorDate': 'Дата плацяжу абавязковая'
-                }
-            };
+            let translations = {}; // Will be loaded from API
             
             function t(key) {
-                return translations[language]?.[key] || translations['en'][key] || key;
+                return translations[key] || key;
+            }
+            
+            async function loadTranslations() {
+                try {
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/translations?lang=' + language;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    if (data.success && data.translations) {
+                        translations = data.translations;
+                        console.log('Loaded translations for language:', language);
+                        // Update UI text after translations are loaded
+                        updateUIText();
+                    } else {
+                        console.error('Failed to load translations:', data.error);
+                        // Fallback: try to load English translations
+                        if (language !== 'en') {
+                            const fallbackUrl = window.location.pathname.replace(/\/$/, '') + '/api/translations?lang=en';
+                            const fallbackResponse = await fetch(fallbackUrl);
+                            const fallbackData = await fallbackResponse.json();
+                            if (fallbackData.success && fallbackData.translations) {
+                                translations = fallbackData.translations;
+                                updateUIText();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading translations:', error);
+                }
             }
             
             async function loadConfig() {
@@ -832,8 +731,8 @@ async def index(request: web.Request) -> web.Response:
                             language = data.language;
                         }
                         console.log('Loaded config from HA - currency:', currency, 'language:', language);
-                        // Update UI text after language is loaded
-                        updateUIText();
+                        // Load translations for the selected language
+                        await loadTranslations();
                     }
                 } catch (error) {
                     console.error('Error loading config:', error);
@@ -1161,6 +1060,7 @@ async def index(request: web.Request) -> web.Response:
             
             // Load data on page load
             loadConfig().then(() => {
+                // loadTranslations is already called in loadConfig after language is set
                 loadPaymentTypes();
                 loadPayments();
             });
@@ -1178,6 +1078,7 @@ def create_app() -> web.Application:
     app.router.add_get("/api/payments", get_payments)
     app.router.add_get("/api/payment-types", get_payment_types)
     app.router.add_get("/api/config", get_config)
+    app.router.add_get("/api/translations", get_translations)
     app.router.add_post("/api/payments", add_payment)
     return app
 

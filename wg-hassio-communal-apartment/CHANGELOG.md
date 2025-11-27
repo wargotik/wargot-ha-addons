@@ -5,6 +5,23 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.2] - 2025-01-27
+
+### Fixed
+- Исправлена ошибка с экранированием апострофов в переводах (украинский, белорусский языки)
+- Переводы вынесены в отдельные JSON файлы вместо хранения в JavaScript коде
+- Добавлен endpoint `/api/translations` для загрузки переводов
+
+### Changed
+- Переводы теперь загружаются динамически через API вместо статического объекта в коде
+- Улучшена обработка ошибок при загрузке переводов с fallback на английский язык
+
+## [0.4.1] - 2025-01-27
+
+### Changed
+- Убран `map: ["config:rw"]` из конфигурации для повышения рейтинга безопасности
+- Обновлен README: добавлены иконки архитектур и GitHub Release
+
 ## [0.4.0] - 2025-01-27
 
 ### Added
@@ -177,6 +194,8 @@
 
 ---
 
+[0.4.2]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.8...v0.4.0
 [0.3.8]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/wargotik/wargot-ha-addons/compare/v0.3.6...v0.3.7
