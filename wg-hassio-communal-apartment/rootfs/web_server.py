@@ -61,8 +61,8 @@ async def get_payments(request: web.Request) -> web.Response:
 async def get_payment_types(request: web.Request) -> web.Response:
     """Get payment types (from constants)."""
     try:
-        # Get language from query parameter or default to 'ru'
-        lang = request.query.get("lang", "ru")
+        # Get language from query parameter or default to 'en'
+        lang = request.query.get("lang", "en")
         
         # Return payment types from constants
         types = []
@@ -584,6 +584,7 @@ async def index(request: web.Request) -> web.Response:
         <script>
             let paymentTypes = [];
             let currency = 'EUR'; // Default currency
+            let language = 'en'; // Default language (English)
             
             async function loadConfig() {
                 try {
@@ -591,9 +592,14 @@ async def index(request: web.Request) -> web.Response:
                     const response = await fetch(apiUrl);
                     const data = await response.json();
                     
-                    if (data.success && data.currency) {
-                        currency = data.currency;
-                        console.log('Loaded currency from HA:', currency);
+                    if (data.success) {
+                        if (data.currency) {
+                            currency = data.currency;
+                        }
+                        if (data.language) {
+                            language = data.language;
+                        }
+                        console.log('Loaded config from HA - currency:', currency, 'language:', language);
                     }
                 } catch (error) {
                     console.error('Error loading config:', error);
@@ -602,14 +608,16 @@ async def index(request: web.Request) -> web.Response:
             
             async function loadPaymentTypes() {
                 try {
-                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/payment-types';
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/payment-types?lang=' + language;
                     const response = await fetch(apiUrl);
                     const data = await response.json();
                     
                     if (data.success) {
                         paymentTypes = data.types;
                         const select = document.getElementById('paymentType');
-                        select.innerHTML = '<option value="">Выберите тип оплаты</option>';
+                        // Set placeholder based on language
+                        const placeholder = language === 'ru' ? 'Выберите тип оплаты' : 'Select payment type';
+                        select.innerHTML = '<option value="">' + placeholder + '</option>';
                         data.types.forEach(type => {
                             const option = document.createElement('option');
                             option.value = type.id;
@@ -655,16 +663,18 @@ async def index(request: web.Request) -> web.Response:
             
             async function loadPayments() {
                 const list = document.getElementById('payments-list');
-                list.innerHTML = '<div class="loading">Загрузка...</div>';
+                const loadingText = language === 'ru' ? 'Загрузка...' : 'Loading...';
+                list.innerHTML = '<div class="loading">' + loadingText + '</div>';
                 
                 try {
-                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/payments';
+                    const apiUrl = window.location.pathname.replace(/\/$/, '') + '/api/payments?lang=' + language;
                     const response = await fetch(apiUrl);
                     const data = await response.json();
                     
                     if (data.success) {
+                        const noPaymentsText = language === 'ru' ? 'Нет оплат в базе' : 'No payments in database';
                         if (data.payments.length === 0) {
-                            list.innerHTML = '<div class="loading">Нет оплат в базе</div>';
+                            list.innerHTML = '<div class="loading">' + noPaymentsText + '</div>';
                         } else {
                             list.innerHTML = data.payments.map(payment => {
                                 const typeName = payment.payment_type_name || 'Неизвестно';
