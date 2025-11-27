@@ -12,6 +12,21 @@ TRANSLATIONS = {
         "electricity": "Electricity",
         "gas": "Gas",
         "water": "Water"
+    },
+    "uk": {
+        "electricity": "Електроенергія",
+        "gas": "Газ",
+        "water": "Вода"
+    },
+    "pl": {
+        "electricity": "Energia elektryczna",
+        "gas": "Gaz",
+        "water": "Woda"
+    },
+    "be": {
+        "electricity": "Электраэнергія",
+        "gas": "Газ",
+        "water": "Вада"
     }
 }
 

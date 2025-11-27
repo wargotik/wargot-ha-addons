@@ -22,6 +22,60 @@ PAYMENT_TYPES = {
     3: "water"
 }
 
+# Error messages translations
+ERROR_TRANSLATIONS = {
+    "en": {
+        "payment_type_not_specified": "Payment type not specified",
+        "payment_date_required": "Payment date is required",
+        "volume_must_be_greater": "Volume must be greater than zero. Check meter readings.",
+        "invalid_payment_type": "Invalid payment type",
+        "unknown_payment_type": "Unknown payment type",
+        "invalid_date_format": "Invalid payment date format",
+        "failed_to_save": "Failed to save payment"
+    },
+    "ru": {
+        "payment_type_not_specified": "Тип оплаты не указан",
+        "payment_date_required": "Дата оплаты обязательна",
+        "volume_must_be_greater": "Объём должен быть больше нуля. Проверьте показания счётчика.",
+        "invalid_payment_type": "Неверный тип оплаты",
+        "unknown_payment_type": "Неизвестный тип оплаты",
+        "invalid_date_format": "Неверный формат даты оплаты",
+        "failed_to_save": "Не удалось сохранить оплату"
+    },
+    "uk": {
+        "payment_type_not_specified": "Тип платежу не вказано",
+        "payment_date_required": "Дата платежу обов'язкова",
+        "volume_must_be_greater": "Об'єм повинен бути більше нуля. Перевірте показання лічильника.",
+        "invalid_payment_type": "Невірний тип платежу",
+        "unknown_payment_type": "Невідомий тип платежу",
+        "invalid_date_format": "Невірний формат дати платежу",
+        "failed_to_save": "Не вдалося зберегти платіж"
+    },
+    "pl": {
+        "payment_type_not_specified": "Typ płatności nie został określony",
+        "payment_date_required": "Data płatności jest wymagana",
+        "volume_must_be_greater": "Objętość musi być większa od zera. Sprawdź odczyty licznika.",
+        "invalid_payment_type": "Nieprawidłowy typ płatności",
+        "unknown_payment_type": "Nieznany typ płatności",
+        "invalid_date_format": "Nieprawidłowy format daty płatności",
+        "failed_to_save": "Nie udało się zapisać płatności"
+    },
+    "be": {
+        "payment_type_not_specified": "Тып плацяжу не паказаны",
+        "payment_date_required": "Дата плацяжу абавязковая",
+        "volume_must_be_greater": "Аб'ём павінен быць больш за нуль. Праверце паказанні лічыльніка.",
+        "invalid_payment_type": "Няправільны тып плацяжу",
+        "unknown_payment_type": "Невядомы тып плацяжу",
+        "invalid_date_format": "Няправільны фармат даты плацяжу",
+        "failed_to_save": "Не ўдалося захаваць плацяж"
+    }
+}
+
+
+def get_error_message(key: str, lang: str = "en") -> str:
+    """Get error message translation."""
+    return ERROR_TRANSLATIONS.get(lang, ERROR_TRANSLATIONS["en"]).get(key, key)
+
 
 async def get_payments(request: web.Request) -> web.Response:
     """Get all payments from database."""
@@ -140,13 +194,13 @@ async def add_payment(request: web.Request) -> web.Response:
         # Get payment_type_id from request (should be numeric ID from PAYMENT_TYPES)
         payment_type_id = data.get("payment_type_id")
         
+        # Get language from query or default to 'en'
+        lang = request.query.get("lang", "en")
+        
         if not payment_type_id:
-            # Get language from query or default to 'en'
-            lang = request.query.get("lang", "en")
-            error_msg = "Payment type not specified" if lang == "en" else "Тип оплаты не указан"
             return web.json_response({
                 "success": False,
-                "error": error_msg
+                "error": get_error_message("payment_type_not_specified", lang)
             }, status=400)
         
         # Validate that payment_type_id exists in PAYMENT_TYPES
@@ -155,13 +209,13 @@ async def add_payment(request: web.Request) -> web.Response:
         except (ValueError, TypeError):
             return web.json_response({
                 "success": False,
-                "error": "Неверный тип оплаты"
+                "error": get_error_message("invalid_payment_type", lang)
             }, status=400)
         
         if payment_type_id not in PAYMENT_TYPES:
             return web.json_response({
                 "success": False,
-                "error": "Неизвестный тип оплаты"
+                "error": get_error_message("unknown_payment_type", lang)
             }, status=400)
         
         # Get required fields
@@ -170,12 +224,9 @@ async def add_payment(request: web.Request) -> web.Response:
         period = data.get("period")
         
         if not payment_date:
-            # Get language from query or default to 'en'
-            lang = request.query.get("lang", "en")
-            error_msg = "Payment date is required" if lang == "en" else "Дата оплаты обязательна"
             return web.json_response({
                 "success": False,
-                "error": error_msg
+                "error": get_error_message("payment_date_required", lang)
             }, status=400)
         
         # Calculate period from payment_date if not provided
@@ -186,7 +237,7 @@ async def add_payment(request: web.Request) -> web.Response:
             except (ValueError, AttributeError):
                 return web.json_response({
                     "success": False,
-                    "error": "Неверный формат даты оплаты"
+                    "error": get_error_message("invalid_date_format", lang)
                 }, status=400)
         
         # Get optional fields
@@ -208,12 +259,9 @@ async def add_payment(request: web.Request) -> web.Response:
                     volume = curr - prev
                     # Validate that volume is greater than 0
                     if volume <= 0:
-                        # Get language from query or default to 'en'
-                        lang = request.query.get("lang", "en")
-                        error_msg = "Volume must be greater than zero. Check meter readings." if lang == "en" else "Объём должен быть больше нуля. Проверьте показания счётчика."
                         return web.json_response({
                             "success": False,
-                            "error": error_msg
+                            "error": get_error_message("volume_must_be_greater", lang)
                         }, status=400)
             except (ValueError, TypeError):
                 pass
@@ -238,9 +286,11 @@ async def add_payment(request: web.Request) -> web.Response:
                 "payment_id": payment_id
             })
         else:
+            # Get language from query or default to 'en'
+            lang = request.query.get("lang", "en")
             return web.json_response({
                 "success": False,
-                "error": "Не удалось сохранить оплату"
+                "error": get_error_message("failed_to_save", lang)
             }, status=500)
             
     except Exception as err:
@@ -662,6 +712,105 @@ async def index(request: web.Request) -> web.Response:
                     'errorVolume': 'Volume must be greater than zero. Check meter readings.',
                     'errorPaymentType': 'Payment type not specified',
                     'errorDate': 'Payment date is required'
+                },
+                'uk': {
+                    'title': 'Платежі',
+                    'addPayment': 'Додати платіж',
+                    'loading': 'Завантаження...',
+                    'noPayments': 'Немає платежів у базі',
+                    'selectPaymentType': 'Виберіть тип платежу',
+                    'requiredFields': 'Обов\'язкові поля',
+                    'optionalFields': 'Необов\'язкові поля',
+                    'paymentType': 'Тип платежу:',
+                    'paymentDate': 'Дата платежу:',
+                    'amount': 'Сума:',
+                    'previousReading': 'Попереднє показання лічильника:',
+                    'currentReading': 'Поточне показання лічильника:',
+                    'volume': 'Об\'єм:',
+                    'period': 'Період:',
+                    'periodHint': 'Автоматично розраховується на основі дати платежу',
+                    'receiptNumber': 'Номер квитанції:',
+                    'paymentMethod': 'Спосіб оплати:',
+                    'notes': 'Примітки:',
+                    'cancel': 'Скасувати',
+                    'add': 'Додати',
+                    'receipt': 'Квитанція',
+                    'method': 'Спосіб оплати',
+                    'readings': 'Показання',
+                    'volumeLabel': 'Об\'єм',
+                    'periodLabel': 'Період',
+                    'dateLabel': 'Дата платежу',
+                    'perUnit': 'за од.',
+                    'unknown': 'Невідомо',
+                    'errorVolume': 'Об\'єм повинен бути більше нуля. Перевірте показання лічильника.',
+                    'errorPaymentType': 'Тип платежу не вказано',
+                    'errorDate': 'Дата платежу обов\'язкова'
+                },
+                'pl': {
+                    'title': 'Płatności',
+                    'addPayment': 'Dodaj płatność',
+                    'loading': 'Ładowanie...',
+                    'noPayments': 'Brak płatności w bazie',
+                    'selectPaymentType': 'Wybierz typ płatności',
+                    'requiredFields': 'Pola wymagane',
+                    'optionalFields': 'Pola opcjonalne',
+                    'paymentType': 'Typ płatności:',
+                    'paymentDate': 'Data płatności:',
+                    'amount': 'Kwota:',
+                    'previousReading': 'Poprzedni odczyt licznika:',
+                    'currentReading': 'Bieżący odczyt licznika:',
+                    'volume': 'Objętość:',
+                    'period': 'Okres:',
+                    'periodHint': 'Automatycznie obliczane na podstawie daty płatności',
+                    'receiptNumber': 'Numer paragonu:',
+                    'paymentMethod': 'Sposób płatności:',
+                    'notes': 'Uwagi:',
+                    'cancel': 'Anuluj',
+                    'add': 'Dodaj',
+                    'receipt': 'Paragon',
+                    'method': 'Sposób płatności',
+                    'readings': 'Odczyty',
+                    'volumeLabel': 'Objętość',
+                    'periodLabel': 'Okres',
+                    'dateLabel': 'Data płatności',
+                    'perUnit': 'za jednostkę',
+                    'unknown': 'Nieznane',
+                    'errorVolume': 'Objętość musi być większa od zera. Sprawdź odczyty licznika.',
+                    'errorPaymentType': 'Typ płatności nie został określony',
+                    'errorDate': 'Data płatności jest wymagana'
+                },
+                'be': {
+                    'title': 'Плацяжы',
+                    'addPayment': 'Дадаць плацяж',
+                    'loading': 'Загрузка...',
+                    'noPayments': 'Няма плацяжоў у базе',
+                    'selectPaymentType': 'Выберыце тып плацяжу',
+                    'requiredFields': 'Абавязковыя палі',
+                    'optionalFields': 'Неабавязковыя палі',
+                    'paymentType': 'Тып плацяжу:',
+                    'paymentDate': 'Дата плацяжу:',
+                    'amount': 'Сума:',
+                    'previousReading': 'Папярэдняе паказанне лічыльніка:',
+                    'currentReading': 'Бягучае паказанне лічыльніка:',
+                    'volume': 'Аб\'ём:',
+                    'period': 'Перыяд:',
+                    'periodHint': 'Аўтаматычна разлічваецца на аснове даты плацяжу',
+                    'receiptNumber': 'Нумар квітанцыі:',
+                    'paymentMethod': 'Спосаб аплаты:',
+                    'notes': 'Заўвагі:',
+                    'cancel': 'Адмяніць',
+                    'add': 'Дадаць',
+                    'receipt': 'Квітанцыя',
+                    'method': 'Спосаб аплаты',
+                    'readings': 'Паказанні',
+                    'volumeLabel': 'Аб\'ём',
+                    'periodLabel': 'Перыяд',
+                    'dateLabel': 'Дата плацяжу',
+                    'perUnit': 'за адз.',
+                    'unknown': 'Невядома',
+                    'errorVolume': 'Аб\'ём павінен быць больш за нуль. Праверце паказанні лічыльніка.',
+                    'errorPaymentType': 'Тып плацяжу не паказаны',
+                    'errorDate': 'Дата плацяжу абавязковая'
                 }
             };
             
