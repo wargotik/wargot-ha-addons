@@ -5,6 +5,12 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.8] - 2025-01-28
+
+### Fixed
+- Исправлен доступ к Home Assistant Core API: используется прямой доступ через `/api/config` с заголовком `Authorization: Bearer`
+- Включен `homeassistant_api: true` в конфигурации аддона для доступа к API Home Assistant
+
 ## [0.4.7] - 2025-01-28
 
 ### Fixed
@@ -224,6 +230,7 @@
 
 ---
 
+[0.4.8]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.4...v0.4.5

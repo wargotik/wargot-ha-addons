@@ -1,6 +1,6 @@
 {
   "name": "Utilities Tracker",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "slug": "wg-hassio-communal-apartment",
   "description": "Add-on for tracking utility payments (electricity, gas, water) with a web interface and integration with Home Assistant Energy Dashboard.",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-ozon",
@@ -9,7 +9,7 @@
   "boot": "auto",
   "hassio_api": true,
   "hassio_role": "default",
-  "homeassistant_api": false,
+  "homeassistant_api": true,
   "host_network": false,
   "ingress": true,
   "ingress_port": 8099,

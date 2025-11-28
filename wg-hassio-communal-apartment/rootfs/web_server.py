@@ -265,23 +265,18 @@ async def get_config(request: web.Request) -> web.Response:
             try:
                 import aiohttp
                 async with aiohttp.ClientSession() as session:
-                    # Use X-Supervisor-Token header for Supervisor API
-                    headers = {"X-Supervisor-Token": ha_token}
-                    
-                    # Try Supervisor API endpoint first
-                    supervisor_url = os.environ.get("SUPERVISOR_URL", "http://supervisor")
-                    api_url = f"{supervisor_url}/api/hassio/core/config"
-                    _LOGGER.debug("Making request to Supervisor API: %s with X-Supervisor-Token header", api_url)
+                    # Try direct Home Assistant Core API access
+                    # Use Authorization header with Bearer token for Home Assistant API
+                    headers = {"Authorization": f"Bearer {ha_token}"}
+                    core_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
+                    api_url = f"{core_url}/api/config"
+                    _LOGGER.debug("Making request to HA Core API: %s with Authorization header", api_url)
                     async with session.get(api_url, headers=headers) as resp:
                         response_text = await resp.text()
-                        _LOGGER.debug("Supervisor API response status: %s, body: %s", resp.status, response_text[:200])
+                        _LOGGER.debug("HA Core API response status: %s, body: %s", resp.status, response_text[:200])
                         
                         if resp.status == 200:
                             config_data = await resp.json()
-                            # Supervisor API returns config in 'data' field
-                            if isinstance(config_data, dict) and "data" in config_data:
-                                config_data = config_data["data"]
-                            
                             currency = config_data.get("currency", currency)
                             # Get language from HA config
                             ha_language = config_data.get("language", "en")
@@ -292,7 +287,7 @@ async def get_config(request: web.Request) -> web.Response:
                             _LOGGER.info("Successfully retrieved HA config - currency: %s, language: %s (from HA: %s)", 
                                        currency, language, ha_language)
                         else:
-                            _LOGGER.warning("Supervisor API returned status %s, response: %s, using defaults - currency: %s, language: %s", 
+                            _LOGGER.warning("HA Core API returned status %s, response: %s, using defaults - currency: %s, language: %s", 
                                           resp.status, response_text[:200], currency, language)
             except Exception as api_err:
                 _LOGGER.warning("Could not get config from HA API: %s, using defaults - currency: %s, language: %s", 
