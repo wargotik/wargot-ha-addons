@@ -5,6 +5,12 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [0.4.7] - 2025-01-28
+
+### Fixed
+- Исправлен endpoint для получения конфигурации Home Assistant: используется `/api/hassio/core/config` вместо `/api/config`
+- Исправлена обработка ответа от Supervisor API (данные в поле "data")
+
 ## [0.4.6] - 2025-01-28
 
 ### Changed
@@ -218,6 +224,7 @@
 
 ---
 
+[0.4.7]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/wargotik/wargot-ha-addons/compare/v0.4.3...v0.4.4

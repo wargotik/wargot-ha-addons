@@ -69,7 +69,7 @@ If you encounter any issues, please check:
 
 ## Version
 
-Current version: 0.4.6
+Current version: 0.4.7
 
 ## Links
 
