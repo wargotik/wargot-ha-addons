@@ -1,12 +1,12 @@
-# Communal Apartment Integration for Home Assistant
+# Utilities Tracker Sensors Integration for Home Assistant
 
 [![GitHub Release][releases-shield]][releases] ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
-Home Assistant integration for the Communal Apartment add-on, providing sensors for the Energy Dashboard.
+Home Assistant integration for the Utilities Tracker add-on, providing sensors for the Energy Dashboard.
 
 ## Description
 
-This integration creates energy sensors for Home Assistant Energy Dashboard based on data from the Communal Apartment add-on. The integration reads data from the add-on's SQLite database and creates three sensors:
+This integration creates energy sensors for Home Assistant Energy Dashboard based on data from the Utilities Tracker add-on. The integration reads data from the add-on's SQLite database and creates three sensors:
 
 - **Electricity** (device_class: energy, unit: kWh)
 - **Gas** (device_class: gas, unit: m³)
@@ -19,7 +19,7 @@ This integration creates energy sensors for Home Assistant Energy Dashboard base
 1. Copy the `custom_components/wg-hassio-communal-apartment-integration/` folder to your Home Assistant `/config/custom_components/` directory
 2. Restart Home Assistant
 3. Go to **Settings** → **Devices & Services** → **Add Integration**
-4. Search for **Communal Apartment** and click **Configure**
+4. Search for **Utilities Tracker Sensors Integration** and click **Configure**
 5. Enter the database path (default: `/config/communal_apartment.db`)
 
 ### Option 2: Via HACS (Home Assistant Community Store)
@@ -27,7 +27,7 @@ This integration creates energy sensors for Home Assistant Energy Dashboard base
 1. Install HACS if you haven't already
 2. Go to HACS → **Integrations** → **Custom repositories**
 3. Add repository: `https://github.com/wargotik/wargot-ha-addons`
-4. Find **Communal Apartment** in HACS and install it
+4. Find **Utilities Tracker Sensors Integration** in HACS and install it
 5. Restart Home Assistant
 6. Add the integration via **Settings** → **Devices & Services**
 
@@ -61,7 +61,7 @@ Each sensor has the following attributes:
 ## Requirements
 
 - Home Assistant version 2022.5 or higher
-- Installed and running Communal Apartment add-on
+- Installed and running Utilities Tracker add-on
 - Access to the add-on's database
 
 ## Features
@@ -73,7 +73,7 @@ Each sensor has the following attributes:
 
 ## Version
 
-Current version: 0.1.2
+Current version: 0.1.3
 
 ## Support
 
