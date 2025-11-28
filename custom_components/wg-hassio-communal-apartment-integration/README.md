@@ -1,81 +1,99 @@
 # Communal Apartment Integration for Home Assistant
 
-Интеграция Home Assistant для работы с аддоном "Коммуналка" и отображения данных в Energy Dashboard.
+[![GitHub Release][releases-shield]][releases] ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
-## Описание
+Home Assistant integration for the Communal Apartment add-on, providing sensors for the Energy Dashboard.
 
-Эта интеграция создает сенсоры для Home Assistant Energy Dashboard на основе данных из аддона "Коммуналка". Интеграция читает данные из базы данных SQLite аддона и создает три сенсора:
+## Description
 
-- **Электроэнергия** (device_class: energy, единица: kWh)
-- **Газ** (device_class: gas, единица: m³)
-- **Вода** (device_class: water, единица: m³)
+This integration creates energy sensors for Home Assistant Energy Dashboard based on data from the Communal Apartment add-on. The integration reads data from the add-on's SQLite database and creates three sensors:
 
-## Установка
+- **Electricity** (device_class: energy, unit: kWh)
+- **Gas** (device_class: gas, unit: m³)
+- **Water** (device_class: water, unit: m³)
 
-### Вариант 1: Ручная установка
+## Installation
 
-1. Скопируйте папку `custom_components/communal_apartment/` в папку `/config/custom_components/` вашего Home Assistant
-2. Перезапустите Home Assistant
-3. Перейдите в **Настройки** → **Устройства и службы** → **Добавить интеграцию**
-4. Найдите **Communal Apartment** и нажмите **Настроить**
-5. Укажите путь к базе данных (по умолчанию `/config/communal_apartment.db`)
+### Option 1: Manual Installation
 
-### Вариант 2: Через HACS (Home Assistant Community Store)
+1. Copy the `custom_components/wg-hassio-communal-apartment-integration/` folder to your Home Assistant `/config/custom_components/` directory
+2. Restart Home Assistant
+3. Go to **Settings** → **Devices & Services** → **Add Integration**
+4. Search for **Communal Apartment** and click **Configure**
+5. Enter the database path (default: `/config/communal_apartment.db`)
 
-1. Установите HACS, если еще не установлен
-2. Перейдите в HACS → **Интеграции** → **Custom repositories**
-3. Добавьте репозиторий: `https://github.com/wargotik/wargot-ha-addons`
-4. Найдите **Communal Apartment** в HACS и установите
-5. Перезапустите Home Assistant
-6. Добавьте интеграцию через **Настройки** → **Устройства и службы**
+### Option 2: Via HACS (Home Assistant Community Store)
 
-## Конфигурация
+1. Install HACS if you haven't already
+2. Go to HACS → **Integrations** → **Custom repositories**
+3. Add repository: `https://github.com/wargotik/wargot-ha-addons`
+4. Find **Communal Apartment** in HACS and install it
+5. Restart Home Assistant
+6. Add the integration via **Settings** → **Devices & Services**
 
-При добавлении интеграции укажите путь к базе данных:
+## Configuration
 
-- **По умолчанию**: `/config/communal_apartment.db` (если база данных аддона смонтирована в `/config`)
-- **Альтернативный**: `/data/communal_apartment.db` (если база данных находится в `/data`)
+When adding the integration, specify the path to the database:
 
-## Использование
+- **Default**: `/config/communal_apartment.db` (if the add-on's database is mounted to `/config`)
+- **Alternative**: `/data/communal_apartment.db` (if the database is located in `/data`)
 
-После установки интеграции автоматически создаются три сенсора:
+## Usage
 
-- `sensor.elektroenergiya` - Электроэнергия (kWh)
-- `sensor.gaz` - Газ (m³)
-- `sensor.voda` - Вода (m³)
+After installing the integration, three sensors are automatically created:
 
-Эти сенсоры автоматически доступны для использования в **Energy Dashboard** Home Assistant.
+- `sensor.elektroenergiya` - Electricity (kWh)
+- `sensor.gaz` - Gas (m³)
+- `sensor.voda` - Water (m³)
 
-### Атрибуты сенсоров
+These sensors are automatically available for use in Home Assistant's **Energy Dashboard**.
 
-Каждый сенсор имеет следующие атрибуты:
+### Sensor Attributes
 
-- `total_amount` - Общая сумма платежей
-- `last_payment_date` - Дата последнего платежа
-- `last_payment_amount` - Сумма последнего платежа
-- `last_payment_volume` - Объем последнего платежа
-- `last_payment_period` - Период последнего платежа
+Each sensor has the following attributes:
 
-## Требования
+- `total_amount` - Total amount of payments
+- `last_payment_date` - Date of the last payment
+- `last_payment_amount` - Amount of the last payment
+- `last_payment_volume` - Volume of the last payment
+- `last_payment_period` - Period of the last payment
 
-- Home Assistant версии 2022.5 или выше
-- Установленный и запущенный аддон "Коммуналка"
-- Доступ к базе данных аддона
+## Requirements
 
-## Версия
+- Home Assistant version 2022.5 or higher
+- Installed and running Communal Apartment add-on
+- Access to the add-on's database
 
-Текущая версия: 0.1.1
+## Features
 
-## Поддержка
+- **Energy Dashboard Integration**: Automatically creates sensors compatible with Home Assistant Energy Dashboard
+- **Real-time Updates**: Data is updated every 5 minutes
+- **Multiple Payment Types**: Supports electricity, gas, and water payments
+- **Detailed Attributes**: Provides comprehensive information about payments
 
-При возникновении проблем проверьте:
+## Version
 
-1. Правильность пути к базе данных
-2. Доступность базы данных для чтения
-3. Логи Home Assistant на наличие ошибок
+Current version: 0.1.2
 
-## Ссылки
+## Support
 
-- [Репозиторий аддона](https://github.com/wargotik/wargot-ha-addons)
+If you encounter any issues, please check:
+
+1. Correctness of the database path
+2. Database file accessibility for reading
+3. Home Assistant logs for errors
+
+## Links
+
+- [Add-on Repository](https://github.com/wargotik/wargot-ha-addons)
 - [Issues](https://github.com/wargotik/wargot-ha-addons/issues)
 
+---
+
+[releases-shield]: https://img.shields.io/github/v/release/wargotik/wargot-ha-addons.svg?style=flat-square
+[releases]: https://github.com/wargotik/wargot-ha-addons/releases
+[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg?style=flat-square
+[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg?style=flat-square
+[armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg?style=flat-square
+[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg?style=flat-square
+[i386-shield]: https://img.shields.io/badge/i386-yes-green.svg?style=flat-square
