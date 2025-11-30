@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-01-28
+
+### Added
+- Detailed logging for sensor list requests
+- Logging of request start, HA API calls, and response processing
+- Debug logging for each found sensor with entity_id, name, and state
+- Logging of total states received and processed sensors count
+
 ## [0.1.3] - 2025-01-28
 
 ### Added
@@ -27,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.1.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.4
 [0.1.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.3
 [0.1.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.2
 [0.1.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.1

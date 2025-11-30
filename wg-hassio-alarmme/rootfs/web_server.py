@@ -210,6 +210,7 @@ async def health_handler(request):
 
 async def get_sensors_handler(request):
     """Get motion and occupancy sensors from Home Assistant."""
+    _LOGGER.info("[web_server] Received request to get sensors list")
     try:
         ha_token = os.environ.get("SUPERVISOR_TOKEN")
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
@@ -218,14 +219,21 @@ async def get_sensors_handler(request):
         occupancy_sensors = []
         
         if ha_token:
+            _LOGGER.debug("[web_server] SUPERVISOR_TOKEN found, requesting sensors from HA API: %s", ha_url)
             try:
                 async with aiohttp.ClientSession() as session:
                     headers = {"Authorization": f"Bearer {ha_token}"}
                     api_url = f"{ha_url}/api/states"
                     
+                    _LOGGER.debug("[web_server] Making request to HA API: %s", api_url)
                     async with session.get(api_url, headers=headers) as resp:
+                        response_text = await resp.text()
+                        _LOGGER.debug("[web_server] HA API response status: %s", resp.status)
+                        
                         if resp.status == 200:
                             states = await resp.json()
+                            total_states = len(states)
+                            _LOGGER.info("[web_server] Received %d total states from HA API", total_states)
                             
                             for state in states:
                                 entity_id = state.get("entity_id", "")
@@ -239,29 +247,36 @@ async def get_sensors_handler(request):
                                         "name": friendly_name,
                                         "state": state.get("state", "unknown")
                                     })
+                                    _LOGGER.debug("[web_server] Found motion sensor: %s (%s) - state: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"))
                                 elif device_class == "occupancy":
                                     occupancy_sensors.append({
                                         "entity_id": entity_id,
                                         "name": friendly_name,
                                         "state": state.get("state", "unknown")
                                     })
+                                    _LOGGER.debug("[web_server] Found occupancy sensor: %s (%s) - state: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"))
                             
-                            _LOGGER.info("Found %d motion sensors and %d occupancy sensors", 
+                            _LOGGER.info("[web_server] Successfully processed sensors - motion: %d, occupancy: %d", 
                                        len(motion_sensors), len(occupancy_sensors))
                         else:
-                            _LOGGER.warning("Failed to get states from HA API: status %s", resp.status)
+                            _LOGGER.warning("[web_server] HA API returned status %s, response: %s", 
+                                          resp.status, response_text[:200])
             except Exception as api_err:
-                _LOGGER.error("Error getting sensors from HA API: %s", api_err, exc_info=True)
+                _LOGGER.error("[web_server] Error getting sensors from HA API: %s", api_err, exc_info=True)
         else:
-            _LOGGER.warning("SUPERVISOR_TOKEN not found, cannot fetch sensors")
+            _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot fetch sensors")
         
+        _LOGGER.info("[web_server] Returning sensors list - motion: %d, occupancy: %d", 
+                    len(motion_sensors), len(occupancy_sensors))
         return web.json_response({
             "success": True,
             "motion_sensors": motion_sensors,
             "occupancy_sensors": occupancy_sensors
         })
     except Exception as err:
-        _LOGGER.error("Error getting sensors: %s", err, exc_info=True)
+        _LOGGER.error("[web_server] Error getting sensors: %s", err, exc_info=True)
         return web.json_response({
             "success": False,
             "error": str(err),
