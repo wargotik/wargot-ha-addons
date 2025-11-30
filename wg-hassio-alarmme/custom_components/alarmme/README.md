@@ -30,5 +30,8 @@ The switches can be used in automations, scripts, and Lovelace cards just like a
 ## Requirements
 
 - Home Assistant 2023.1 or later
-- AlarmMe add-on (for state monitoring)
+- AlarmMe add-on (recommended, for state monitoring)
+  - The integration will check if the add-on is available on startup
+  - If the add-on is not running, a warning will be logged
+  - Switches will still be created, but the add-on won't be able to monitor their state
 
