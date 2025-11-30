@@ -18,6 +18,7 @@ class VirtualSwitches:
         self.switches = {
             "away": {
                 "entity_id": "input_boolean.alarmme_away_mode",
+                "unique_id": "alarmme_away_mode",
                 "name": "Away Mode",
                 "friendly_name": "Режим отсутствия",
                 "icon": "mdi:shield-home",
@@ -25,6 +26,7 @@ class VirtualSwitches:
             },
             "night": {
                 "entity_id": "input_boolean.alarmme_night_mode",
+                "unique_id": "alarmme_night_mode",
                 "name": "Night Mode",
                 "friendly_name": "Ночной режим",
                 "icon": "mdi:weather-night",
@@ -79,11 +81,13 @@ class VirtualSwitches:
             try:
                 # Create input_boolean entity via REST API
                 # input_boolean can be created by setting its state
+                # unique_id is required for UI management
                 entity_data = {
                     "state": switch_data["state"],
                     "attributes": {
                         "friendly_name": switch_data["friendly_name"],
-                        "icon": switch_data["icon"]
+                        "icon": switch_data["icon"],
+                        "unique_id": switch_data.get("unique_id", switch_data["entity_id"].split(".")[1])
                     }
                 }
                 
