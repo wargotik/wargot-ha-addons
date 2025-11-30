@@ -175,12 +175,18 @@ async def index_handler(request):
                     <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
                         <div style="font-weight: 600; margin-bottom: 8px;">Away Mode</div>
                         <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Режим отсутствия</div>
-                        <div id="switch-away-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white;">Загрузка...</div>
+                        <div style="margin-bottom: 8px;">
+                            <div id="switch-away-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
+                            <span id="switch-away-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
+                        </div>
                     </div>
                     <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
                         <div style="font-weight: 600; margin-bottom: 8px;">Night Mode</div>
                         <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Ночной режим</div>
-                        <div id="switch-night-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white;">Загрузка...</div>
+                        <div style="margin-bottom: 8px;">
+                            <div id="switch-night-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
+                            <span id="switch-night-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -301,6 +307,12 @@ async def index_handler(request):
                             updateSwitchState('away', data.switches.away || 'OFF');
                             updateSwitchState('night', data.switches.night || 'OFF');
                             updateMqttBadge(data.mqtt_connected !== undefined ? data.mqtt_connected : false);
+                            
+                            // Update installation status
+                            if (data.switches_installed) {
+                                updateSwitchInstalled('away', data.switches_installed.away);
+                                updateSwitchInstalled('night', data.switches_installed.night);
+                            }
                         }
                     }
                 } catch (error) {
@@ -316,6 +328,19 @@ async def index_handler(request):
                 const isOn = state === 'ON';
                 element.textContent = isOn ? 'ВКЛ' : 'ВЫКЛ';
                 element.style.backgroundColor = isOn ? '#27ae60' : '#7f8c8d';
+            }
+            
+            function updateSwitchInstalled(switchType, installed) {
+                const element = document.getElementById('switch-' + switchType + '-installed');
+                if (!element) return;
+                
+                if (installed) {
+                    element.textContent = '✓ Установлен';
+                    element.style.color = '#27ae60';
+                } else {
+                    element.textContent = '✗ Не установлен';
+                    element.style.color = '#e74c3c';
+                }
             }
             
             function updateMqttBadge(connected) {

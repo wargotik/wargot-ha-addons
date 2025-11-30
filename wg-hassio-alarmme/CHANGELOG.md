@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] - 2025-01-28
+
+### Added
+- Display switch installation status in UI
+- Check if virtual switches are installed in Home Assistant via API
+- Visual indicator (✓/✗) showing whether each switch is installed or not
+- Status updates automatically every 5 seconds along with switch states
+
 ## [0.3.7] - 2025-01-28
 
 ### Fixed
@@ -169,6 +177,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.8
 [0.3.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.7
 [0.3.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.6
 [0.3.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.5
