@@ -20,7 +20,7 @@ class MQTTSwitches:
     
     def __init__(self):
         """Initialize MQTT switches manager."""
-        self.mqtt_host = os.environ.get("MQTT_HOST", "core-mosquitto")
+        self.mqtt_host = os.environ.get("MQTT_HOST", "localhost")
         self.mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
         self.mqtt_user = os.environ.get("MQTT_USER", "")
         self.mqtt_password = os.environ.get("MQTT_PASSWORD", "")
