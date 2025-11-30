@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2025-01-28
+
+### Added
+- Support for tracking 4 types of sensors:
+  - **Motion** (device_class: motion) - Classic PIR motion detection
+  - **Moving** (device_class: moving) - Moving object detection (cameras/radars)
+  - **Occupancy** (device_class: occupancy) - Zone occupancy with delay (motion+presence combo)
+  - **Presence** (device_class: presence) - Static human presence (mmWave detects breathing)
+- Updated web interface to display 4 columns of sensors
+- Responsive grid layout: 2 columns on tablets, 4 columns on desktop
+
+### Changed
+- Sensor tracking expanded from 2 types to 4 types
+- Improved grid layout for better sensor display
+
 ## [0.1.9] - 2025-01-28
 
 ### Fixed
@@ -76,6 +91,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.2.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.0
 [0.1.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.9
 [0.1.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.8
 [0.1.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.7

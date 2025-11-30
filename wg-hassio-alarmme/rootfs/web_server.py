@@ -43,9 +43,14 @@ async def index_handler(request):
             }
             .sensors-grid {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 30px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
                 margin-top: 30px;
+            }
+            @media (min-width: 1200px) {
+                .sensors-grid {
+                    grid-template-columns: repeat(4, 1fr);
+                }
             }
             .sensor-column {
                 background-color: #f8f9fa;
@@ -124,12 +129,20 @@ async def index_handler(request):
             <p>AlarmMe add-on is running.</p>
             <div class="sensors-grid">
                 <div class="sensor-column">
-                    <h3>Датчики движения</h3>
+                    <h3>Motion<br><small>(PIR движение)</small></h3>
                     <div id="motion-sensors" class="loading">Загрузка...</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>Датчики присутствия</h3>
+                    <h3>Moving<br><small>(движущийся объект)</small></h3>
+                    <div id="moving-sensors" class="loading">Загрузка...</div>
+                </div>
+                <div class="sensor-column">
+                    <h3>Occupancy<br><small>(занятость зоны)</small></h3>
                     <div id="occupancy-sensors" class="loading">Загрузка...</div>
+                </div>
+                <div class="sensor-column">
+                    <h3>Presence<br><small>(статическое присутствие)</small></h3>
+                    <div id="presence-sensors" class="loading">Загрузка...</div>
                 </div>
             </div>
         </div>
@@ -146,10 +159,11 @@ async def index_handler(request):
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('Error response:', response.status, errorText);
-                        document.getElementById('motion-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
-                        document.getElementById('occupancy-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
+                        const errorMsg = '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
+                        document.getElementById('motion-sensors').innerHTML = errorMsg;
+                        document.getElementById('moving-sensors').innerHTML = errorMsg;
+                        document.getElementById('occupancy-sensors').innerHTML = errorMsg;
+                        document.getElementById('presence-sensors').innerHTML = errorMsg;
                         return;
                     }
                     
@@ -157,21 +171,25 @@ async def index_handler(request):
                     console.log('Received data:', data);
                     
                     if (data.success) {
-                        renderSensors('motion-sensors', data.motion_sensors);
-                        renderSensors('occupancy-sensors', data.occupancy_sensors);
+                        renderSensors('motion-sensors', data.motion_sensors || []);
+                        renderSensors('moving-sensors', data.moving_sensors || []);
+                        renderSensors('occupancy-sensors', data.occupancy_sensors || []);
+                        renderSensors('presence-sensors', data.presence_sensors || []);
                     } else {
                         console.error('API returned success=false:', data.error);
-                        document.getElementById('motion-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
-                        document.getElementById('occupancy-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
+                        const errorMsg = '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
+                        document.getElementById('motion-sensors').innerHTML = errorMsg;
+                        document.getElementById('moving-sensors').innerHTML = errorMsg;
+                        document.getElementById('occupancy-sensors').innerHTML = errorMsg;
+                        document.getElementById('presence-sensors').innerHTML = errorMsg;
                     }
                 } catch (error) {
                     console.error('Error loading sensors:', error);
-                    document.getElementById('motion-sensors').innerHTML = 
-                        '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
-                    document.getElementById('occupancy-sensors').innerHTML = 
-                        '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
+                    const errorMsg = '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
+                    document.getElementById('motion-sensors').innerHTML = errorMsg;
+                    document.getElementById('moving-sensors').innerHTML = errorMsg;
+                    document.getElementById('occupancy-sensors').innerHTML = errorMsg;
+                    document.getElementById('presence-sensors').innerHTML = errorMsg;
                 }
             }
             
@@ -253,7 +271,7 @@ async def send_notification(service_name: str, message: str, title: str = None) 
 
 
 async def get_sensors_handler(request):
-    """Get motion and occupancy sensors from Home Assistant."""
+    """Get motion, moving, occupancy and presence sensors from Home Assistant."""
     client_ip = request.remote
     _LOGGER.info("[web_server] Received request to get sensors list from %s", client_ip)
     try:
@@ -261,7 +279,9 @@ async def get_sensors_handler(request):
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         
         motion_sensors = []
+        moving_sensors = []
         occupancy_sensors = []
+        presence_sensors = []
         
         if ha_token:
             _LOGGER.debug("[web_server] SUPERVISOR_TOKEN found, requesting sensors from HA API: %s", ha_url)
@@ -299,6 +319,14 @@ async def get_sensors_handler(request):
                                     })
                                     _LOGGER.debug("[web_server] Found motion sensor: %s (%s) - state: %s", 
                                                  friendly_name, entity_id, state.get("state", "unknown"))
+                                elif device_class == "moving":
+                                    moving_sensors.append({
+                                        "entity_id": entity_id,
+                                        "name": friendly_name,
+                                        "state": state.get("state", "unknown")
+                                    })
+                                    _LOGGER.debug("[web_server] Found moving sensor: %s (%s) - state: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"))
                                 elif device_class == "occupancy":
                                     occupancy_sensors.append({
                                         "entity_id": entity_id,
@@ -307,9 +335,17 @@ async def get_sensors_handler(request):
                                     })
                                     _LOGGER.debug("[web_server] Found occupancy sensor: %s (%s) - state: %s", 
                                                  friendly_name, entity_id, state.get("state", "unknown"))
+                                elif device_class == "presence":
+                                    presence_sensors.append({
+                                        "entity_id": entity_id,
+                                        "name": friendly_name,
+                                        "state": state.get("state", "unknown")
+                                    })
+                                    _LOGGER.debug("[web_server] Found presence sensor: %s (%s) - state: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"))
                             
-                            _LOGGER.info("[web_server] Successfully processed sensors - motion: %d, occupancy: %d", 
-                                       len(motion_sensors), len(occupancy_sensors))
+                            _LOGGER.info("[web_server] Successfully processed sensors - motion: %d, moving: %d, occupancy: %d, presence: %d", 
+                                       len(motion_sensors), len(moving_sensors), len(occupancy_sensors), len(presence_sensors))
                         else:
                             _LOGGER.warning("[web_server] HA API returned status %s, response: %s", 
                                           resp.status, response_text[:200])
@@ -318,12 +354,14 @@ async def get_sensors_handler(request):
         else:
             _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot fetch sensors")
         
-        _LOGGER.info("[web_server] Returning sensors list - motion: %d, occupancy: %d", 
-                    len(motion_sensors), len(occupancy_sensors))
+        _LOGGER.info("[web_server] Returning sensors list - motion: %d, moving: %d, occupancy: %d, presence: %d", 
+                    len(motion_sensors), len(moving_sensors), len(occupancy_sensors), len(presence_sensors))
         return web.json_response({
             "success": True,
             "motion_sensors": motion_sensors,
-            "occupancy_sensors": occupancy_sensors
+            "moving_sensors": moving_sensors,
+            "occupancy_sensors": occupancy_sensors,
+            "presence_sensors": presence_sensors
         })
     except Exception as err:
         _LOGGER.error("[web_server] Error getting sensors: %s", err, exc_info=True)
@@ -331,7 +369,9 @@ async def get_sensors_handler(request):
             "success": False,
             "error": str(err),
             "motion_sensors": [],
-            "occupancy_sensors": []
+            "moving_sensors": [],
+            "occupancy_sensors": [],
+            "presence_sensors": []
         }, status=500)
 
 
