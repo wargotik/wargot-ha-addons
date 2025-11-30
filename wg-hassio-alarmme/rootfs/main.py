@@ -40,14 +40,14 @@ async def main():
     
     # Initialize MQTT switches
     mqtt_switches = MQTTSwitches()
-    # Always pass mqtt_switches to web_server, even if connection failed
-    # This allows UI to show default states
-    set_mqtt_switches(mqtt_switches)
-    
-    if await mqtt_switches.start_async():
-        _LOGGER.info("MQTT switches initialized and connected")
+    if mqtt_switches.start():
+        _LOGGER.info("MQTT switches initialized")
+        # Pass mqtt_switches to web_server
+        set_mqtt_switches(mqtt_switches)
     else:
-        _LOGGER.warning("Failed to connect to MQTT broker, switches will show default states")
+        _LOGGER.warning("Failed to initialize MQTT switches")
+        # Still pass to web_server for UI to show default states
+        set_mqtt_switches(mqtt_switches)
     
     # Send notification on startup
     await send_notification("mobile_app_iphone", "AlarmMe add-on started")

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2025-01-28
+
+### Changed
+- Reverted to simpler MQTT connection logic (similar to 0.3.1)
+- Removed complex Supervisor API credential fetching that was causing connection issues
+- Simplified MQTT initialization - uses direct connection to core-mosquitto
+- Removed async start_async method, using simple start() method
+
 ## [0.3.4] - 2025-01-28
 
 ### Added
@@ -148,6 +156,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.5
 [0.3.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.4
 [0.3.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.3
 [0.3.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.2
