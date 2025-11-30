@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import aiohttp
 from typing import Dict, Optional, Callable
 
 try:
@@ -20,10 +21,15 @@ class MQTTSwitches:
     
     def __init__(self):
         """Initialize MQTT switches manager."""
-        self.mqtt_host = os.environ.get("MQTT_HOST", "core-mosquitto")
+        # Try to get from environment first
+        self.mqtt_host = os.environ.get("MQTT_HOST")
         self.mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
         self.mqtt_user = os.environ.get("MQTT_USER", "")
         self.mqtt_password = os.environ.get("MQTT_PASSWORD", "")
+        
+        # Default to localhost if not set (for add-ons, MQTT is usually on localhost)
+        if not self.mqtt_host:
+            self.mqtt_host = "localhost"
         
         self.switches = {
             "away": {
@@ -65,7 +71,17 @@ class MQTTSwitches:
             # Publish discovery messages
             asyncio.create_task(self._publish_discovery())
         else:
-            _LOGGER.error("[mqtt_switches] Failed to connect to MQTT broker, return code: %s", rc)
+            # MQTT error codes
+            error_messages = {
+                1: "incorrect protocol version",
+                2: "invalid client identifier",
+                3: "server unavailable",
+                4: "bad username or password",
+                5: "not authorised"
+            }
+            error_msg = error_messages.get(rc, f"unknown error ({rc})")
+            _LOGGER.error("[mqtt_switches] Failed to connect to MQTT broker: %s (code: %s). Host: %s:%s, User: %s", 
+                         error_msg, rc, self.mqtt_host, self.mqtt_port, self.mqtt_user or "none")
             self._connected = False
     
     def _on_disconnect(self, client, userdata, rc):
@@ -163,6 +179,81 @@ class MQTTSwitches:
             _LOGGER.error("[mqtt_switches] Failed to publish state for %s, error: %s", 
                         switch_data["name"], result.rc)
     
+    async def _get_mqtt_credentials(self):
+        """Get MQTT credentials from Supervisor API or use defaults."""
+        ha_token = os.environ.get("SUPERVISOR_TOKEN")
+        ha_url = os.environ.get("HASSIO_URL", "http://supervisor")
+        
+        if not ha_token:
+            _LOGGER.warning("[mqtt_switches] SUPERVISOR_TOKEN not found, using defaults (localhost)")
+            # Default to localhost for add-ons
+            if not self.mqtt_host or self.mqtt_host == "core-mosquitto":
+                self.mqtt_host = "localhost"
+            return False
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {"Authorization": f"Bearer {ha_token}"}
+                
+                # Try multiple API endpoints
+                endpoints = [
+                    f"{ha_url}/services/mqtt",
+                    f"{ha_url}/api/hassio/services/mqtt",
+                    f"{ha_url}/core/api/config"
+                ]
+                
+                for api_url in endpoints:
+                    try:
+                        async with session.get(api_url, headers=headers) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                _LOGGER.debug("[mqtt_switches] Got response from %s: %s", api_url, data)
+                                
+                                # Try different response formats
+                                mqtt_data = None
+                                if isinstance(data, dict):
+                                    if "data" in data:
+                                        mqtt_data = data["data"]
+                                    elif "mqtt" in data:
+                                        mqtt_data = data["mqtt"]
+                                    elif "host" in data:
+                                        mqtt_data = data
+                                
+                                if mqtt_data:
+                                    if "host" in mqtt_data:
+                                        self.mqtt_host = mqtt_data["host"]
+                                    if "port" in mqtt_data:
+                                        self.mqtt_port = int(mqtt_data["port"])
+                                    if "username" in mqtt_data:
+                                        self.mqtt_user = mqtt_data["username"]
+                                    if "password" in mqtt_data:
+                                        self.mqtt_password = mqtt_data["password"]
+                                    _LOGGER.info("[mqtt_switches] Got MQTT credentials from %s", api_url)
+                                    return True
+                    except Exception as e:
+                        _LOGGER.debug("[mqtt_switches] Failed to get credentials from %s: %s", api_url, e)
+                        continue
+        except Exception as err:
+            _LOGGER.warning("[mqtt_switches] Could not get MQTT credentials from Supervisor API: %s", err)
+        
+        # Fallback to localhost if not set
+        if not self.mqtt_host or self.mqtt_host == "core-mosquitto":
+            self.mqtt_host = "localhost"
+            _LOGGER.info("[mqtt_switches] Using default MQTT host: localhost")
+        
+        return False
+    
+    async def start_async(self):
+        """Start MQTT client (async version with credential fetching)."""
+        if not MQTT_AVAILABLE or mqtt is None:
+            _LOGGER.error("[mqtt_switches] paho-mqtt not installed. Install it: pip install paho-mqtt")
+            return False
+        
+        # Try to get credentials from Supervisor API
+        await self._get_mqtt_credentials()
+        
+        return self.start()
+    
     def start(self):
         """Start MQTT client."""
         if not MQTT_AVAILABLE or mqtt is None:
@@ -172,8 +263,13 @@ class MQTTSwitches:
         try:
             self.client = mqtt.Client(client_id="alarmme_addon")
             
-            if self.mqtt_user and self.mqtt_password:
-                self.client.username_pw_set(self.mqtt_user, self.mqtt_password)
+            # Always set username/password if available, even if empty
+            # Some MQTT brokers require authentication
+            if self.mqtt_user or self.mqtt_password:
+                self.client.username_pw_set(self.mqtt_user or None, self.mqtt_password or None)
+                _LOGGER.info("[mqtt_switches] Using MQTT authentication: user=%s", self.mqtt_user or "none")
+            else:
+                _LOGGER.info("[mqtt_switches] Connecting without MQTT authentication")
             
             self.client.on_connect = self._on_connect
             self.client.on_disconnect = self._on_disconnect

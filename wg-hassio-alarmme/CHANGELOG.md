@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2025-01-28
+
+### Fixed
+- Improved MQTT connection error handling
+- Added automatic MQTT credentials fetching from Supervisor API
+- Default MQTT host changed to localhost (for add-ons running in Supervisor)
+- Better error messages for MQTT connection failures
+- Multiple fallback endpoints for getting MQTT credentials
+
 ## [0.3.1] - 2025-01-28
 
 ### Fixed
@@ -123,6 +132,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.2
 [0.3.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.1
 [0.3.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.0
 [0.2.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.1

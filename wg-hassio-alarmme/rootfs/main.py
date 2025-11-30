@@ -40,7 +40,7 @@ async def main():
     
     # Initialize MQTT switches
     mqtt_switches = MQTTSwitches()
-    if mqtt_switches.start():
+    if await mqtt_switches.start_async():
         _LOGGER.info("MQTT switches initialized")
         # Pass mqtt_switches to web_server
         set_mqtt_switches(mqtt_switches)
