@@ -17,14 +17,14 @@ class VirtualSwitches:
         self.ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         self.switches = {
             "away": {
-                "entity_id": "switch.alarmme_away_mode",
+                "entity_id": "input_boolean.alarmme_away_mode",
                 "name": "Away Mode",
                 "friendly_name": "Режим отсутствия",
                 "icon": "mdi:shield-home",
                 "state": "off"
             },
             "night": {
-                "entity_id": "switch.alarmme_night_mode",
+                "entity_id": "input_boolean.alarmme_night_mode",
                 "name": "Night Mode",
                 "friendly_name": "Ночной режим",
                 "icon": "mdi:weather-night",
@@ -63,7 +63,7 @@ class VirtualSwitches:
         return success
     
     async def create_switches(self) -> bool:
-        """Create virtual switches in Home Assistant."""
+        """Create input_boolean switches in Home Assistant."""
         if not self.ha_token:
             _LOGGER.warning("[switches] SUPERVISOR_TOKEN not found, cannot create switches")
             return False
@@ -77,7 +77,8 @@ class VirtualSwitches:
         success = True
         for switch_type, switch_data in self.switches.items():
             try:
-                # Create switch entity via REST API
+                # Create input_boolean entity via REST API
+                # input_boolean can be created by setting its state
                 entity_data = {
                     "state": switch_data["state"],
                     "attributes": {
@@ -87,28 +88,35 @@ class VirtualSwitches:
                 }
                 
                 api_url = f"{self.ha_url}/api/states/{switch_data['entity_id']}"
-                _LOGGER.info("[switches] Creating switch: %s", switch_data["entity_id"])
+                _LOGGER.info("[switches] Creating input_boolean: %s", switch_data["entity_id"])
                 
                 async with session.post(api_url, headers=headers, json=entity_data) as resp:
                     if resp.status in (200, 201):
-                        _LOGGER.info("[switches] Successfully created switch: %s", switch_data["entity_id"])
+                        _LOGGER.info("[switches] Successfully created input_boolean: %s", switch_data["entity_id"])
                         # Get current state from response
                         if resp.status == 200:
                             data = await resp.json()
                             switch_data["state"] = data.get("state", "off")
                     else:
                         response_text = await resp.text()
-                        _LOGGER.warning("[switches] Failed to create switch %s: status %s, response: %s",
+                        _LOGGER.warning("[switches] Failed to create input_boolean %s: status %s, response: %s",
                                       switch_data["entity_id"], resp.status, response_text[:200])
-                        success = False
+                        # Try to check if it already exists
+                        async with session.get(api_url, headers=headers) as check_resp:
+                            if check_resp.status == 200:
+                                _LOGGER.info("[switches] input_boolean %s already exists", switch_data["entity_id"])
+                                data = await check_resp.json()
+                                switch_data["state"] = data.get("state", "off")
+                            else:
+                                success = False
             except Exception as err:
-                _LOGGER.error("[switches] Error creating switch %s: %s", switch_data["entity_id"], err, exc_info=True)
+                _LOGGER.error("[switches] Error creating input_boolean %s: %s", switch_data["entity_id"], err, exc_info=True)
                 success = False
         
         return success
     
     async def update_switch_state(self, switch_type: str, state: str) -> bool:
-        """Update switch state in Home Assistant."""
+        """Update input_boolean state in Home Assistant using services."""
         if switch_type not in self.switches:
             _LOGGER.error("[switches] Unknown switch type: %s", switch_type)
             return False
@@ -118,8 +126,6 @@ class VirtualSwitches:
             return False
         
         switch_data = self.switches[switch_type]
-        switch_data["state"] = state
-        
         session = await self._get_session()
         headers = {
             "Authorization": f"Bearer {self.ha_token}",
@@ -127,28 +133,30 @@ class VirtualSwitches:
         }
         
         try:
-            entity_data = {
-                "state": state,
-                "attributes": {
-                    "friendly_name": switch_data["friendly_name"],
-                    "icon": switch_data["icon"]
-                }
+            # Use input_boolean service to toggle state
+            service = "turn_on" if state.lower() in ("on", "true", "1") else "turn_off"
+            service_url = f"{self.ha_url}/api/services/input_boolean/{service}"
+            
+            service_data = {
+                "entity_id": switch_data["entity_id"]
             }
             
-            api_url = f"{self.ha_url}/api/states/{switch_data['entity_id']}"
-            _LOGGER.debug("[switches] Updating switch %s to state: %s", switch_data["entity_id"], state)
+            _LOGGER.debug("[switches] Updating input_boolean %s to state: %s (service: %s)", 
+                         switch_data["entity_id"], state, service)
             
-            async with session.post(api_url, headers=headers, json=entity_data) as resp:
-                if resp.status in (200, 201):
-                    _LOGGER.info("[switches] Successfully updated switch %s to %s", switch_data["entity_id"], state)
+            async with session.post(service_url, headers=headers, json=service_data) as resp:
+                if resp.status == 200:
+                    _LOGGER.info("[switches] Successfully updated input_boolean %s to %s", 
+                               switch_data["entity_id"], state)
+                    switch_data["state"] = state.lower()
                     return True
                 else:
                     response_text = await resp.text()
-                    _LOGGER.warning("[switches] Failed to update switch %s: status %s, response: %s",
+                    _LOGGER.warning("[switches] Failed to update input_boolean %s: status %s, response: %s",
                                   switch_data["entity_id"], resp.status, response_text[:200])
                     return False
         except Exception as err:
-            _LOGGER.error("[switches] Error updating switch %s: %s", switch_data["entity_id"], err, exc_info=True)
+            _LOGGER.error("[switches] Error updating input_boolean %s: %s", switch_data["entity_id"], err, exc_info=True)
             return False
     
     async def get_switch_state_from_ha(self, switch_type: str) -> Optional[str]:

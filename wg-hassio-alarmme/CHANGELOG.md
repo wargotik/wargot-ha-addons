@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2025-01-28
+
+### Changed
+- Switched from `switch` to `input_boolean` domain for virtual switches
+- Virtual switches now use `input_boolean.alarmme_away_mode` and `input_boolean.alarmme_night_mode`
+- Switches now have built-in toggle logic - can be switched directly from Home Assistant UI
+- State updates now use `input_boolean/turn_on` and `input_boolean/turn_off` services instead of direct state updates
+
+### Fixed
+- Switches can now be toggled from Home Assistant UI (previously only worked via API)
+- Better state management using input_boolean services
+
 ## [0.4.0] - 2025-01-28
 
 ### Changed
@@ -204,6 +216,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.4.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.1
 [0.4.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.0
 [0.3.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.9
 [0.3.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.8

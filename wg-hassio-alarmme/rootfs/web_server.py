@@ -553,8 +553,8 @@ async def get_switches_handler(request):
         default_states = {"away": "OFF", "night": "OFF"}
         
         # Check if switches exist in Home Assistant
-        away_exists = await _check_switch_exists("switch.alarmme_away_mode")
-        night_exists = await _check_switch_exists("switch.alarmme_night_mode")
+        away_exists = await _check_switch_exists("input_boolean.alarmme_away_mode")
+        night_exists = await _check_switch_exists("input_boolean.alarmme_night_mode")
         
         if _virtual_switches is None:
             _LOGGER.debug("[web_server] Virtual switches not initialized, returning default states")
