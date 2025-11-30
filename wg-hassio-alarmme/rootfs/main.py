@@ -5,8 +5,8 @@ import logging
 import sys
 import signal
 
-from web_server import run_web_server, send_notification, set_mqtt_switches
-from mqtt_switches import MQTTSwitches
+from web_server import run_web_server, send_notification, set_virtual_switches
+from switches import VirtualSwitches
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,20 +17,20 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-mqtt_switches = None
+virtual_switches = None
 
 
 def signal_handler(sig, frame):
     """Handle shutdown signals."""
     _LOGGER.info("Received shutdown signal, stopping...")
-    if mqtt_switches:
-        mqtt_switches.stop()
+    if virtual_switches:
+        virtual_switches.stop()
     sys.exit(0)
 
 
 async def main():
     """Main function."""
-    global mqtt_switches
+    global virtual_switches
     
     _LOGGER.info("Starting AlarmMe add-on")
     
@@ -38,16 +38,16 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     
-    # Initialize MQTT switches
-    mqtt_switches = MQTTSwitches()
-    if mqtt_switches.start():
-        _LOGGER.info("MQTT switches initialized")
-        # Pass mqtt_switches to web_server
-        set_mqtt_switches(mqtt_switches)
+    # Initialize virtual switches via REST API
+    virtual_switches = VirtualSwitches()
+    if await virtual_switches.start():
+        _LOGGER.info("Virtual switches initialized via REST API")
+        # Pass virtual_switches to web_server
+        set_virtual_switches(virtual_switches)
     else:
-        _LOGGER.warning("Failed to initialize MQTT switches")
+        _LOGGER.warning("Failed to initialize virtual switches")
         # Still pass to web_server for UI to show default states
-        set_mqtt_switches(mqtt_switches)
+        set_virtual_switches(virtual_switches)
     
     # Send notification on startup
     await send_notification("mobile_app_iphone", "AlarmMe add-on started")

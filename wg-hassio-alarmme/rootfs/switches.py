@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 import logging
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,22 +20,47 @@ class VirtualSwitches:
                 "entity_id": "switch.alarmme_away_mode",
                 "name": "Away Mode",
                 "friendly_name": "Режим отсутствия",
+                "icon": "mdi:shield-home",
                 "state": "off"
             },
             "night": {
                 "entity_id": "switch.alarmme_night_mode",
                 "name": "Night Mode",
                 "friendly_name": "Ночной режим",
+                "icon": "mdi:weather-night",
                 "state": "off"
             }
         }
         self._session: Optional[aiohttp.ClientSession] = None
+        self.state_callback: Optional[Callable[[str, str], None]] = None
+        self._monitoring_task: Optional[asyncio.Task] = None
+        self._connected = False
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession()
         return self._session
+    
+    async def start(self) -> bool:
+        """Start virtual switches - create them and start monitoring."""
+        if not self.ha_token:
+            _LOGGER.warning("[switches] SUPERVISOR_TOKEN not found, cannot create switches")
+            return False
+        
+        # Create switches
+        success = await self.create_switches()
+        
+        if success:
+            self._connected = True
+            # Start monitoring for state changes
+            self._monitoring_task = asyncio.create_task(self._monitor_switches())
+            _LOGGER.info("[switches] Virtual switches started and monitoring active")
+        else:
+            _LOGGER.warning("[switches] Failed to create some switches, but continuing...")
+            self._connected = True  # Still try to monitor
+        
+        return success
     
     async def create_switches(self) -> bool:
         """Create virtual switches in Home Assistant."""
@@ -57,7 +82,7 @@ class VirtualSwitches:
                     "state": switch_data["state"],
                     "attributes": {
                         "friendly_name": switch_data["friendly_name"],
-                        "icon": "mdi:shield-home" if switch_type == "away" else "mdi:weather-night"
+                        "icon": switch_data["icon"]
                     }
                 }
                 
@@ -67,6 +92,10 @@ class VirtualSwitches:
                 async with session.post(api_url, headers=headers, json=entity_data) as resp:
                     if resp.status in (200, 201):
                         _LOGGER.info("[switches] Successfully created switch: %s", switch_data["entity_id"])
+                        # Get current state from response
+                        if resp.status == 200:
+                            data = await resp.json()
+                            switch_data["state"] = data.get("state", "off")
                     else:
                         response_text = await resp.text()
                         _LOGGER.warning("[switches] Failed to create switch %s: status %s, response: %s",
@@ -102,7 +131,7 @@ class VirtualSwitches:
                 "state": state,
                 "attributes": {
                     "friendly_name": switch_data["friendly_name"],
-                    "icon": "mdi:shield-home" if switch_type == "away" else "mdi:weather-night"
+                    "icon": switch_data["icon"]
                 }
             }
             
@@ -122,8 +151,8 @@ class VirtualSwitches:
             _LOGGER.error("[switches] Error updating switch %s: %s", switch_data["entity_id"], err, exc_info=True)
             return False
     
-    async def get_switch_state(self, switch_type: str) -> Optional[str]:
-        """Get current switch state from Home Assistant."""
+    async def get_switch_state_from_ha(self, switch_type: str) -> Optional[str]:
+        """Get current switch state from Home Assistant API."""
         if switch_type not in self.switches:
             _LOGGER.error("[switches] Unknown switch type: %s", switch_type)
             return None
@@ -152,21 +181,53 @@ class VirtualSwitches:
             _LOGGER.error("[switches] Error getting switch state %s: %s", switch_data["entity_id"], err, exc_info=True)
             return None
     
-    async def monitor_switches(self):
-        """Monitor switch state changes via WebSocket or polling."""
-        # This would subscribe to state_changed events via WebSocket
-        # For now, we'll use polling as a simple implementation
+    def get_switch_state(self, switch_type: str) -> Optional[str]:
+        """Get current switch state from local cache."""
+        if switch_type in self.switches:
+            return self.switches[switch_type]["state"]
+        return None
+    
+    async def _monitor_switches(self):
+        """Monitor switch state changes via polling."""
         while True:
             try:
-                for switch_type in self.switches.keys():
-                    await self.get_switch_state(switch_type)
-                await asyncio.sleep(5)  # Poll every 5 seconds
+                for switch_type, switch_data in self.switches.items():
+                    old_state = switch_data["state"]
+                    new_state = await self.get_switch_state_from_ha(switch_type)
+                    
+                    if new_state and new_state != old_state:
+                        _LOGGER.info("[switches] Switch %s changed from %s to %s", 
+                                   switch_data["name"], old_state, new_state)
+                        if self.state_callback:
+                            self.state_callback(switch_type, new_state.upper())
+                
+                await asyncio.sleep(2)  # Poll every 2 seconds
+            except asyncio.CancelledError:
+                _LOGGER.info("[switches] Monitoring task cancelled")
+                break
             except Exception as err:
                 _LOGGER.error("[switches] Error monitoring switches: %s", err, exc_info=True)
                 await asyncio.sleep(10)
     
+    def get_all_states(self) -> Dict[str, str]:
+        """Get all switch states from local cache."""
+        return {switch_type: switch_data["state"].upper() for switch_type, switch_data in self.switches.items()}
+    
+    def stop(self):
+        """Stop monitoring and close session."""
+        if self._monitoring_task:
+            self._monitoring_task.cancel()
+        self._connected = False
+        _LOGGER.info("[switches] Virtual switches stopped")
+    
     async def close(self):
         """Close aiohttp session."""
+        self.stop()
         if self._session and not self._session.closed:
             await self._session.close()
+    
+    @property
+    def is_connected(self) -> bool:
+        """Check if switches are connected and monitoring."""
+        return self._connected
 

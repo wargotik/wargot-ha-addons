@@ -8,14 +8,14 @@ import json
 
 _LOGGER = logging.getLogger(__name__)
 
-# Global MQTT switches instance
-_mqtt_switches = None
+# Global virtual switches instance
+_virtual_switches = None
 
 
-def set_mqtt_switches(mqtt_switches):
-    """Set MQTT switches instance."""
-    global _mqtt_switches
-    _mqtt_switches = mqtt_switches
+def set_virtual_switches(virtual_switches):
+    """Set virtual switches instance."""
+    global _virtual_switches
+    _virtual_switches = virtual_switches
 
 
 async def index_handler(request):
@@ -547,28 +547,28 @@ async def _check_switch_exists(entity_id: str) -> bool:
 async def get_switches_handler(request):
     """Get virtual switches state."""
     try:
-        global _mqtt_switches
+        global _virtual_switches
         
-        # Default states if MQTT not available
+        # Default states if switches not available
         default_states = {"away": "OFF", "night": "OFF"}
         
         # Check if switches exist in Home Assistant
         away_exists = await _check_switch_exists("switch.alarmme_away_mode")
         night_exists = await _check_switch_exists("switch.alarmme_night_mode")
         
-        if _mqtt_switches is None:
-            _LOGGER.debug("[web_server] MQTT switches not initialized, returning default states")
+        if _virtual_switches is None:
+            _LOGGER.debug("[web_server] Virtual switches not initialized, returning default states")
             return web.json_response({
                 "success": True,
                 "switches": default_states,
-                "mqtt_connected": False,
+                "connected": False,
                 "switches_installed": {
                     "away": away_exists,
                     "night": night_exists
                 }
             })
         
-        states = _mqtt_switches.get_all_states()
+        states = _virtual_switches.get_all_states()
         
         return web.json_response({
             "success": True,
@@ -576,7 +576,7 @@ async def get_switches_handler(request):
                 "away": states.get("away", "OFF"),
                 "night": states.get("night", "OFF")
             },
-            "mqtt_connected": _mqtt_switches._connected if hasattr(_mqtt_switches, '_connected') else False,
+            "connected": _virtual_switches.is_connected if hasattr(_virtual_switches, 'is_connected') else False,
             "switches_installed": {
                 "away": away_exists,
                 "night": night_exists
@@ -588,7 +588,7 @@ async def get_switches_handler(request):
             "success": True,
             "error": str(err),
             "switches": {"away": "OFF", "night": "OFF"},
-            "mqtt_connected": False,
+            "connected": False,
             "switches_installed": {
                 "away": False,
                 "night": False
