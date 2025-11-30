@@ -135,6 +135,26 @@ async def index_handler(request):
                 margin-top: 10px;
                 font-weight: 500;
             }
+            .mqtt-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                margin-left: 10px;
+                font-weight: 500;
+            }
+            .mqtt-badge.connected {
+                background-color: #27ae60;
+                color: white;
+            }
+            .mqtt-badge.disconnected {
+                background-color: #e74c3c;
+                color: white;
+            }
+            .mqtt-badge.unknown {
+                background-color: #7f8c8d;
+                color: white;
+            }
             @media (max-width: 768px) {
                 .sensors-grid {
                     grid-template-columns: 1fr;
@@ -145,7 +165,10 @@ async def index_handler(request):
     <body>
         <div class="container">
             <h1>AlarmMe</h1>
-            <p>AlarmMe add-on is running. <span id="update-badge" class="update-badge">Обновление...</span></p>
+            <p>AlarmMe add-on is running. 
+                <span id="update-badge" class="update-badge">Обновление...</span>
+                <span id="mqtt-badge" class="mqtt-badge unknown">MQTT: проверка...</span>
+            </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <h3 style="margin-top: 0; margin-bottom: 15px;">Виртуальные выключатели</h3>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
@@ -277,10 +300,12 @@ async def index_handler(request):
                         if (data.success) {
                             updateSwitchState('away', data.switches.away || 'OFF');
                             updateSwitchState('night', data.switches.night || 'OFF');
+                            updateMqttBadge(data.mqtt_connected !== undefined ? data.mqtt_connected : false);
                         }
                     }
                 } catch (error) {
                     console.error('Error loading switches:', error);
+                    updateMqttBadge(false);
                 }
             }
             
@@ -291,6 +316,19 @@ async def index_handler(request):
                 const isOn = state === 'ON';
                 element.textContent = isOn ? 'ВКЛ' : 'ВЫКЛ';
                 element.style.backgroundColor = isOn ? '#27ae60' : '#7f8c8d';
+            }
+            
+            function updateMqttBadge(connected) {
+                const badge = document.getElementById('mqtt-badge');
+                if (!badge) return;
+                
+                if (connected) {
+                    badge.textContent = 'MQTT: подключен';
+                    badge.className = 'mqtt-badge connected';
+                } else {
+                    badge.textContent = 'MQTT: отключен';
+                    badge.className = 'mqtt-badge disconnected';
+                }
             }
             
             // Load sensors on page load
@@ -315,36 +353,6 @@ async def index_handler(request):
 async def health_handler(request):
     """Handle health check endpoint."""
     return web.json_response({"status": "ok"})
-
-
-async def get_switches_handler(request):
-    """Get virtual switches state."""
-    try:
-        global _mqtt_switches
-        
-        if _mqtt_switches is None:
-            return web.json_response({
-                "success": False,
-                "error": "MQTT switches not initialized",
-                "switches": {"away": "OFF", "night": "OFF"}
-            }, status=503)
-        
-        states = _mqtt_switches.get_all_states()
-        
-        return web.json_response({
-            "success": True,
-            "switches": {
-                "away": states.get("away", "OFF"),
-                "night": states.get("night", "OFF")
-            }
-        })
-    except Exception as err:
-        _LOGGER.error("[web_server] Error getting switches: %s", err, exc_info=True)
-        return web.json_response({
-            "success": False,
-            "error": str(err),
-            "switches": {"away": "OFF", "night": "OFF"}
-        }, status=500)
 
 
 async def send_notification(service_name: str, message: str, title: str = None) -> bool:
@@ -496,12 +504,16 @@ async def get_switches_handler(request):
     try:
         global _mqtt_switches
         
+        # Default states if MQTT not available
+        default_states = {"away": "OFF", "night": "OFF"}
+        
         if _mqtt_switches is None:
+            _LOGGER.debug("[web_server] MQTT switches not initialized, returning default states")
             return web.json_response({
-                "success": False,
-                "error": "MQTT switches not initialized",
-                "switches": {"away": "OFF", "night": "OFF"}
-            }, status=503)
+                "success": True,
+                "switches": default_states,
+                "mqtt_connected": False
+            })
         
         states = _mqtt_switches.get_all_states()
         
@@ -510,15 +522,17 @@ async def get_switches_handler(request):
             "switches": {
                 "away": states.get("away", "OFF"),
                 "night": states.get("night", "OFF")
-            }
+            },
+            "mqtt_connected": _mqtt_switches._connected if hasattr(_mqtt_switches, '_connected') else False
         })
     except Exception as err:
         _LOGGER.error("[web_server] Error getting switches: %s", err, exc_info=True)
         return web.json_response({
-            "success": False,
+            "success": True,
             "error": str(err),
-            "switches": {"away": "OFF", "night": "OFF"}
-        }, status=500)
+            "switches": {"away": "OFF", "night": "OFF"},
+            "mqtt_connected": False
+        })
 
 
 @web.middleware

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2025-01-28
+
+### Fixed
+- Fixed 503 error when MQTT switches not connected - now returns default states (OFF) instead of error
+- UI now shows switch states even when MQTT is not connected
+- MQTT switches instance is always passed to web_server, allowing UI to work without MQTT connection
+- Removed duplicate get_switches_handler function definition
+
 ## [0.3.2] - 2025-01-28
 
 ### Fixed
@@ -132,6 +140,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.3
 [0.3.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.2
 [0.3.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.1
 [0.3.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.0
