@@ -8,6 +8,15 @@ import json
 
 _LOGGER = logging.getLogger(__name__)
 
+# Global MQTT switches instance
+_mqtt_switches = None
+
+
+def set_mqtt_switches(mqtt_switches):
+    """Set MQTT switches instance."""
+    global _mqtt_switches
+    _mqtt_switches = mqtt_switches
+
 
 async def index_handler(request):
     """Handle index page."""
@@ -137,6 +146,21 @@ async def index_handler(request):
         <div class="container">
             <h1>AlarmMe</h1>
             <p>AlarmMe add-on is running. <span id="update-badge" class="update-badge">Обновление...</span></p>
+            <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px;">Виртуальные выключатели</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Away Mode</div>
+                        <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Режим отсутствия</div>
+                        <div id="switch-away-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white;">Загрузка...</div>
+                    </div>
+                    <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Night Mode</div>
+                        <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Ночной режим</div>
+                        <div id="switch-night-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white;">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
             <div class="sensors-grid">
                 <div class="sensor-column">
                     <h3>Motion<br><small>(PIR движение)</small></h3>
@@ -244,11 +268,40 @@ async def index_handler(request):
                 }).join('');
             }
             
+            async function loadSwitches() {
+                try {
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/switches';
+                    const response = await fetch(apiPath);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            updateSwitchState('away', data.switches.away || 'OFF');
+                            updateSwitchState('night', data.switches.night || 'OFF');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading switches:', error);
+                }
+            }
+            
+            function updateSwitchState(switchType, state) {
+                const element = document.getElementById('switch-' + switchType + '-state');
+                if (!element) return;
+                
+                const isOn = state === 'ON';
+                element.textContent = isOn ? 'ВКЛ' : 'ВЫКЛ';
+                element.style.backgroundColor = isOn ? '#27ae60' : '#7f8c8d';
+            }
+            
             // Load sensors on page load
             loadSensors();
+            loadSwitches();
             
             // Refresh sensors every 30 seconds
             setInterval(loadSensors, 30000);
+            
+            // Refresh switches every 5 seconds
+            setInterval(loadSwitches, 5000);
             
             // Update badge every second
             setInterval(updateBadge, 1000);
@@ -262,6 +315,36 @@ async def index_handler(request):
 async def health_handler(request):
     """Handle health check endpoint."""
     return web.json_response({"status": "ok"})
+
+
+async def get_switches_handler(request):
+    """Get virtual switches state."""
+    try:
+        global _mqtt_switches
+        
+        if _mqtt_switches is None:
+            return web.json_response({
+                "success": False,
+                "error": "MQTT switches not initialized",
+                "switches": {"away": "OFF", "night": "OFF"}
+            }, status=503)
+        
+        states = _mqtt_switches.get_all_states()
+        
+        return web.json_response({
+            "success": True,
+            "switches": {
+                "away": states.get("away", "OFF"),
+                "night": states.get("night", "OFF")
+            }
+        })
+    except Exception as err:
+        _LOGGER.error("[web_server] Error getting switches: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err),
+            "switches": {"away": "OFF", "night": "OFF"}
+        }, status=500)
 
 
 async def send_notification(service_name: str, message: str, title: str = None) -> bool:
@@ -408,6 +491,36 @@ async def get_sensors_handler(request):
         }, status=500)
 
 
+async def get_switches_handler(request):
+    """Get virtual switches state."""
+    try:
+        global _mqtt_switches
+        
+        if _mqtt_switches is None:
+            return web.json_response({
+                "success": False,
+                "error": "MQTT switches not initialized",
+                "switches": {"away": "OFF", "night": "OFF"}
+            }, status=503)
+        
+        states = _mqtt_switches.get_all_states()
+        
+        return web.json_response({
+            "success": True,
+            "switches": {
+                "away": states.get("away", "OFF"),
+                "night": states.get("night", "OFF")
+            }
+        })
+    except Exception as err:
+        _LOGGER.error("[web_server] Error getting switches: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err),
+            "switches": {"away": "OFF", "night": "OFF"}
+        }, status=500)
+
+
 @web.middleware
 async def logging_middleware(request, handler):
     """Middleware to log all requests."""
@@ -441,11 +554,12 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/", index_handler)
     app.router.add_get("/health", health_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
+    app.router.add_get("/api/switches", get_switches_handler)
     
     # 404 handler
     app.router.add_route("*", "/{path:.*}", not_found_handler)
     
-    _LOGGER.info("[web_server] Registered routes: /, /health, /api/sensors")
+    _LOGGER.info("[web_server] Registered routes: /, /health, /api/sensors, /api/switches")
     
     # Start server
     runner = web.AppRunner(app)

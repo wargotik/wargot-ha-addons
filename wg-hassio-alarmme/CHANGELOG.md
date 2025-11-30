@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-01-28
+
+### Added
+- Virtual switches via MQTT Discovery
+- Two switches: "Away Mode" (Режим отсутствия) and "Night Mode" (Ночной режим)
+- Switches automatically appear on Home Assistant Overview page
+- Switch state display in add-on web UI
+- Real-time switch state updates every 5 seconds
+- MQTT integration for bidirectional communication (UI ↔ Add-on)
+- Switch state persistence in Home Assistant
+
+### Changed
+- Switches now managed by add-on via MQTT instead of separate integration
+- Added paho-mqtt dependency for MQTT support
+
 ## [0.2.1] - 2025-01-28
 
 ### Added
@@ -102,6 +117,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.0
 [0.2.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.1
 [0.2.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.0
 [0.1.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.9
