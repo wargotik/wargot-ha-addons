@@ -135,7 +135,7 @@ async def index_handler(request):
                 margin-top: 10px;
                 font-weight: 500;
             }
-            .mqtt-badge {
+            .connection-badge {
                 display: inline-block;
                 padding: 4px 12px;
                 border-radius: 12px;
@@ -143,15 +143,15 @@ async def index_handler(request):
                 margin-left: 10px;
                 font-weight: 500;
             }
-            .mqtt-badge.connected {
+            .connection-badge.connected {
                 background-color: #27ae60;
                 color: white;
             }
-            .mqtt-badge.disconnected {
+            .connection-badge.disconnected {
                 background-color: #e74c3c;
                 color: white;
             }
-            .mqtt-badge.unknown {
+            .connection-badge.unknown {
                 background-color: #7f8c8d;
                 color: white;
             }
@@ -167,7 +167,7 @@ async def index_handler(request):
             <h1>AlarmMe</h1>
             <p>AlarmMe add-on is running. 
                 <span id="update-badge" class="update-badge">Обновление...</span>
-                <span id="mqtt-badge" class="mqtt-badge unknown">MQTT: проверка...</span>
+                <span id="connection-badge" class="connection-badge unknown">Подключение: проверка...</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <h3 style="margin-top: 0; margin-bottom: 15px;">Виртуальные выключатели</h3>
@@ -306,7 +306,7 @@ async def index_handler(request):
                         if (data.success) {
                             updateSwitchState('away', data.switches.away || 'OFF');
                             updateSwitchState('night', data.switches.night || 'OFF');
-                            updateMqttBadge(data.mqtt_connected !== undefined ? data.mqtt_connected : false);
+                            updateConnectionBadge(data.connected !== undefined ? data.connected : false);
                             
                             // Update installation status
                             if (data.switches_installed) {
@@ -317,7 +317,7 @@ async def index_handler(request):
                     }
                 } catch (error) {
                     console.error('Error loading switches:', error);
-                    updateMqttBadge(false);
+                    updateConnectionBadge(false);
                 }
             }
             
@@ -343,16 +343,16 @@ async def index_handler(request):
                 }
             }
             
-            function updateMqttBadge(connected) {
-                const badge = document.getElementById('mqtt-badge');
+            function updateConnectionBadge(connected) {
+                const badge = document.getElementById('connection-badge');
                 if (!badge) return;
                 
                 if (connected) {
-                    badge.textContent = 'MQTT: подключен';
-                    badge.className = 'mqtt-badge connected';
+                    badge.textContent = 'REST API: подключен';
+                    badge.className = 'connection-badge connected';
                 } else {
-                    badge.textContent = 'MQTT: отключен';
-                    badge.className = 'mqtt-badge disconnected';
+                    badge.textContent = 'REST API: отключен';
+                    badge.className = 'connection-badge disconnected';
                 }
             }
             

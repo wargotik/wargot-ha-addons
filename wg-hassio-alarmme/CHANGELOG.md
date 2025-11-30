@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-01-28
+
+### Changed
+- **BREAKING**: Switched from MQTT Discovery to REST API for virtual switches
+- Virtual switches now created directly via Home Assistant REST API (`/api/states/`)
+- No longer requires MQTT broker - works with just Home Assistant API
+- Switches are created automatically on add-on startup
+- State monitoring via polling (checks every 2 seconds for changes)
+- UI updated to show "REST API: подключен/отключен" instead of MQTT status
+
+### Added
+- Automatic state synchronization - detects when switches are changed in Home Assistant UI
+- Background monitoring task that polls switch states every 2 seconds
+- Callback support for state change notifications
+
+### Removed
+- MQTT dependency for virtual switches (paho-mqtt still in requirements but not used)
+- MQTT Discovery message publishing
+- MQTT connection logic
+
 ## [0.3.9] - 2025-01-28
 
 ### Changed
@@ -184,6 +204,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.4.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.0
 [0.3.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.9
 [0.3.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.8
 [0.3.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.7
