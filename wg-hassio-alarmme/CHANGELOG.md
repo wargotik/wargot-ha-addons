@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-01-28
+
+### Added
+- Update badge showing time since last sensor update (e.g., "X секунд назад")
+- Badge updates every second to show real-time elapsed time
+- Badge displayed next to "AlarmMe add-on is running" text
+
+### Changed
+- Sensor refresh interval changed from 5 seconds to 30 seconds
+- Improved user experience with visible update status
+
 ## [0.2.0] - 2025-01-28
 
 ### Added
@@ -91,6 +102,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.2.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.1
 [0.2.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.0
 [0.1.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.9
 [0.1.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.8

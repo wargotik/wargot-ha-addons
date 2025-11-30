@@ -116,6 +116,16 @@ async def index_handler(request):
                 color: #95a5a6;
                 font-style: italic;
             }
+            .update-badge {
+                display: inline-block;
+                background-color: #3498db;
+                color: white;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                margin-top: 10px;
+                font-weight: 500;
+            }
             @media (max-width: 768px) {
                 .sensors-grid {
                     grid-template-columns: 1fr;
@@ -126,7 +136,7 @@ async def index_handler(request):
     <body>
         <div class="container">
             <h1>AlarmMe</h1>
-            <p>AlarmMe add-on is running.</p>
+            <p>AlarmMe add-on is running. <span id="update-badge" class="update-badge">Обновление...</span></p>
             <div class="sensors-grid">
                 <div class="sensor-column">
                     <h3>Motion<br><small>(PIR движение)</small></h3>
@@ -147,6 +157,24 @@ async def index_handler(request):
             </div>
         </div>
         <script>
+            let lastUpdateTime = null;
+            
+            function updateBadge() {
+                const badge = document.getElementById('update-badge');
+                if (!badge || !lastUpdateTime) return;
+                
+                const secondsAgo = Math.floor((Date.now() - lastUpdateTime) / 1000);
+                if (secondsAgo < 60) {
+                    badge.textContent = secondsAgo + ' секунд назад';
+                } else if (secondsAgo < 3600) {
+                    const minutesAgo = Math.floor(secondsAgo / 60);
+                    badge.textContent = minutesAgo + ' минут назад';
+                } else {
+                    const hoursAgo = Math.floor(secondsAgo / 3600);
+                    badge.textContent = hoursAgo + ' часов назад';
+                }
+            }
+            
             async function loadSensors() {
                 try {
                     console.log('Loading sensors...');
@@ -175,6 +203,8 @@ async def index_handler(request):
                         renderSensors('moving-sensors', data.moving_sensors || []);
                         renderSensors('occupancy-sensors', data.occupancy_sensors || []);
                         renderSensors('presence-sensors', data.presence_sensors || []);
+                        lastUpdateTime = Date.now();
+                        updateBadge();
                     } else {
                         console.error('API returned success=false:', data.error);
                         const errorMsg = '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
@@ -217,8 +247,11 @@ async def index_handler(request):
             // Load sensors on page load
             loadSensors();
             
-            // Refresh sensors every 5 seconds
-            setInterval(loadSensors, 5000);
+            // Refresh sensors every 30 seconds
+            setInterval(loadSensors, 30000);
+            
+            // Update badge every second
+            setInterval(updateBadge, 1000);
         </script>
     </body>
     </html>
