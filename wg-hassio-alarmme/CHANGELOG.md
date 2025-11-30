@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2025-01-28
+
+### Added
+- MQTT connection status badge on UI
+- Visual indicator showing MQTT connection state (connected/disconnected)
+- Badge updates automatically every 5 seconds with switch states
+- Color-coded badge: green for connected, red for disconnected
+
 ## [0.3.3] - 2025-01-28
 
 ### Fixed
@@ -140,6 +148,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.4
 [0.3.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.3
 [0.3.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.2
 [0.3.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.1
