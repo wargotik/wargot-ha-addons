@@ -167,7 +167,7 @@ async def index_handler(request):
             <h1>AlarmMe</h1>
             <p>AlarmMe add-on is running. 
                 <span id="update-badge" class="update-badge">Обновление...</span>
-                <span id="connection-badge" class="connection-badge unknown">Подключение: проверка...</span>
+                <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <h3 style="margin-top: 0; margin-bottom: 15px;">Виртуальные выключатели</h3>
@@ -552,9 +552,9 @@ async def get_switches_handler(request):
         # Default states if switches not available
         default_states = {"away": "OFF", "night": "OFF"}
         
-        # Check if switches exist in Home Assistant
-        away_exists = await _check_switch_exists("input_boolean.alarmme_away_mode")
-        night_exists = await _check_switch_exists("input_boolean.alarmme_night_mode")
+        # Check if switches exist in Home Assistant (created by integration)
+        away_exists = await _check_switch_exists("switch.alarmme_away_mode")
+        night_exists = await _check_switch_exists("switch.alarmme_night_mode")
         
         if _virtual_switches is None:
             _LOGGER.debug("[web_server] Virtual switches not initialized, returning default states")

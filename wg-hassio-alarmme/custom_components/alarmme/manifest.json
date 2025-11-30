@@ -1,0 +1,12 @@
+{
+  "domain": "alarmme",
+  "name": "AlarmMe",
+  "version": "1.0.0",
+  "codeowners": ["@wargot"],
+  "config_flow": false,
+  "dependencies": [],
+  "documentation": "https://github.com/wargotik/wargot-ha-addons",
+  "integration_type": "system",
+  "iot_class": "local_polling"
+}
+

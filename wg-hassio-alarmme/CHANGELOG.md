@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2025-01-28
+
+### Added
+- **Custom Integration**: Added AlarmMe integration (`custom_components/alarmme/`)
+- Integration creates two switches: `switch.alarmme_away_mode` and `switch.alarmme_night_mode`
+- Switches are grouped in "AlarmMe" device with manufacturer "WarGot"
+- Switches have `unique_id` and can be managed from Home Assistant UI
+- Switches persist state across restarts using `RestoreEntity`
+
+### Changed
+- **BREAKING**: Add-on no longer creates switches via REST API
+- Add-on now reads switch states from integration-created switches
+- Switches are created by integration, not by add-on
+- Entity IDs changed from `input_boolean.*` to `switch.alarmme_*`
+- Add-on checks if switches exist and shows "Не установлен" if integration is not installed
+
+### Fixed
+- Switches now have proper `unique_id` through integration
+- Switches can be fully managed from Home Assistant UI settings
+- Device grouping: both switches appear under "AlarmMe" device
+
 ## [0.4.2] - 2025-01-28
 
 ### Fixed
@@ -223,6 +244,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.5.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.0
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.2
 [0.4.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.1
 [0.4.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.0
