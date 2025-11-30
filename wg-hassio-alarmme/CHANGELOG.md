@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2025-01-28
+
+### Added
+- Notification sent automatically when add-on starts
+- Notification sent to `mobile_app_iphone` with message "AlarmMe add-on started"
+
+## [0.1.7] - 2025-01-28
+
+### Added
+- Function to send notifications via Home Assistant notify service
+- Support for sending notifications to mobile apps (e.g., `notify.mobile_app_iphone`)
+- Logging for notification sending attempts and results
+
+## [0.1.6] - 2025-01-28
+
+### Changed
+- Removed sidebar, sensors now displayed in main content area
+- Sensors displayed in two-column grid layout below "AlarmMe add-on is running" message
+- Improved responsive design for mobile devices
+
+## [0.1.5] - 2025-01-28
+
+### Added
+- Request logging middleware for all HTTP requests
+- Enhanced error handling in JavaScript with detailed console logging
+- Client IP address logging
+- Better error messages in UI showing HTTP status codes and error details
+- JSON parsing error handling
+
+### Fixed
+- Improved error handling for API responses with non-200 status codes
+- Better debugging information in browser console
+
 ## [0.1.4] - 2025-01-28
 
 ### Added
@@ -35,6 +68,10 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.1.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.8
+[0.1.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.7
+[0.1.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.6
+[0.1.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.5
 [0.1.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.4
 [0.1.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.3
 [0.1.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.2

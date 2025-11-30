@@ -27,64 +27,65 @@ async def index_handler(request):
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
                 background-color: #f5f5f5;
-                display: flex;
-                height: 100vh;
-                overflow: hidden;
-            }
-            .sidebar {
-                width: 300px;
-                background-color: #2c3e50;
-                color: white;
                 padding: 20px;
-                overflow-y: auto;
-                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             }
-            .sidebar h2 {
+            .container {
+                background-color: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            h1 {
+                color: #333;
                 margin-bottom: 20px;
-                font-size: 18px;
-                border-bottom: 2px solid #34495e;
-                padding-bottom: 10px;
+            }
+            .sensors-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                margin-top: 30px;
             }
             .sensor-column {
-                margin-bottom: 30px;
+                background-color: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
             }
             .sensor-column h3 {
-                font-size: 14px;
-                text-transform: uppercase;
+                font-size: 16px;
+                color: #333;
                 margin-bottom: 15px;
-                color: #ecf0f1;
                 font-weight: 600;
             }
             .sensor-item {
-                background-color: #34495e;
+                background-color: white;
                 padding: 12px;
                 margin-bottom: 8px;
                 border-radius: 4px;
-                cursor: pointer;
-                transition: background-color 0.2s;
+                border: 1px solid #e0e0e0;
+                transition: box-shadow 0.2s;
             }
             .sensor-item:hover {
-                background-color: #3d566e;
-            }
-            .sensor-item.active {
-                background-color: #3498db;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
             .sensor-name {
                 font-size: 14px;
                 font-weight: 500;
                 margin-bottom: 4px;
+                color: #333;
             }
             .sensor-id {
                 font-size: 11px;
-                color: #bdc3c7;
+                color: #7f8c8d;
                 font-family: monospace;
+                margin-bottom: 6px;
             }
             .sensor-state {
                 display: inline-block;
                 padding: 2px 8px;
                 border-radius: 3px;
                 font-size: 11px;
-                margin-top: 6px;
                 font-weight: 600;
             }
             .sensor-state.on {
@@ -99,22 +100,6 @@ async def index_handler(request):
                 background-color: #e74c3c;
                 color: white;
             }
-            .main-content {
-                flex: 1;
-                padding: 20px;
-                overflow-y: auto;
-            }
-            .container {
-                background-color: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                max-width: 1200px;
-            }
-            h1 {
-                color: #333;
-                margin-bottom: 10px;
-            }
             .loading {
                 text-align: center;
                 padding: 20px;
@@ -126,47 +111,64 @@ async def index_handler(request):
                 color: #95a5a6;
                 font-style: italic;
             }
+            @media (max-width: 768px) {
+                .sensors-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
         </style>
     </head>
     <body>
-        <div class="sidebar">
-            <h2>AlarmMe</h2>
-            <div class="sensor-column">
-                <h3>Датчики движения</h3>
-                <div id="motion-sensors" class="loading">Загрузка...</div>
-            </div>
-            <div class="sensor-column">
-                <h3>Датчики присутствия</h3>
-                <div id="occupancy-sensors" class="loading">Загрузка...</div>
-            </div>
-        </div>
-        <div class="main-content">
-            <div class="container">
-                <h1>AlarmMe</h1>
-                <p>AlarmMe add-on is running.</p>
+        <div class="container">
+            <h1>AlarmMe</h1>
+            <p>AlarmMe add-on is running.</p>
+            <div class="sensors-grid">
+                <div class="sensor-column">
+                    <h3>Датчики движения</h3>
+                    <div id="motion-sensors" class="loading">Загрузка...</div>
+                </div>
+                <div class="sensor-column">
+                    <h3>Датчики присутствия</h3>
+                    <div id="occupancy-sensors" class="loading">Загрузка...</div>
+                </div>
             </div>
         </div>
         <script>
             async function loadSensors() {
                 try {
+                    console.log('Loading sensors...');
                     const response = await fetch('/api/sensors');
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Error response:', response.status, errorText);
+                        document.getElementById('motion-sensors').innerHTML = 
+                            '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
+                        document.getElementById('occupancy-sensors').innerHTML = 
+                            '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
+                        return;
+                    }
+                    
                     const data = await response.json();
+                    console.log('Received data:', data);
                     
                     if (data.success) {
                         renderSensors('motion-sensors', data.motion_sensors);
                         renderSensors('occupancy-sensors', data.occupancy_sensors);
                     } else {
+                        console.error('API returned success=false:', data.error);
                         document.getElementById('motion-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка загрузки</div>';
+                            '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
                         document.getElementById('occupancy-sensors').innerHTML = 
-                            '<div class="empty-state">Ошибка загрузки</div>';
+                            '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
                     }
                 } catch (error) {
                     console.error('Error loading sensors:', error);
                     document.getElementById('motion-sensors').innerHTML = 
-                        '<div class="empty-state">Ошибка загрузки</div>';
+                        '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
                     document.getElementById('occupancy-sensors').innerHTML = 
-                        '<div class="empty-state">Ошибка загрузки</div>';
+                        '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
                 }
             }
             
@@ -208,9 +210,49 @@ async def health_handler(request):
     return web.json_response({"status": "ok"})
 
 
+async def send_notification(service_name: str, message: str, title: str = None) -> bool:
+    """Send notification via Home Assistant notify service."""
+    try:
+        ha_token = os.environ.get("SUPERVISOR_TOKEN")
+        ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
+        
+        if not ha_token:
+            _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot send notification")
+            return False
+        
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                "Authorization": f"Bearer {ha_token}",
+                "Content-Type": "application/json"
+            }
+            
+            # Prepare notification data
+            notification_data = {"message": message}
+            if title:
+                notification_data["title"] = title
+            
+            # Call notify service
+            api_url = f"{ha_url}/api/services/notify/{service_name}"
+            _LOGGER.info("[web_server] Sending notification via %s: %s", service_name, message)
+            
+            async with session.post(api_url, headers=headers, json=notification_data) as resp:
+                if resp.status == 200:
+                    _LOGGER.info("[web_server] Notification sent successfully via %s", service_name)
+                    return True
+                else:
+                    response_text = await resp.text()
+                    _LOGGER.warning("[web_server] Failed to send notification via %s: status %s, response: %s", 
+                                  service_name, resp.status, response_text[:200])
+                    return False
+    except Exception as err:
+        _LOGGER.error("[web_server] Error sending notification via %s: %s", service_name, err, exc_info=True)
+        return False
+
+
 async def get_sensors_handler(request):
     """Get motion and occupancy sensors from Home Assistant."""
-    _LOGGER.info("[web_server] Received request to get sensors list")
+    client_ip = request.remote
+    _LOGGER.info("[web_server] Received request to get sensors list from %s", client_ip)
     try:
         ha_token = os.environ.get("SUPERVISOR_TOKEN")
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
@@ -231,9 +273,14 @@ async def get_sensors_handler(request):
                         _LOGGER.debug("[web_server] HA API response status: %s", resp.status)
                         
                         if resp.status == 200:
-                            states = await resp.json()
-                            total_states = len(states)
-                            _LOGGER.info("[web_server] Received %d total states from HA API", total_states)
+                            try:
+                                states = await resp.json()
+                                total_states = len(states)
+                                _LOGGER.info("[web_server] Received %d total states from HA API", total_states)
+                            except Exception as json_err:
+                                _LOGGER.error("[web_server] Error parsing JSON response from HA API: %s, response: %s", 
+                                            json_err, response_text[:500])
+                                raise
                             
                             for state in states:
                                 entity_id = state.get("entity_id", "")
@@ -285,9 +332,22 @@ async def get_sensors_handler(request):
         }, status=500)
 
 
+@web.middleware
+async def logging_middleware(request, handler):
+    """Middleware to log all requests."""
+    _LOGGER.info("[web_server] %s %s from %s", request.method, request.path_qs, request.remote)
+    try:
+        response = await handler(request)
+        _LOGGER.info("[web_server] %s %s - status: %s", request.method, request.path_qs, response.status)
+        return response
+    except Exception as err:
+        _LOGGER.error("[web_server] Error handling %s %s: %s", request.method, request.path_qs, err, exc_info=True)
+        raise
+
+
 async def run_web_server(port: int = 8099):
     """Run the web server."""
-    app = web.Application()
+    app = web.Application(middlewares=[logging_middleware])
     
     # Routes
     app.router.add_get("/", index_handler)
