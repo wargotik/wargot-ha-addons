@@ -20,9 +20,11 @@ class MQTTSwitches:
     
     def __init__(self):
         """Initialize MQTT switches manager."""
+        # In Home Assistant Supervisor, MQTT is usually provided by "Mosquitto broker" add-on
+        # The add-on container name is typically "core-mosquitto" or "addon_core_mosquitto"
         # Try multiple possible MQTT hosts for Home Assistant Supervisor
-        # Default order: core-mosquitto (standard), localhost, 172.30.32.1 (Supervisor IP)
-        default_hosts = ["core-mosquitto", "localhost", "172.30.32.1"]
+        # Default order: core-mosquitto (standard add-on name), localhost, 172.30.32.1 (Supervisor IP)
+        default_hosts = ["core-mosquitto", "addon_core_mosquitto", "localhost", "172.30.32.1"]
         env_host = os.environ.get("MQTT_HOST")
         if env_host:
             self.mqtt_hosts = [env_host]

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.9] - 2025-01-28
+
+### Changed
+- Added additional MQTT host option: "addon_core_mosquitto" (alternative container name)
+- Improved MQTT connection fallback logic for different Home Assistant Supervisor setups
+- Updated comments to clarify that MQTT is provided by "Mosquitto broker" add-on, not built into HA Core
+
 ## [0.3.8] - 2025-01-28
 
 ### Added
@@ -177,6 +184,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.9
 [0.3.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.8
 [0.3.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.7
 [0.3.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.6
