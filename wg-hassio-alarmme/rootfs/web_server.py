@@ -499,6 +499,26 @@ async def get_sensors_handler(request):
         }, status=500)
 
 
+async def _check_switch_exists(entity_id: str) -> bool:
+    """Check if switch entity exists in Home Assistant."""
+    try:
+        ha_token = os.environ.get("SUPERVISOR_TOKEN")
+        ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
+        
+        if not ha_token:
+            return False
+        
+        async with aiohttp.ClientSession() as session:
+            headers = {"Authorization": f"Bearer {ha_token}"}
+            api_url = f"{ha_url}/api/states/{entity_id}"
+            
+            async with session.get(api_url, headers=headers) as resp:
+                return resp.status == 200
+    except Exception as err:
+        _LOGGER.debug("[web_server] Error checking switch existence %s: %s", entity_id, err)
+        return False
+
+
 async def get_switches_handler(request):
     """Get virtual switches state."""
     try:
@@ -507,12 +527,20 @@ async def get_switches_handler(request):
         # Default states if MQTT not available
         default_states = {"away": "OFF", "night": "OFF"}
         
+        # Check if switches exist in Home Assistant
+        away_exists = await _check_switch_exists("switch.alarmme_away_mode")
+        night_exists = await _check_switch_exists("switch.alarmme_night_mode")
+        
         if _mqtt_switches is None:
             _LOGGER.debug("[web_server] MQTT switches not initialized, returning default states")
             return web.json_response({
                 "success": True,
                 "switches": default_states,
-                "mqtt_connected": False
+                "mqtt_connected": False,
+                "switches_installed": {
+                    "away": away_exists,
+                    "night": night_exists
+                }
             })
         
         states = _mqtt_switches.get_all_states()
@@ -523,7 +551,11 @@ async def get_switches_handler(request):
                 "away": states.get("away", "OFF"),
                 "night": states.get("night", "OFF")
             },
-            "mqtt_connected": _mqtt_switches._connected if hasattr(_mqtt_switches, '_connected') else False
+            "mqtt_connected": _mqtt_switches._connected if hasattr(_mqtt_switches, '_connected') else False,
+            "switches_installed": {
+                "away": away_exists,
+                "night": night_exists
+            }
         })
     except Exception as err:
         _LOGGER.error("[web_server] Error getting switches: %s", err, exc_info=True)
@@ -531,7 +563,11 @@ async def get_switches_handler(request):
             "success": True,
             "error": str(err),
             "switches": {"away": "OFF", "night": "OFF"},
-            "mqtt_connected": False
+            "mqtt_connected": False,
+            "switches_installed": {
+                "away": False,
+                "night": False
+            }
         })
 
 

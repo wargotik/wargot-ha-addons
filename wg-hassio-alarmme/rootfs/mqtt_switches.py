@@ -20,7 +20,16 @@ class MQTTSwitches:
     
     def __init__(self):
         """Initialize MQTT switches manager."""
-        self.mqtt_host = os.environ.get("MQTT_HOST", "localhost")
+        # Try multiple possible MQTT hosts for Home Assistant Supervisor
+        # Default order: core-mosquitto (standard), localhost, 172.30.32.1 (Supervisor IP)
+        default_hosts = ["core-mosquitto", "localhost", "172.30.32.1"]
+        env_host = os.environ.get("MQTT_HOST")
+        if env_host:
+            self.mqtt_hosts = [env_host]
+        else:
+            self.mqtt_hosts = default_hosts
+        
+        self.mqtt_host = self.mqtt_hosts[0]  # Current host being tried
         self.mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
         self.mqtt_user = os.environ.get("MQTT_USER", "")
         self.mqtt_password = os.environ.get("MQTT_PASSWORD", "")
@@ -164,31 +173,59 @@ class MQTTSwitches:
                         switch_data["name"], result.rc)
     
     def start(self):
-        """Start MQTT client."""
+        """Start MQTT client. Try multiple hosts if connection fails."""
         if not MQTT_AVAILABLE or mqtt is None:
             _LOGGER.error("[mqtt_switches] paho-mqtt not installed. Install it: pip install paho-mqtt")
             return False
         
-        try:
-            self.client = mqtt.Client(client_id="alarmme_addon")
-            
-            if self.mqtt_user and self.mqtt_password:
-                self.client.username_pw_set(self.mqtt_user, self.mqtt_password)
-            
-            self.client.on_connect = self._on_connect
-            self.client.on_disconnect = self._on_disconnect
-            self.client.on_message = self._on_message
-            
-            _LOGGER.info("[mqtt_switches] Connecting to MQTT broker: %s:%s", self.mqtt_host, self.mqtt_port)
-            self.client.connect(self.mqtt_host, self.mqtt_port, 60)
-            
-            # Start network loop in background thread
-            self.client.loop_start()
-            
-            return True
-        except Exception as err:
-            _LOGGER.error("[mqtt_switches] Error starting MQTT client: %s", err, exc_info=True)
-            return False
+        # Try each host in the list
+        for host in self.mqtt_hosts:
+            try:
+                self.mqtt_host = host
+                self.client = mqtt.Client(client_id="alarmme_addon")
+                
+                if self.mqtt_user and self.mqtt_password:
+                    self.client.username_pw_set(self.mqtt_user, self.mqtt_password)
+                
+                self.client.on_connect = self._on_connect
+                self.client.on_disconnect = self._on_disconnect
+                self.client.on_message = self._on_message
+                
+                _LOGGER.info("[mqtt_switches] Trying to connect to MQTT broker: %s:%s", self.mqtt_host, self.mqtt_port)
+                self.client.connect(self.mqtt_host, self.mqtt_port, 60)
+                
+                # Start network loop in background thread
+                self.client.loop_start()
+                
+                # Wait a bit to see if connection succeeds
+                import time
+                time.sleep(1)
+                
+                # If we get here without exception, connection attempt was made
+                # The actual connection result will be in _on_connect callback
+                _LOGGER.info("[mqtt_switches] Connection attempt completed for %s:%s", self.mqtt_host, self.mqtt_port)
+                return True
+                
+            except Exception as err:
+                _LOGGER.warning("[mqtt_switches] Failed to connect to %s:%s: %s", host, self.mqtt_port, err)
+                if self.client:
+                    try:
+                        self.client.loop_stop()
+                        self.client.disconnect()
+                    except:
+                        pass
+                    self.client = None
+                
+                # Try next host
+                if host != self.mqtt_hosts[-1]:
+                    _LOGGER.info("[mqtt_switches] Trying next host...")
+                    continue
+                else:
+                    # Last host failed
+                    _LOGGER.error("[mqtt_switches] All MQTT hosts failed. Tried: %s", ", ".join(self.mqtt_hosts))
+                    return False
+        
+        return False
     
     def stop(self):
         """Stop MQTT client."""

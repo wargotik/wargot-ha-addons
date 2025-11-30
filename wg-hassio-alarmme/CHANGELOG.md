@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.7] - 2025-01-28
+
+### Fixed
+- Improved MQTT connection logic to try multiple hosts automatically
+- Now tries hosts in order: core-mosquitto, localhost, 172.30.32.1
+- Better error handling and logging for connection attempts
+- Falls back to next host if connection fails
+
 ## [0.3.6] - 2025-01-28
 
 ### Fixed
@@ -161,6 +169,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.7
 [0.3.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.6
 [0.3.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.5
 [0.3.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.4
