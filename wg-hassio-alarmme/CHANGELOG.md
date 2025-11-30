@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-01-28
+
+### Fixed
+- Fixed 404 error when loading sensors - now uses relative path that works with Ingress
+- Added 404 handler with logging for better debugging
+- Improved logging for all HTTP requests including 404 errors
+- Added route registration logging on server startup
+
 ## [0.1.8] - 2025-01-28
 
 ### Added
@@ -68,6 +76,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.1.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.9
 [0.1.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.8
 [0.1.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.7
 [0.1.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.1.6

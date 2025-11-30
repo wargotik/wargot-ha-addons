@@ -137,7 +137,10 @@ async def index_handler(request):
             async function loadSensors() {
                 try {
                     console.log('Loading sensors...');
-                    const response = await fetch('/api/sensors');
+                    // Use relative path that works with Ingress
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/sensors';
+                    console.log('API path:', apiPath);
+                    const response = await fetch(apiPath);
                     console.log('Response status:', response.status);
                     
                     if (!response.ok) {
@@ -340,9 +343,21 @@ async def logging_middleware(request, handler):
         response = await handler(request)
         _LOGGER.info("[web_server] %s %s - status: %s", request.method, request.path_qs, response.status)
         return response
+    except web.HTTPNotFound:
+        _LOGGER.warning("[web_server] 404 Not Found: %s %s", request.method, request.path_qs)
+        raise
     except Exception as err:
         _LOGGER.error("[web_server] Error handling %s %s: %s", request.method, request.path_qs, err, exc_info=True)
         raise
+
+
+async def not_found_handler(request):
+    """Handle 404 errors."""
+    _LOGGER.warning("[web_server] 404 Not Found: %s %s", request.method, request.path_qs)
+    return web.json_response({
+        "success": False,
+        "error": f"Route not found: {request.path_qs}"
+    }, status=404)
 
 
 async def run_web_server(port: int = 8099):
@@ -354,13 +369,18 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/health", health_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
     
+    # 404 handler
+    app.router.add_route("*", "/{path:.*}", not_found_handler)
+    
+    _LOGGER.info("[web_server] Registered routes: /, /health, /api/sensors")
+    
     # Start server
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     
-    _LOGGER.info(f"Web server started on port {port}")
+    _LOGGER.info(f"[web_server] Web server started on port {port}")
     
     # Keep running
     try:
