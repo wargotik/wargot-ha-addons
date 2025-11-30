@@ -7,8 +7,10 @@ from typing import Dict, Optional, Callable
 
 try:
     import paho.mqtt.client as mqtt
+    MQTT_AVAILABLE = True
 except ImportError:
-    paho = None
+    mqtt = None
+    MQTT_AVAILABLE = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -163,7 +165,7 @@ class MQTTSwitches:
     
     def start(self):
         """Start MQTT client."""
-        if paho is None:
+        if not MQTT_AVAILABLE or mqtt is None:
             _LOGGER.error("[mqtt_switches] paho-mqtt not installed. Install it: pip install paho-mqtt")
             return False
         

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2025-01-28
+
+### Fixed
+- Fixed NameError in mqtt_switches.py when paho-mqtt is not available
+- Improved MQTT import error handling
+
 ## [0.3.0] - 2025-01-28
 
 ### Added
@@ -117,6 +123,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.3.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.1
 [0.3.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.3.0
 [0.2.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.1
 [0.2.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.2.0
