@@ -121,11 +121,30 @@ class SensorMonitor:
                                 if current_mode in ("away", "night") and sensor_enabled_in_mode:
                                     # INTRUSION DETECTED!
                                     intrusion_message = f"⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: {friendly_name}"
-                                    _LOGGER.error("[sensor_monitor] 🚨 INTRUSION DETECTED: %s (%s) - Mode: %s", 
-                                                friendly_name, entity_id, current_mode)
+                                    _LOGGER.error("[sensor_monitor] 🚨 INTRUSION DETECTED: %s (%s) - Mode: %s, Sensor enabled in mode: %s", 
+                                                friendly_name, entity_id, current_mode, sensor_enabled_in_mode)
                                     
                                     if self._notification_callback:
-                                        await self._notification_callback(intrusion_message, persistent_notification=True, title="🚨 ТРЕВОГА")
+                                        _LOGGER.info("[sensor_monitor] Calling notification callback to send alert")
+                                        # Add actionable button to silence alarm
+                                        actions = [
+                                            {
+                                                "action": "SILENCE_ALARM",
+                                                "title": "Отключить тревогу"
+                                            }
+                                        ]
+                                        try:
+                                            result = await self._notification_callback(
+                                                intrusion_message, 
+                                                persistent_notification=True, 
+                                                title="🚨 ТРЕВОГА",
+                                                actions=actions
+                                            )
+                                            _LOGGER.info("[sensor_monitor] Notification callback returned: %s", result)
+                                        except Exception as notif_err:
+                                            _LOGGER.error("[sensor_monitor] Error calling notification callback: %s", notif_err, exc_info=True)
+                                    else:
+                                        _LOGGER.warning("[sensor_monitor] No notification callback set, cannot send intrusion alert!")
                     
                     # Save last poll time
                     self._save_last_poll_time()

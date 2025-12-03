@@ -838,25 +838,30 @@ async def get_available_notify_services() -> dict:
         
         if not ha_token:
             _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot get notify services")
-            return {"iphone": [], "android": [], "other": []}
+            return {"iphone": [], "android": [], "other": [], "all_mobile": []}
         
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {ha_token}"}
             api_url = f"{ha_url}/api/services"
+            _LOGGER.debug("[web_server] Fetching services from: %s", api_url)
             
             async with session.get(api_url, headers=headers) as resp:
                 if resp.status == 200:
                     services = await resp.json()
+                    _LOGGER.debug("[web_server] Received services response, keys: %s", list(services.keys()) if isinstance(services, dict) else "Not a dict")
+                    
                     notify_services = services.get("notify", {})
+                    _LOGGER.info("[web_server] All notify services found: %s", list(notify_services.keys()) if notify_services else "None")
                     
                     iphone_services = []
                     android_services = []
                     other_services = []
                     
                     for service_name in notify_services.keys():
-                        if "iphone" in service_name.lower():
+                        service_lower = service_name.lower()
+                        if "iphone" in service_lower or "ios" in service_lower:
                             iphone_services.append(service_name)
-                        elif "android" in service_name.lower():
+                        elif "android" in service_lower:
                             android_services.append(service_name)
                         elif service_name.startswith("mobile_app_"):
                             other_services.append(service_name)
@@ -868,19 +873,31 @@ async def get_available_notify_services() -> dict:
                         "all_mobile": iphone_services + android_services + other_services
                     }
                     
-                    _LOGGER.info("[web_server] Found notify services: iPhone=%d, Android=%d, Other=%d", 
-                               len(iphone_services), len(android_services), len(other_services))
+                    _LOGGER.info("[web_server] Found notify services: iPhone=%d (%s), Android=%d (%s), Other=%d (%s), Total mobile=%d", 
+                               len(iphone_services), iphone_services,
+                               len(android_services), android_services,
+                               len(other_services), other_services,
+                               len(result["all_mobile"]))
                     return result
                 else:
-                    _LOGGER.warning("[web_server] Failed to get notify services: status %s", resp.status)
-                    return {"iphone": [], "android": [], "other": []}
+                    response_text = await resp.text()
+                    _LOGGER.error("[web_server] Failed to get notify services: status %s, response: %s", resp.status, response_text[:500])
+                    return {"iphone": [], "android": [], "other": [], "all_mobile": []}
     except Exception as err:
         _LOGGER.error("[web_server] Error getting notify services: %s", err, exc_info=True)
-        return {"iphone": [], "android": [], "other": []}
+        return {"iphone": [], "android": [], "other": [], "all_mobile": []}
 
 
-async def send_notification(message: str, persistent_notification: bool = False, title: str = None) -> bool:
-    """Send notification to all available mobile devices (iPhone/Android) and optionally as persistent notification."""
+async def send_notification(message: str, persistent_notification: bool = False, title: str = None, actions: list = None) -> bool:
+    """Send notification to all available mobile devices (iPhone/Android) and optionally as persistent notification.
+    
+    Args:
+        message: Notification message text
+        persistent_notification: If True, also send as persistent notification in HA UI
+        title: Optional notification title
+        actions: Optional list of action buttons for actionable notifications (mobile devices only)
+                 Format: [{"action": "ACTION_ID", "title": "Button Text"}, ...]
+    """
     try:
         ha_token = os.environ.get("SUPERVISOR_TOKEN")
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
@@ -894,17 +911,24 @@ async def send_notification(message: str, persistent_notification: bool = False,
         if title:
             notification_data["title"] = title
         
+        # Add actions for mobile devices (not for persistent_notification)
+        if actions:
+            notification_data["data"] = {"actions": actions}
+        
         # Get list of available mobile devices
         services = await get_available_notify_services()
         all_mobile_services = services.get("all_mobile", [])
+        _LOGGER.info("[web_server] Available mobile services: %s", all_mobile_services)
         
         # Add persistent_notification if requested
         services_to_notify = list(all_mobile_services)
         if persistent_notification:
             services_to_notify.append("persistent_notification")
         
+        _LOGGER.info("[web_server] Sending notification to %d services: %s", len(services_to_notify), services_to_notify)
+        
         if not services_to_notify:
-            _LOGGER.warning("[web_server] No notification services available")
+            _LOGGER.warning("[web_server] No notification services available - cannot send notification")
             return False
         
         # Send notification to all services
@@ -918,16 +942,34 @@ async def send_notification(message: str, persistent_notification: bool = False,
             for service_name in services_to_notify:
                 try:
                     api_url = f"{ha_url}/api/services/notify/{service_name}"
-                    _LOGGER.debug("[web_server] Sending notification via %s: %s", service_name, message)
                     
-                    async with session.post(api_url, headers=headers, json=notification_data) as resp:
-                        if resp.status == 200:
-                            success_count += 1
-                            _LOGGER.info("[web_server] Notification sent successfully via %s", service_name)
-                        else:
+                    # For persistent_notification, don't send actions (not supported)
+                    if service_name == "persistent_notification":
+                        persistent_data = {"message": message}
+                        if title:
+                            persistent_data["title"] = title
+                        _LOGGER.debug("[web_server] Sending persistent notification: %s", message)
+                        async with session.post(api_url, headers=headers, json=persistent_data) as resp:
+                            if resp.status == 200:
+                                success_count += 1
+                                _LOGGER.info("[web_server] Persistent notification sent successfully")
+                            else:
+                                response_text = await resp.text()
+                                _LOGGER.warning("[web_server] Failed to send persistent notification: status %s, response: %s", 
+                                              resp.status, response_text[:200])
+                    else:
+                        # For mobile devices, send with actions if provided
+                        _LOGGER.info("[web_server] Sending notification via %s: %s (actions: %s, data: %s)", 
+                                     service_name, message, actions, notification_data)
+                        async with session.post(api_url, headers=headers, json=notification_data) as resp:
                             response_text = await resp.text()
-                            _LOGGER.warning("[web_server] Failed to send notification via %s: status %s, response: %s", 
-                                          service_name, resp.status, response_text[:200])
+                            if resp.status == 200:
+                                success_count += 1
+                                _LOGGER.info("[web_server] Notification sent successfully via %s, response: %s", 
+                                           service_name, response_text[:200])
+                            else:
+                                _LOGGER.error("[web_server] Failed to send notification via %s: status %s, response: %s", 
+                                              service_name, resp.status, response_text[:500])
                 except Exception as service_err:
                     _LOGGER.error("[web_server] Error sending notification via %s: %s", service_name, service_err)
         

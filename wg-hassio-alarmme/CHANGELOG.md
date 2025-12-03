@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.19] - 2025-01-30
+
+### Changed
+- **Enhanced logging for notifications**: Added detailed logging to diagnose notification delivery issues
+- `get_available_notify_services()` now logs all found notify services and their categorization
+- `send_notification()` now logs available mobile services, notification data, and API responses
+- `sensor_monitor.py` now logs when notification callback is called and its result
+- Improved error messages with full API response text for debugging
+
+## [0.6.18] - 2025-01-30
+
+### Added
+- **Actionable notifications**: Added support for action buttons in mobile notifications
+- Intrusion alerts now include "Отключить тревогу" (Silence Alarm) button on mobile devices
+- `send_notification` now accepts `actions` parameter for actionable notifications
+- Actions are automatically added to mobile device notifications (iPhone/Android)
+- Persistent notifications in HA UI remain without actions (not supported)
+
 ## [0.6.17] - 2025-01-30
 
 ### Added
@@ -489,6 +507,8 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.19]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.19
+[0.6.18]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.18
 [0.6.17]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.17
 [0.6.16]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.16
 [0.6.15]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.15
