@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2025-01-30
+
+### Added
+- **Mutually exclusive switch modes**: Switches now work in three exclusive modes:
+  - **Off** - both switches disabled
+  - **Away Mode** - away mode enabled, night mode disabled
+  - **Night Mode** - night mode enabled, away mode disabled
+- **Local state storage**: Switch states are now saved to `/data/switches_state.json`
+- State persistence across add-on restarts
+- **Interactive mode buttons** in web UI for switching between modes
+- POST API endpoint `/api/switches` for updating mode programmatically
+- Visual mode indicator with color-coded badges (gray for off, blue for away, purple for night)
+- Mode buttons with active state highlighting
+- Automatic state synchronization between Home Assistant and local storage
+
+### Changed
+- **BREAKING**: Switch behavior changed to mutually exclusive - turning on one automatically turns off the other
+- UI updated to show single "Режим работы" (Mode) section instead of separate switch displays
+- Mode display shows current active mode instead of individual switch states
+- Switch state updates now ensure mutual exclusivity
+- Monitoring task enforces mutual exclusivity when detecting changes from Home Assistant
+
+### Fixed
+- State consistency between Home Assistant and add-on local storage
+- Improved state management with automatic conflict resolution
+
 ## [0.5.0] - 2025-01-28
 
 ### Added
@@ -244,6 +270,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.0
 [0.5.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.0
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.2
 [0.4.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.1

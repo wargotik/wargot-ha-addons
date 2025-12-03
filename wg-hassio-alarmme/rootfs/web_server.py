@@ -20,7 +20,38 @@ def set_virtual_switches(virtual_switches):
 
 async def index_handler(request):
     """Handle index page."""
-    html = """
+    # Read version from config.json
+    version = "unknown"
+    try:
+        # Try multiple possible paths for config.json
+        possible_paths = [
+            "/config.json",  # Standard add-on config location
+            "/data/options.json",  # Add-on options (usually doesn't have version)
+            os.path.join(os.path.dirname(__file__), "..", "..", "config.json"),  # Relative to script
+            "/app/config.json",  # If config is copied to /app
+        ]
+        
+        for config_path in possible_paths:
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        if "version" in config:
+                            version = config.get("version", "unknown")
+                            _LOGGER.debug("[web_server] Read version %s from %s", version, config_path)
+                            break
+                except Exception as path_err:
+                    _LOGGER.debug("[web_server] Error reading %s: %s", config_path, path_err)
+                    continue
+        
+        # Fallback: try environment variable
+        if version == "unknown":
+            version = os.environ.get("ADDON_VERSION", os.environ.get("VERSION", "unknown"))
+    except Exception as err:
+        _LOGGER.debug("[web_server] Could not read version: %s", err)
+        version = os.environ.get("ADDON_VERSION", "unknown")
+    
+    html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -49,6 +80,19 @@ async def index_handler(request):
             h1 {
                 color: #333;
                 margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .version-badge {
+                display: inline-block;
+                background-color: #95a5a6;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 11px;
+                font-weight: 500;
+                font-family: monospace;
             }
             .sensors-grid {
                 display: grid;
@@ -155,38 +199,94 @@ async def index_handler(request):
                 background-color: #7f8c8d;
                 color: white;
             }
+            .mode-buttons {
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+                flex-wrap: wrap;
+            }
+            .mode-button {
+                flex: 1;
+                min-width: 120px;
+                padding: 12px 20px;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                background-color: white;
+                color: #333;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-align: center;
+            }
+            .mode-button:hover {
+                border-color: #3498db;
+                background-color: #f0f8ff;
+            }
+            .mode-button.active {
+                border-color: #3498db;
+                background-color: #3498db;
+                color: white;
+            }
+            .mode-button.active.off {
+                border-color: #7f8c8d;
+                background-color: #7f8c8d;
+            }
+            .mode-button.active.away {
+                border-color: #3498db;
+                background-color: #3498db;
+            }
+            .mode-button.active.night {
+                border-color: #9b59b6;
+                background-color: #9b59b6;
+            }
+            .mode-button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
             @media (max-width: 768px) {
                 .sensors-grid {
                     grid-template-columns: 1fr;
+                }
+                .mode-buttons {
+                    flex-direction: column;
+                }
+                .mode-button {
+                    width: 100%;
                 }
             }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>AlarmMe</h1>
+            <h1>AlarmMe<span class="version-badge">v{version}</span></h1>
             <p>AlarmMe add-on is running. 
                 <span id="update-badge" class="update-badge">Обновление...</span>
                 <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-                <h3 style="margin-top: 0; margin-bottom: 15px;">Виртуальные выключатели</h3>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Away Mode</div>
-                        <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Режим отсутствия</div>
-                        <div style="margin-bottom: 8px;">
-                            <div id="switch-away-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
-                            <span id="switch-away-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
-                        </div>
+                <h3 style="margin-top: 0; margin-bottom: 15px;">Режим работы</h3>
+                <div style="padding: 15px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Текущий режим</div>
+                        <div id="current-mode" style="display: inline-block; padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
+                        <span id="switches-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
                     </div>
-                    <div style="padding: 12px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Night Mode</div>
-                        <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 8px;">Ночной режим</div>
-                        <div style="margin-bottom: 8px;">
-                            <div id="switch-night-state" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
-                            <span id="switch-night-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
-                        </div>
+                    <div class="mode-buttons">
+                        <button class="mode-button off" id="mode-button-off" onclick="setMode('off')">
+                            Выключено
+                        </button>
+                        <button class="mode-button away" id="mode-button-away" onclick="setMode('away')">
+                            Away Mode
+                        </button>
+                        <button class="mode-button night" id="mode-button-night" onclick="setMode('night')">
+                            Night Mode
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: #7f8c8d; margin-top: 12px;">
+                        <div>• <strong>Выключено</strong> - оба режима отключены</div>
+                        <div>• <strong>Away Mode</strong> - режим отсутствия</div>
+                        <div>• <strong>Night Mode</strong> - ночной режим</div>
                     </div>
                 </div>
             </div>
@@ -304,41 +404,126 @@ async def index_handler(request):
                     if (response.ok) {
                         const data = await response.json();
                         if (data.success) {
-                            updateSwitchState('away', data.switches.away || 'OFF');
-                            updateSwitchState('night', data.switches.night || 'OFF');
+                            updateCurrentMode(data.mode || 'off');
                             updateConnectionBadge(data.connected !== undefined ? data.connected : false);
                             
-                            // Update installation status
+                            // Update installation status (both switches should be installed)
                             if (data.switches_installed) {
-                                updateSwitchInstalled('away', data.switches_installed.away);
-                                updateSwitchInstalled('night', data.switches_installed.night);
+                                const bothInstalled = data.switches_installed.away && data.switches_installed.night;
+                                updateSwitchesInstalled(bothInstalled);
                             }
                         }
                     }
                 } catch (error) {
                     console.error('Error loading switches:', error);
                     updateConnectionBadge(false);
+                    updateCurrentMode('off');
                 }
             }
             
-            function updateSwitchState(switchType, state) {
-                const element = document.getElementById('switch-' + switchType + '-state');
+            function updateCurrentMode(mode) {
+                const element = document.getElementById('current-mode');
                 if (!element) return;
                 
-                const isOn = state === 'ON';
-                element.textContent = isOn ? 'ВКЛ' : 'ВЫКЛ';
-                element.style.backgroundColor = isOn ? '#27ae60' : '#7f8c8d';
+                const modeLabels = {
+                    'off': 'Выключено',
+                    'away': 'Away Mode',
+                    'night': 'Night Mode'
+                };
+                
+                const modeColors = {
+                    'off': '#7f8c8d',
+                    'away': '#3498db',
+                    'night': '#9b59b6'
+                };
+                
+                const label = modeLabels[mode] || 'Неизвестно';
+                const color = modeColors[mode] || '#7f8c8d';
+                
+                element.textContent = label;
+                element.style.backgroundColor = color;
+                
+                // Update button states
+                updateModeButtons(mode);
             }
             
-            function updateSwitchInstalled(switchType, installed) {
-                const element = document.getElementById('switch-' + switchType + '-installed');
+            function updateModeButtons(activeMode) {
+                const buttons = {
+                    'off': document.getElementById('mode-button-off'),
+                    'away': document.getElementById('mode-button-away'),
+                    'night': document.getElementById('mode-button-night')
+                };
+                
+                for (const [mode, button] of Object.entries(buttons)) {
+                    if (button) {
+                        if (mode === activeMode) {
+                            button.classList.add('active');
+                            button.disabled = false;
+                        } else {
+                            button.classList.remove('active');
+                            button.disabled = false;
+                        }
+                    }
+                }
+            }
+            
+            async function setMode(mode) {
+                // Disable all buttons during update
+                const buttons = ['off', 'away', 'night'].map(m => document.getElementById('mode-button-' + m));
+                buttons.forEach(btn => {
+                    if (btn) btn.disabled = true;
+                });
+                
+                try {
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/switches';
+                    const response = await fetch(apiPath, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ mode: mode })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            // Update UI immediately
+                            updateCurrentMode(data.mode || mode);
+                            // Reload switches to get latest state
+                            await loadSwitches();
+                        } else {
+                            alert('Ошибка: ' + (data.error || 'Не удалось изменить режим'));
+                            // Reload to restore correct state
+                            await loadSwitches();
+                        }
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+                        alert('Ошибка: ' + (errorData.error || 'Не удалось изменить режим'));
+                        // Reload to restore correct state
+                        await loadSwitches();
+                    }
+                } catch (error) {
+                    console.error('Error setting mode:', error);
+                    alert('Ошибка: ' + error.message);
+                    // Reload to restore correct state
+                    await loadSwitches();
+                } finally {
+                    // Re-enable buttons
+                    buttons.forEach(btn => {
+                        if (btn) btn.disabled = false;
+                    });
+                }
+            }
+            
+            function updateSwitchesInstalled(installed) {
+                const element = document.getElementById('switches-installed');
                 if (!element) return;
                 
                 if (installed) {
-                    element.textContent = '✓ Установлен';
+                    element.textContent = '✓ Выключатели установлены';
                     element.style.color = '#27ae60';
                 } else {
-                    element.textContent = '✗ Не установлен';
+                    element.textContent = '✗ Выключатели не установлены';
                     element.style.color = '#e74c3c';
                 }
             }
@@ -545,12 +730,13 @@ async def _check_switch_exists(entity_id: str) -> bool:
 
 
 async def get_switches_handler(request):
-    """Get virtual switches state."""
+    """Get virtual switches state and current mode."""
     try:
         global _virtual_switches
         
         # Default states if switches not available
         default_states = {"away": "OFF", "night": "OFF"}
+        default_mode = "off"
         
         # Check if switches exist in Home Assistant (created by integration)
         away_exists = await _check_switch_exists("switch.alarmme_away_mode")
@@ -560,6 +746,7 @@ async def get_switches_handler(request):
             _LOGGER.debug("[web_server] Virtual switches not initialized, returning default states")
             return web.json_response({
                 "success": True,
+                "mode": default_mode,
                 "switches": default_states,
                 "connected": False,
                 "switches_installed": {
@@ -569,9 +756,11 @@ async def get_switches_handler(request):
             })
         
         states = _virtual_switches.get_all_states()
+        current_mode = _virtual_switches.get_current_mode()
         
         return web.json_response({
             "success": True,
+            "mode": current_mode,
             "switches": {
                 "away": states.get("away", "OFF"),
                 "night": states.get("night", "OFF")
@@ -587,6 +776,7 @@ async def get_switches_handler(request):
         return web.json_response({
             "success": True,
             "error": str(err),
+            "mode": "off",
             "switches": {"away": "OFF", "night": "OFF"},
             "connected": False,
             "switches_installed": {
@@ -594,6 +784,81 @@ async def get_switches_handler(request):
                 "night": False
             }
         })
+
+
+async def update_switches_handler(request):
+    """Update virtual switches mode (POST)."""
+    try:
+        global _virtual_switches
+        
+        if _virtual_switches is None:
+            _LOGGER.warning("[web_server] Virtual switches not initialized")
+            return web.json_response({
+                "success": False,
+                "error": "Virtual switches not initialized"
+            }, status=503)
+        
+        # Parse request body
+        try:
+            data = await request.json()
+        except Exception as json_err:
+            _LOGGER.warning("[web_server] Invalid JSON in request: %s", json_err)
+            return web.json_response({
+                "success": False,
+                "error": "Invalid JSON"
+            }, status=400)
+        
+        mode = data.get("mode", "").lower()
+        
+        if mode not in ("off", "away", "night"):
+            _LOGGER.warning("[web_server] Invalid mode: %s", mode)
+            return web.json_response({
+                "success": False,
+                "error": f"Invalid mode: {mode}. Must be 'off', 'away', or 'night'"
+            }, status=400)
+        
+        _LOGGER.info("[web_server] Updating mode to: %s", mode)
+        
+        # Update switches based on mode
+        if mode == "off":
+            # Turn off both switches
+            away_success = await _virtual_switches.update_switch_state("away", "off")
+            night_success = await _virtual_switches.update_switch_state("night", "off")
+            success = away_success and night_success
+        elif mode == "away":
+            # Turn on away, turn off night
+            away_success = await _virtual_switches.update_switch_state("away", "on")
+            night_success = await _virtual_switches.update_switch_state("night", "off")
+            success = away_success and night_success
+        elif mode == "night":
+            # Turn on night, turn off away
+            away_success = await _virtual_switches.update_switch_state("away", "off")
+            night_success = await _virtual_switches.update_switch_state("night", "on")
+            success = away_success and night_success
+        else:
+            success = False
+        
+        if success:
+            # Get updated mode
+            current_mode = _virtual_switches.get_current_mode()
+            _LOGGER.info("[web_server] Successfully updated mode to: %s", current_mode)
+            return web.json_response({
+                "success": True,
+                "mode": current_mode
+            })
+        else:
+            _LOGGER.warning("[web_server] Failed to update mode to: %s", mode)
+            return web.json_response({
+                "success": False,
+                "error": "Failed to update switches"
+            }, status=500)
+            
+    except Exception as err:
+        _LOGGER.error("[web_server] Error updating switches: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
 
 
 @web.middleware
@@ -630,6 +895,7 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/health", health_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
     app.router.add_get("/api/switches", get_switches_handler)
+    app.router.add_post("/api/switches", update_switches_handler)
     
     # 404 handler
     app.router.add_route("*", "/{path:.*}", not_found_handler)
