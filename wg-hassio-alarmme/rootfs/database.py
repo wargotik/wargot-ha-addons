@@ -221,23 +221,32 @@ class SensorDatabase:
         """Check if sensor is saved in database."""
         return self.get_sensor(entity_id) is not None
     
-    def record_sensor_trigger(self, entity_id: str) -> bool:
-        """Record sensor trigger (when state changes from off to on)."""
+    def record_sensor_trigger(self, entity_id: str, last_changed: str = None) -> bool:
+        """Record sensor trigger using last_changed timestamp from Home Assistant."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            cursor.execute("""
-                UPDATE sensors 
-                SET last_triggered_at = CURRENT_TIMESTAMP,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE entity_id = ?
-            """, (entity_id,))
+            # Use last_changed from HA if provided, otherwise use current timestamp
+            if last_changed:
+                cursor.execute("""
+                    UPDATE sensors 
+                    SET last_triggered_at = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE entity_id = ?
+                """, (last_changed, entity_id))
+            else:
+                cursor.execute("""
+                    UPDATE sensors 
+                    SET last_triggered_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE entity_id = ?
+                """, (entity_id,))
             
             conn.commit()
             conn.close()
             
-            _LOGGER.debug("[database] Recorded sensor trigger: %s", entity_id)
+            _LOGGER.debug("[database] Recorded sensor trigger: %s (last_changed: %s)", entity_id, last_changed)
             return True
         except Exception as err:
             _LOGGER.error("[database] Error recording sensor trigger %s: %s", entity_id, err, exc_info=True)

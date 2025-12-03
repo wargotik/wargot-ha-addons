@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.13] - 2025-01-30
+
+### Added
+- Added detailed logging when sensor modes (Away/Night) are enabled or disabled
+- Logs include sensor name, entity_id, and which mode was changed (Away or Night)
+- Logs success/failure of mode updates in database
+
+## [0.6.12] - 2025-01-30
+
+### Changed
+- Enhanced sensor logging - now logs complete sensor data object from Home Assistant API
+- All fields from HA response are now logged: entity_id, state, attributes, last_changed, last_updated, context, etc.
+- Uses pprint for readable formatted output of all sensor information
+
+## [0.6.11] - 2025-01-30
+
+### Changed
+- Sensor trigger now saves `last_changed` timestamp from Home Assistant instead of current timestamp
+- When sensor state is "on" or "true", we now record the exact time when HA detected the state change
+- More accurate trigger timestamps - uses HA's `last_changed` field instead of add-on's current time
+
+## [0.6.10] - 2025-01-30
+
+### Changed
+- Removed previous_state tracking - trigger detection now based only on current sensor state
+- Sensor trigger is recorded when state is "on" or "true" (regardless of previous state)
+- Simplified trigger detection logic - no longer tracks state changes, only current active state
+
+## [0.6.9] - 2025-01-30
+
+### Changed
+- Added detailed logging for each sensor received from HA API in background task
+- Logs include: entity_id, name, device_class, state, and last_updated timestamp
+- Helps with debugging and monitoring sensor data from Home Assistant
+
+## [0.6.8] - 2025-01-30
+
+### Changed
+- **BREAKING**: UI no longer polls Home Assistant API for sensor discovery
+- UI now only reads sensors from database (sensors are saved by background task)
+- UI only fetches current states from HA API for display purposes (no saving, no trigger detection)
+- Background task is now the only source for:
+  - Auto-saving new sensors to database
+  - Detecting sensor triggers
+  - Recording trigger timestamps
+- Improved separation of concerns: background task handles all sensor management, UI only displays data
+- UI shows only sensors that are already saved in database by background task
+
+### Removed
+- Removed auto-save logic from UI handler (moved to background task)
+- Removed trigger detection from UI handler (moved to background task)
+- Removed state cache updates from UI handler (only background task updates cache)
+
+## [0.6.7] - 2025-01-30
+
+### Changed
+- Added extensive logging to background sensor monitoring task:
+  - Logs start of each poll cycle
+  - Logs total states received from HA API
+  - Logs number of processed sensors (motion/moving/occupancy/presence)
+  - Logs number of newly auto-saved sensors
+  - Logs number of detected triggers
+  - Logs success/failure of trigger recording in database
+  - Logs state changes (not just triggers)
+  - Logs completion summary with statistics
+  - Improved error logging with response body on API errors
+
 ## [0.6.6] - 2025-01-30
 
 ### Fixed
@@ -392,6 +459,13 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.13]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.13
+[0.6.12]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.12
+[0.6.11]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.11
+[0.6.10]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.10
+[0.6.9]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.9
+[0.6.8]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.8
+[0.6.7]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.7
 [0.6.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.6
 [0.6.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.5
 [0.6.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.4

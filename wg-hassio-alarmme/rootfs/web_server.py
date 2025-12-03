@@ -855,128 +855,80 @@ async def send_notification(service_name: str, message: str, title: str = None) 
 
 
 async def get_sensors_handler(request):
-    """Get motion, moving, occupancy and presence sensors from Home Assistant."""
+    """Get sensors from database and their current states from Home Assistant (read-only, no saving/triggers)."""
     client_ip = request.remote
-    _LOGGER.info("[web_server] Received request to get sensors list from %s", client_ip)
+    _LOGGER.info("[web_server] Received UI request to get sensors list from %s", client_ip)
     try:
+        global _db
+        
+        # Get all sensors from database (only saved sensors)
+        saved_sensors = _db.get_all_sensors()
+        _LOGGER.info("[web_server] Found %d sensors in database", len(saved_sensors))
+        
+        # Create a map of entity_id -> sensor data from database
+        sensors_by_id = {s["entity_id"]: s for s in saved_sensors}
+        
+        # Get current states from HA API (only for display, no saving/triggers)
+        ha_states_map = {}
         ha_token = os.environ.get("SUPERVISOR_TOKEN")
         ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         
-        motion_sensors = []
-        moving_sensors = []
-        occupancy_sensors = []
-        presence_sensors = []
-        
-        if ha_token:
-            _LOGGER.debug("[web_server] SUPERVISOR_TOKEN found, requesting sensors from HA API: %s", ha_url)
+        if ha_token and sensors_by_id:
             try:
                 async with aiohttp.ClientSession() as session:
                     headers = {"Authorization": f"Bearer {ha_token}"}
                     api_url = f"{ha_url}/api/states"
                     
-                    _LOGGER.debug("[web_server] Making request to HA API: %s", api_url)
+                    _LOGGER.debug("[web_server] Fetching current states from HA API for %d sensors (display only)", len(sensors_by_id))
                     async with session.get(api_url, headers=headers) as resp:
-                        response_text = await resp.text()
-                        _LOGGER.debug("[web_server] HA API response status: %s", resp.status)
-                        
                         if resp.status == 200:
-                            try:
-                                states = await resp.json()
-                                total_states = len(states)
-                                _LOGGER.info("[web_server] Received %d total states from HA API", total_states)
-                            except Exception as json_err:
-                                _LOGGER.error("[web_server] Error parsing JSON response from HA API: %s, response: %s", 
-                                            json_err, response_text[:500])
-                                raise
-                            
+                            states = await resp.json()
+                            # Create map of entity_id -> state for quick lookup
                             for state in states:
                                 entity_id = state.get("entity_id", "")
-                                attributes = state.get("attributes", {})
-                                device_class = attributes.get("device_class", "")
-                                friendly_name = attributes.get("friendly_name", entity_id)
-                                
-                                # Check if sensor is saved in database
-                                saved_sensor = _db.get_sensor(entity_id)
-                                is_saved = saved_sensor is not None
-                                
-                                # Auto-save sensor if not in database
-                                if not is_saved:
-                                    _LOGGER.debug("[web_server] Auto-saving newly detected sensor: %s (%s)", friendly_name, entity_id)
-                                    _db.save_sensor(
-                                        entity_id=entity_id,
-                                        name=friendly_name,
-                                        device_class=device_class,
-                                        enabled_in_away_mode=False,
-                                        enabled_in_night_mode=False
-                                    )
-                                    # Re-fetch to get saved data
-                                    saved_sensor = _db.get_sensor(entity_id)
-                                    is_saved = True
-                                
-                                # Track sensor state changes for trigger detection
-                                current_state = state.get("state", "unknown").lower()
-                                previous_state = _sensor_states_cache.get(entity_id, "unknown")
-                                
-                                # Detect trigger: state changed from off to on
-                                if previous_state == "off" and current_state == "on":
-                                    _LOGGER.info("[web_server] 🔔 Sensor TRIGGERED: %s (%s) - changed from %s to %s", 
-                                               friendly_name, entity_id, previous_state, current_state)
-                                    # Record trigger in database
-                                    _db.record_sensor_trigger(entity_id)
-                                    # Re-fetch to get updated last_triggered_at
-                                    saved_sensor = _db.get_sensor(entity_id)
-                                
-                                # Update cache with current state
-                                _sensor_states_cache[entity_id] = current_state
-                                
-                                sensor_data = {
-                                    "entity_id": entity_id,
-                                    "name": friendly_name,
-                                    "state": state.get("state", "unknown"),
-                                    "device_class": device_class,
-                                    "saved": is_saved
-                                }
-                                
-                                # Add mode settings and last_triggered_at if sensor is saved
-                                if saved_sensor:
-                                    # Ensure boolean values (handle None, 0, 1, etc.)
-                                    sensor_data["enabled_in_away_mode"] = bool(saved_sensor.get("enabled_in_away_mode", False))
-                                    sensor_data["enabled_in_night_mode"] = bool(saved_sensor.get("enabled_in_night_mode", False))
-                                    sensor_data["last_triggered_at"] = saved_sensor.get("last_triggered_at")
-                                else:
-                                    # Default values if sensor not in database yet
-                                    sensor_data["enabled_in_away_mode"] = False
-                                    sensor_data["enabled_in_night_mode"] = False
-                                    sensor_data["last_triggered_at"] = None
-                                
-                                if device_class == "motion":
-                                    motion_sensors.append(sensor_data)
-                                    _LOGGER.debug("[web_server] Found motion sensor: %s (%s) - state: %s, saved: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
-                                elif device_class == "moving":
-                                    moving_sensors.append(sensor_data)
-                                    _LOGGER.debug("[web_server] Found moving sensor: %s (%s) - state: %s, saved: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
-                                elif device_class == "occupancy":
-                                    occupancy_sensors.append(sensor_data)
-                                    _LOGGER.debug("[web_server] Found occupancy sensor: %s (%s) - state: %s, saved: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
-                                elif device_class == "presence":
-                                    presence_sensors.append(sensor_data)
-                                    _LOGGER.debug("[web_server] Found presence sensor: %s (%s) - state: %s, saved: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
-                            
-                            _LOGGER.info("[web_server] Successfully processed sensors - motion: %d, moving: %d, occupancy: %d, presence: %d", 
-                                       len(motion_sensors), len(moving_sensors), len(occupancy_sensors), len(presence_sensors))
+                                if entity_id in sensors_by_id:
+                                    ha_states_map[entity_id] = state.get("state", "unknown")
+                            _LOGGER.debug("[web_server] Retrieved current states for %d sensors", len(ha_states_map))
                         else:
-                            _LOGGER.warning("[web_server] HA API returned status %s, response: %s", 
-                                          resp.status, response_text[:200])
+                            _LOGGER.warning("[web_server] HA API returned status %s, will show sensors without current state", resp.status)
             except Exception as api_err:
-                _LOGGER.error("[web_server] Error getting sensors from HA API: %s", api_err, exc_info=True)
-        else:
-            _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot fetch sensors")
+                _LOGGER.warning("[web_server] Error fetching current states from HA API: %s (will show sensors without current state)", api_err)
         
-        _LOGGER.info("[web_server] Returning sensors list - motion: %d, moving: %d, occupancy: %d, presence: %d", 
+        # Build sensor lists grouped by device_class
+        motion_sensors = []
+        moving_sensors = []
+        occupancy_sensors = []
+        presence_sensors = []
+        
+        for saved_sensor in saved_sensors:
+            entity_id = saved_sensor["entity_id"]
+            device_class = saved_sensor["device_class"]
+            
+            # Get current state from HA (or "unknown" if not available)
+            current_state = ha_states_map.get(entity_id, "unknown")
+            
+            sensor_data = {
+                "entity_id": entity_id,
+                "name": saved_sensor["name"],
+                "state": current_state,
+                "device_class": device_class,
+                "saved": True,  # All sensors from database are saved
+                "enabled_in_away_mode": bool(saved_sensor.get("enabled_in_away_mode", False)),
+                "enabled_in_night_mode": bool(saved_sensor.get("enabled_in_night_mode", False)),
+                "last_triggered_at": saved_sensor.get("last_triggered_at")
+            }
+            
+            # Group by device_class
+            if device_class == "motion":
+                motion_sensors.append(sensor_data)
+            elif device_class == "moving":
+                moving_sensors.append(sensor_data)
+            elif device_class == "occupancy":
+                occupancy_sensors.append(sensor_data)
+            elif device_class == "presence":
+                presence_sensors.append(sensor_data)
+        
+        _LOGGER.info("[web_server] Returning sensors from database - motion: %d, moving: %d, occupancy: %d, presence: %d", 
                     len(motion_sensors), len(moving_sensors), len(occupancy_sensors), len(presence_sensors))
         return web.json_response({
             "success": True,
@@ -1089,8 +1041,23 @@ async def update_sensor_modes_handler(request):
                 "error": "At least one mode (enabled_in_away_mode or enabled_in_night_mode) must be provided"
             }, status=400)
         
-        _LOGGER.info("[web_server] Updating sensor modes: %s (away: %s, night: %s)", 
-                    entity_id, enabled_in_away_mode, enabled_in_night_mode)
+        # Get sensor info for logging
+        sensor_info = _db.get_sensor(entity_id)
+        sensor_name = sensor_info.get("name", entity_id) if sensor_info else entity_id
+        
+        # Log mode changes
+        if enabled_in_away_mode is not None:
+            mode_status = "enabled" if enabled_in_away_mode else "disabled"
+            _LOGGER.info("[web_server] 🔧 Sensor mode changed: %s (%s) - Away Mode: %s", 
+                        sensor_name, entity_id, mode_status)
+        
+        if enabled_in_night_mode is not None:
+            mode_status = "enabled" if enabled_in_night_mode else "disabled"
+            _LOGGER.info("[web_server] 🔧 Sensor mode changed: %s (%s) - Night Mode: %s", 
+                        sensor_name, entity_id, mode_status)
+        
+        _LOGGER.info("[web_server] Updating sensor modes: %s (%s) - away: %s, night: %s", 
+                    sensor_name, entity_id, enabled_in_away_mode, enabled_in_night_mode)
         
         success = _db.update_sensor_modes(
             entity_id=entity_id,
@@ -1099,6 +1066,8 @@ async def update_sensor_modes_handler(request):
         )
         
         if success:
+            _LOGGER.info("[web_server] ✅ Successfully updated sensor modes for: %s (%s)", 
+                        sensor_name, entity_id)
             return web.json_response({
                 "success": True,
                 "message": "Sensor modes updated successfully"

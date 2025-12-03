@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+from pprint import pformat
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,10 +38,11 @@ class SensorMonitor:
     async def _poll_sensors(self):
         """Poll sensors from Home Assistant API."""
         if not self.ha_token:
-            _LOGGER.debug("[sensor_monitor] SUPERVISOR_TOKEN not found, skipping poll")
+            _LOGGER.warning("[sensor_monitor] SUPERVISOR_TOKEN not found, skipping poll")
             return
         
         try:
+            _LOGGER.info("[sensor_monitor] Starting sensor poll from HA API: %s", self.ha_url)
             session = await self._get_session()
             headers = {"Authorization": f"Bearer {self.ha_token}"}
             api_url = f"{self.ha_url}/api/states"
@@ -48,22 +50,36 @@ class SensorMonitor:
             async with session.get(api_url, headers=headers) as resp:
                 if resp.status == 200:
                     states = await resp.json()
+                    _LOGGER.debug("[sensor_monitor] Received %d total states from HA API", len(states))
+                    
+                    processed_count = 0
+                    new_sensors_count = 0
+                    trigger_count = 0
                     
                     for state in states:
                         entity_id = state.get("entity_id", "")
                         attributes = state.get("attributes", {})
                         device_class = attributes.get("device_class", "")
                         friendly_name = attributes.get("friendly_name", entity_id)
+                        current_state = state.get("state", "unknown")
                         
                         # Only process motion, moving, occupancy, presence sensors
                         if device_class not in ("motion", "moving", "occupancy", "presence"):
                             continue
+                        
+                        processed_count += 1
+                        
+                        # Log all sensor information received from HA (entire state object)
+                        _LOGGER.info("[sensor_monitor] Sensor from HA - Full data for %s:\n%s", 
+                                    entity_id, pformat(state, width=120, indent=2))
                         
                         # Check if sensor is saved in database
                         saved_sensor = self._db.get_sensor(entity_id)
                         
                         # Auto-save sensor if not in database
                         if not saved_sensor:
+                            _LOGGER.info("[sensor_monitor] Auto-saving new sensor: %s (%s) - %s", 
+                                       friendly_name, entity_id, device_class)
                             self._db.save_sensor(
                                 entity_id=entity_id,
                                 name=friendly_name,
@@ -72,29 +88,36 @@ class SensorMonitor:
                                 enabled_in_night_mode=False
                             )
                             saved_sensor = self._db.get_sensor(entity_id)
+                            new_sensors_count += 1
                         
-                        # Track sensor state changes for trigger detection
+                        # Detect trigger: sensor is in "on" state
                         current_state = state.get("state", "unknown").lower()
-                        previous_state = self._sensor_states_cache.get(entity_id, "unknown")
                         
-                        # Detect trigger: state changed from off to on
-                        if previous_state == "off" and current_state == "on":
-                            _LOGGER.info("[sensor_monitor] 🔔 Sensor TRIGGERED: %s (%s) - changed from %s to %s", 
-                                       friendly_name, entity_id, previous_state, current_state)
-                            # Record trigger in database
-                            self._db.record_sensor_trigger(entity_id)
-                        
-                        # Update cache with current state
-                        self._sensor_states_cache[entity_id] = current_state
+                        # Record trigger if sensor is active (on/true)
+                        if current_state in ("on", "true"):
+                            # Get last_changed from HA (when HA detected the state change)
+                            last_changed = state.get("last_changed")
+                            _LOGGER.info("[sensor_monitor] 🔔 Sensor TRIGGERED: %s (%s) - state: %s, last_changed: %s", 
+                                       friendly_name, entity_id, current_state, last_changed)
+                            # Record trigger in database with last_changed from HA
+                            if self._db.record_sensor_trigger(entity_id, last_changed):
+                                trigger_count += 1
+                                _LOGGER.info("[sensor_monitor] ✅ Recorded trigger in database for: %s (last_changed: %s)", 
+                                           entity_id, last_changed)
+                            else:
+                                _LOGGER.error("[sensor_monitor] ❌ Failed to record trigger in database for: %s", entity_id)
                     
                     # Save last poll time
                     self._save_last_poll_time()
-                    _LOGGER.debug("[sensor_monitor] Polled %d sensors, saved poll time", len([s for s in states if s.get("attributes", {}).get("device_class") in ("motion", "moving", "occupancy", "presence")]))
+                    _LOGGER.info("[sensor_monitor] ✅ Poll completed: processed %d sensors, %d new sensors, %d triggers detected", 
+                               processed_count, new_sensors_count, trigger_count)
                 else:
-                    _LOGGER.warning("[sensor_monitor] HA API returned status %s", resp.status)
+                    _LOGGER.warning("[sensor_monitor] ❌ HA API returned status %s (expected 200)", resp.status)
+                    response_text = await resp.text()
+                    _LOGGER.debug("[sensor_monitor] Response body: %s", response_text[:200])
                     
         except Exception as err:
-            _LOGGER.error("[sensor_monitor] Error polling sensors: %s", err, exc_info=True)
+            _LOGGER.error("[sensor_monitor] ❌ Error polling sensors: %s", err, exc_info=True)
     
     def _save_last_poll_time(self):
         """Save last poll time to JSON file."""
