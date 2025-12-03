@@ -38,10 +38,18 @@ class SensorDatabase:
                     device_class TEXT NOT NULL,
                     enabled_in_away_mode INTEGER DEFAULT 0,
                     enabled_in_night_mode INTEGER DEFAULT 0,
+                    last_triggered_at TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            
+            # Add last_triggered_at column if it doesn't exist (for existing databases)
+            try:
+                cursor.execute("ALTER TABLE sensors ADD COLUMN last_triggered_at TIMESTAMP")
+            except sqlite3.OperationalError:
+                # Column already exists, ignore
+                pass
             
             # Create index on device_class for faster queries
             cursor.execute("""
@@ -96,7 +104,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at
                 FROM sensors
                 WHERE entity_id = ?
             """, (entity_id,))
@@ -110,7 +118,8 @@ class SensorDatabase:
                     "name": row[1],
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
-                    "enabled_in_night_mode": bool(row[4])
+                    "enabled_in_night_mode": bool(row[4]),
+                    "last_triggered_at": row[5] if len(row) > 5 else None
                 }
             return None
         except Exception as err:
@@ -124,7 +133,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at
                 FROM sensors
                 ORDER BY name
             """)
@@ -138,7 +147,8 @@ class SensorDatabase:
                     "name": row[1],
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
-                    "enabled_in_night_mode": bool(row[4])
+                    "enabled_in_night_mode": bool(row[4]),
+                    "last_triggered_at": row[5] if len(row) > 5 else None
                 }
                 for row in rows
             ]
@@ -210,4 +220,26 @@ class SensorDatabase:
     def is_sensor_saved(self, entity_id: str) -> bool:
         """Check if sensor is saved in database."""
         return self.get_sensor(entity_id) is not None
+    
+    def record_sensor_trigger(self, entity_id: str) -> bool:
+        """Record sensor trigger (when state changes from off to on)."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE sensors 
+                SET last_triggered_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE entity_id = ?
+            """, (entity_id,))
+            
+            conn.commit()
+            conn.close()
+            
+            _LOGGER.debug("[database] Recorded sensor trigger: %s", entity_id)
+            return True
+        except Exception as err:
+            _LOGGER.error("[database] Error recording sensor trigger %s: %s", entity_id, err, exc_info=True)
+            return False
 

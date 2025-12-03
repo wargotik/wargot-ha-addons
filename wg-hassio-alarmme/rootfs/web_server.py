@@ -16,6 +16,9 @@ _virtual_switches = None
 # Global database instance
 _db = SensorDatabase()
 
+# Global sensor states cache for tracking changes
+_sensor_states_cache = {}
+
 
 def set_virtual_switches(virtual_switches):
     """Set virtual switches instance."""
@@ -212,6 +215,12 @@ async def index_handler(request):
             .sensor-state.unknown {
                 background-color: #e74c3c;
                 color: white;
+            }
+            .sensor-last-triggered {
+                font-size: 10px;
+                color: #7f8c8d;
+                margin-top: 4px;
+                font-style: italic;
             }
             .loading {
                 text-align: center;
@@ -466,6 +475,38 @@ async def index_handler(request):
                         </div>
                     `;
                     
+                    // Format last triggered time
+                    let lastTriggeredHtml = '';
+                    if (sensor.last_triggered_at) {
+                        try {
+                            const triggerDate = new Date(sensor.last_triggered_at);
+                            const now = new Date();
+                            const diffMs = now - triggerDate;
+                            const diffSec = Math.floor(diffMs / 1000);
+                            const diffMin = Math.floor(diffSec / 60);
+                            const diffHour = Math.floor(diffMin / 60);
+                            const diffDay = Math.floor(diffHour / 24);
+                            
+                            let timeAgo = '';
+                            if (diffSec < 60) {
+                                timeAgo = diffSec + ' сек назад';
+                            } else if (diffMin < 60) {
+                                timeAgo = diffMin + ' мин назад';
+                            } else if (diffHour < 24) {
+                                timeAgo = diffHour + ' ч назад';
+                            } else {
+                                timeAgo = diffDay + ' дн назад';
+                            }
+                            
+                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${timeAgo}</div>`;
+                        } catch (e) {
+                            // If date parsing fails, show raw value
+                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${sensor.last_triggered_at}</div>`;
+                        }
+                    } else {
+                        lastTriggeredHtml = '<div class="sensor-last-triggered">Срабатываний не было</div>';
+                    }
+                    
                     return `
                         <div class="sensor-item">
                             <div class="sensor-name">
@@ -474,6 +515,7 @@ async def index_handler(request):
                             </div>
                             <div class="sensor-id">${sensor.entity_id}</div>
                             <div class="sensor-state ${stateClass}">${sensor.state}</div>
+                            ${lastTriggeredHtml}
                             ${modeButtons}
                         </div>
                     `;
@@ -820,6 +862,22 @@ async def get_sensors_handler(request):
                                     saved_sensor = _db.get_sensor(entity_id)
                                     is_saved = True
                                 
+                                # Track sensor state changes for trigger detection
+                                current_state = state.get("state", "unknown").lower()
+                                previous_state = _sensor_states_cache.get(entity_id, "unknown")
+                                
+                                # Detect trigger: state changed from off to on
+                                if previous_state == "off" and current_state == "on":
+                                    _LOGGER.info("[web_server] 🔔 Sensor TRIGGERED: %s (%s) - changed from %s to %s", 
+                                               friendly_name, entity_id, previous_state, current_state)
+                                    # Record trigger in database
+                                    _db.record_sensor_trigger(entity_id)
+                                    # Re-fetch to get updated last_triggered_at
+                                    saved_sensor = _db.get_sensor(entity_id)
+                                
+                                # Update cache with current state
+                                _sensor_states_cache[entity_id] = current_state
+                                
                                 sensor_data = {
                                     "entity_id": entity_id,
                                     "name": friendly_name,
@@ -828,10 +886,11 @@ async def get_sensors_handler(request):
                                     "saved": is_saved
                                 }
                                 
-                                # Add mode settings if sensor is saved
+                                # Add mode settings and last_triggered_at if sensor is saved
                                 if saved_sensor:
                                     sensor_data["enabled_in_away_mode"] = saved_sensor.get("enabled_in_away_mode", False)
                                     sensor_data["enabled_in_night_mode"] = saved_sensor.get("enabled_in_night_mode", False)
+                                    sensor_data["last_triggered_at"] = saved_sensor.get("last_triggered_at")
                                 
                                 if device_class == "motion":
                                     motion_sensors.append(sensor_data)

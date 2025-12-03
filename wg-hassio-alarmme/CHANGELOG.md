@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.5] - 2025-01-30
+
+### Added
+- **Sensor trigger tracking**: Sensors now track when they trigger (state changes from off to on)
+- **Trigger logging**: All sensor triggers are logged with timestamp
+- **Last triggered time display**: Each sensor shows time since last trigger (e.g., "5 мин назад", "2 ч назад")
+- Database field `last_triggered_at` added to sensors table
+- Automatic trigger detection when sensor state changes from off to on
+- Visual indicator showing "Последнее срабатывание: X" or "Срабатываний не было" for each sensor
+
+### Changed
+- Database schema updated to include `last_triggered_at` timestamp field
+- Sensor state changes are now tracked in memory cache for trigger detection
+- UI updated to display last trigger time below sensor state
+
 ## [0.5.4] - 2025-01-30
 
 ### Added
@@ -304,6 +319,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.5.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.5
 [0.5.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.4
 [0.5.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.3
 [0.5.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.2
