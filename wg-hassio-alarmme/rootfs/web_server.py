@@ -6,10 +6,15 @@ import logging
 import os
 import json
 
+from database import SensorDatabase
+
 _LOGGER = logging.getLogger(__name__)
 
 # Global virtual switches instance
 _virtual_switches = None
+
+# Global database instance
+_db = SensorDatabase()
 
 
 def set_virtual_switches(virtual_switches):
@@ -132,6 +137,22 @@ async def index_handler(request):
                 font-weight: 500;
                 margin-bottom: 4px;
                 color: #333;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .sensor-save-icon, .sensor-saved-icon {
+                font-size: 16px;
+                cursor: pointer;
+                opacity: 0.6;
+                transition: opacity 0.2s;
+            }
+            .sensor-save-icon:hover {
+                opacity: 1;
+            }
+            .sensor-saved-icon {
+                opacity: 1;
+                cursor: default;
             }
             .sensor-id {
                 font-size: 11px;
@@ -387,14 +408,52 @@ async def index_handler(request):
                 container.innerHTML = sensors.map(sensor => {
                     const stateClass = sensor.state === 'on' ? 'on' : 
                                       sensor.state === 'off' ? 'off' : 'unknown';
+                    // All sensors are auto-saved, so always show saved icon
+                    const savedIcon = '<span class="sensor-saved-icon" title="Сохранён в базу">💾</span>';
                     return `
                         <div class="sensor-item">
-                            <div class="sensor-name">${sensor.name || sensor.entity_id}</div>
+                            <div class="sensor-name">
+                                ${sensor.name || sensor.entity_id}
+                                ${savedIcon}
+                            </div>
                             <div class="sensor-id">${sensor.entity_id}</div>
                             <div class="sensor-state ${stateClass}">${sensor.state}</div>
                         </div>
                     `;
                 }).join('');
+            }
+            
+            async function saveSensor(entityId, name, deviceClass) {
+                try {
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/sensors/save';
+                    const response = await fetch(apiPath, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            entity_id: entityId,
+                            name: name,
+                            device_class: deviceClass
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            // Reload sensors to update UI
+                            await loadSensors();
+                        } else {
+                            alert('Ошибка: ' + (data.error || 'Не удалось сохранить датчик'));
+                        }
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+                        alert('Ошибка: ' + (errorData.error || 'Не удалось сохранить датчик'));
+                    }
+                } catch (error) {
+                    console.error('Error saving sensor:', error);
+                    alert('Ошибка: ' + error.message);
+                }
             }
             
             async function loadSwitches() {
@@ -647,38 +706,53 @@ async def get_sensors_handler(request):
                                 device_class = attributes.get("device_class", "")
                                 friendly_name = attributes.get("friendly_name", entity_id)
                                 
+                                # Check if sensor is saved in database
+                                saved_sensor = _db.get_sensor(entity_id)
+                                is_saved = saved_sensor is not None
+                                
+                                # Auto-save sensor if not in database
+                                if not is_saved:
+                                    _LOGGER.debug("[web_server] Auto-saving newly detected sensor: %s (%s)", friendly_name, entity_id)
+                                    _db.save_sensor(
+                                        entity_id=entity_id,
+                                        name=friendly_name,
+                                        device_class=device_class,
+                                        enabled_in_away_mode=False,
+                                        enabled_in_night_mode=False
+                                    )
+                                    # Re-fetch to get saved data
+                                    saved_sensor = _db.get_sensor(entity_id)
+                                    is_saved = True
+                                
+                                sensor_data = {
+                                    "entity_id": entity_id,
+                                    "name": friendly_name,
+                                    "state": state.get("state", "unknown"),
+                                    "device_class": device_class,
+                                    "saved": is_saved
+                                }
+                                
+                                # Add mode settings if sensor is saved
+                                if saved_sensor:
+                                    sensor_data["enabled_in_away_mode"] = saved_sensor.get("enabled_in_away_mode", False)
+                                    sensor_data["enabled_in_night_mode"] = saved_sensor.get("enabled_in_night_mode", False)
+                                
                                 if device_class == "motion":
-                                    motion_sensors.append({
-                                        "entity_id": entity_id,
-                                        "name": friendly_name,
-                                        "state": state.get("state", "unknown")
-                                    })
-                                    _LOGGER.debug("[web_server] Found motion sensor: %s (%s) - state: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"))
+                                    motion_sensors.append(sensor_data)
+                                    _LOGGER.debug("[web_server] Found motion sensor: %s (%s) - state: %s, saved: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
                                 elif device_class == "moving":
-                                    moving_sensors.append({
-                                        "entity_id": entity_id,
-                                        "name": friendly_name,
-                                        "state": state.get("state", "unknown")
-                                    })
-                                    _LOGGER.debug("[web_server] Found moving sensor: %s (%s) - state: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"))
+                                    moving_sensors.append(sensor_data)
+                                    _LOGGER.debug("[web_server] Found moving sensor: %s (%s) - state: %s, saved: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
                                 elif device_class == "occupancy":
-                                    occupancy_sensors.append({
-                                        "entity_id": entity_id,
-                                        "name": friendly_name,
-                                        "state": state.get("state", "unknown")
-                                    })
-                                    _LOGGER.debug("[web_server] Found occupancy sensor: %s (%s) - state: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"))
+                                    occupancy_sensors.append(sensor_data)
+                                    _LOGGER.debug("[web_server] Found occupancy sensor: %s (%s) - state: %s, saved: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
                                 elif device_class == "presence":
-                                    presence_sensors.append({
-                                        "entity_id": entity_id,
-                                        "name": friendly_name,
-                                        "state": state.get("state", "unknown")
-                                    })
-                                    _LOGGER.debug("[web_server] Found presence sensor: %s (%s) - state: %s", 
-                                                 friendly_name, entity_id, state.get("state", "unknown"))
+                                    presence_sensors.append(sensor_data)
+                                    _LOGGER.debug("[web_server] Found presence sensor: %s (%s) - state: %s, saved: %s", 
+                                                 friendly_name, entity_id, state.get("state", "unknown"), is_saved)
                             
                             _LOGGER.info("[web_server] Successfully processed sensors - motion: %d, moving: %d, occupancy: %d, presence: %d", 
                                        len(motion_sensors), len(moving_sensors), len(occupancy_sensors), len(presence_sensors))
@@ -708,6 +782,60 @@ async def get_sensors_handler(request):
             "moving_sensors": [],
             "occupancy_sensors": [],
             "presence_sensors": []
+        }, status=500)
+
+
+async def save_sensor_handler(request):
+    """Save sensor to database (POST)."""
+    try:
+        global _db
+        
+        # Parse request body
+        try:
+            data = await request.json()
+        except Exception as json_err:
+            _LOGGER.warning("[web_server] Invalid JSON in request: %s", json_err)
+            return web.json_response({
+                "success": False,
+                "error": "Invalid JSON"
+            }, status=400)
+        
+        entity_id = data.get("entity_id")
+        name = data.get("name", "")
+        device_class = data.get("device_class", "")
+        
+        if not entity_id:
+            return web.json_response({
+                "success": False,
+                "error": "entity_id is required"
+            }, status=400)
+        
+        _LOGGER.info("[web_server] Saving sensor to database: %s (%s)", name, entity_id)
+        
+        success = _db.save_sensor(
+            entity_id=entity_id,
+            name=name,
+            device_class=device_class,
+            enabled_in_away_mode=False,
+            enabled_in_night_mode=False
+        )
+        
+        if success:
+            return web.json_response({
+                "success": True,
+                "message": "Sensor saved successfully"
+            })
+        else:
+            return web.json_response({
+                "success": False,
+                "error": "Failed to save sensor"
+            }, status=500)
+            
+    except Exception as err:
+        _LOGGER.error("[web_server] Error saving sensor: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
         }, status=500)
 
 
@@ -896,6 +1024,7 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/", index_handler)
     app.router.add_get("/health", health_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
+    app.router.add_post("/api/sensors/save", save_sensor_handler)
     app.router.add_get("/api/switches", get_switches_handler)
     app.router.add_post("/api/switches", update_switches_handler)
     
