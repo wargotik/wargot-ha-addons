@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.0] - 2025-01-30
+## [0.5.1] - 2025-01-30
 
 ### Added
 - **Mutually exclusive switch modes**: Switches now work in three exclusive modes:
