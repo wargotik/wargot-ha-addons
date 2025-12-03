@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.3] - 2025-01-30
+
+### Added
+- **SQLite database for sensors**: Sensors are now automatically saved to `/data/alarmme.db` when detected
+- Database module (`database.py`) for managing sensor storage
+- Sensor table with fields: `entity_id`, `name`, `device_class`, `enabled_in_away_mode`, `enabled_in_night_mode`
+- Automatic sensor saving when detected from Home Assistant API
+- Visual indicator (💾 icon) next to sensor name showing it's saved in database
+- POST API endpoint `/api/sensors/save` for manual sensor saving (if needed)
+
+### Changed
+- Sensors are now automatically persisted to database upon first detection
+- UI always shows saved icon for sensors (since they're auto-saved)
+
 ## [0.5.2] - 2025-01-30
 
 ### Fixed
@@ -277,6 +291,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.5.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.3
 [0.5.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.2
 [0.5.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.1
 [0.5.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.0
