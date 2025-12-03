@@ -320,16 +320,23 @@ class VirtualSwitches:
             # Ensure /data directory exists
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
             
-            # Prepare states dictionary
-            states_to_save = {
-                switch_type: switch_data["state"]
-                for switch_type, switch_data in self.switches.items()
-            }
+            # Read existing state if file exists (to preserve last_sensor_poll)
+            state_data = {}
+            if self._state_file.exists():
+                try:
+                    with open(self._state_file, 'r', encoding='utf-8') as f:
+                        state_data = json.load(f)
+                except Exception:
+                    state_data = {}
+            
+            # Update switch states
+            for switch_type, switch_data in self.switches.items():
+                state_data[switch_type] = switch_data["state"]
             
             # Write to file atomically
             temp_file = self._state_file.with_suffix('.tmp')
             with open(temp_file, 'w', encoding='utf-8') as f:
-                json.dump(states_to_save, f, indent=2, ensure_ascii=False)
+                json.dump(state_data, f, indent=2, ensure_ascii=False)
             
             # Replace original file
             temp_file.replace(self._state_file)

@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2025-01-30
+
+### Added
+- **Background sensor monitoring**: Sensors are now polled in background every 5 seconds, even when web page is closed
+- Background monitoring task runs independently of web UI
+- Last background poll time saved to `/data/switches_state.json` (same file as switch states)
+- Visual indicator on web page showing time since last background poll (e.g., "Фоновое обновление: 5 сек назад")
+- GET API endpoint `/api/background-poll-time` for retrieving last poll time
+- Automatic sensor trigger detection in background (logs and saves to database)
+
+### Changed
+- Sensor monitoring now works 24/7, not just when web page is open
+- Background poll time displayed next to "REST API" badge on main page
+- Poll time updates every 5 seconds in UI
+- **BREAKING**: Major feature addition - background monitoring significantly changes add-on behavior
+
+## [0.5.6] - 2025-01-30
+
+### Added
+- **Background sensor monitoring**: Sensors are now polled in background every 5 seconds, even when web page is closed
+- Background monitoring task runs independently of web UI
+- Last background poll time saved to `/data/switches_state.json` (same file as switch states)
+- Visual indicator on web page showing time since last background poll (e.g., "Фоновое обновление: 5 сек назад")
+- GET API endpoint `/api/background-poll-time` for retrieving last poll time
+- Automatic sensor trigger detection in background (logs and saves to database)
+
+### Changed
+- Sensor monitoring now works 24/7, not just when web page is open
+- Background poll time displayed next to "REST API" badge on main page
+- Poll time updates every 5 seconds in UI
+
 ## [0.5.5] - 2025-01-30
 
 ### Added
@@ -319,6 +350,8 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.1
+[0.5.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.6
 [0.5.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.5
 [0.5.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.4
 [0.5.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.3

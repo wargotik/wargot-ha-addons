@@ -7,6 +7,7 @@ import os
 import json
 
 from database import SensorDatabase
+from sensor_monitor import SensorMonitor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,11 +20,30 @@ _db = SensorDatabase()
 # Global sensor states cache for tracking changes
 _sensor_states_cache = {}
 
+# Global sensor monitor instance
+_sensor_monitor = None
+
 
 def set_virtual_switches(virtual_switches):
     """Set virtual switches instance."""
     global _virtual_switches
     _virtual_switches = virtual_switches
+
+
+def set_sensor_monitor(sensor_monitor):
+    """Set sensor monitor instance."""
+    global _sensor_monitor
+    _sensor_monitor = sensor_monitor
+
+
+def get_db():
+    """Get database instance."""
+    return _db
+
+
+def get_sensor_states_cache():
+    """Get sensor states cache."""
+    return _sensor_states_cache
 
 
 async def index_handler(request):
@@ -327,6 +347,7 @@ async def index_handler(request):
             <p>AlarmMe add-on is running. 
                 <span id="update-badge" class="update-badge">Обновление...</span>
                 <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
+                <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">Фоновое обновление: проверка...</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <h3 style="margin-top: 0; margin-bottom: 15px;">Режим работы</h3>
@@ -738,15 +759,69 @@ async def index_handler(request):
                 }
             }
             
+            async function loadBackgroundPollTime() {
+                try {
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/background-poll-time';
+                    const response = await fetch(apiPath);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.last_poll_time) {
+                            updateBackgroundPollBadge(data.last_poll_time);
+                        } else {
+                            updateBackgroundPollBadge(null);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading background poll time:', error);
+                    updateBackgroundPollBadge(null);
+                }
+            }
+            
+            function updateBackgroundPollBadge(lastPollTime) {
+                const badge = document.getElementById('background-poll-badge');
+                if (!badge) return;
+                
+                if (!lastPollTime) {
+                    badge.textContent = 'Фоновое обновление: нет данных';
+                    return;
+                }
+                
+                try {
+                    const pollDate = new Date(lastPollTime);
+                    const now = new Date();
+                    const diffMs = now - pollDate;
+                    const diffSec = Math.floor(diffMs / 1000);
+                    const diffMin = Math.floor(diffSec / 60);
+                    const diffHour = Math.floor(diffMin / 60);
+                    
+                    let timeAgo = '';
+                    if (diffSec < 60) {
+                        timeAgo = diffSec + ' сек назад';
+                    } else if (diffMin < 60) {
+                        timeAgo = diffMin + ' мин назад';
+                    } else {
+                        timeAgo = diffHour + ' ч назад';
+                    }
+                    
+                    badge.textContent = 'Фоновое обновление: ' + timeAgo;
+                } catch (e) {
+                    badge.textContent = 'Фоновое обновление: ошибка';
+                }
+            }
+            
             // Load sensors on page load
             loadSensors();
             loadSwitches();
+            loadBackgroundPollTime();
             
             // Refresh sensors every 30 seconds
             setInterval(loadSensors, 30000);
             
             // Refresh switches every 5 seconds
             setInterval(loadSwitches, 5000);
+            
+            // Refresh background poll time every 5 seconds
+            setInterval(loadBackgroundPollTime, 5000);
             
             // Update badge every second
             setInterval(updateBadge, 1000);
@@ -1054,6 +1129,31 @@ async def update_sensor_modes_handler(request):
         }, status=500)
 
 
+async def get_background_poll_time_handler(request):
+    """Get last background sensor poll time."""
+    try:
+        global _sensor_monitor
+        
+        if _sensor_monitor is None:
+            return web.json_response({
+                "success": True,
+                "last_poll_time": None
+            })
+        
+        last_poll_time = _sensor_monitor.get_last_poll_time()
+        
+        return web.json_response({
+            "success": True,
+            "last_poll_time": last_poll_time
+        })
+    except Exception as err:
+        _LOGGER.error("[web_server] Error getting background poll time: %s", err, exc_info=True)
+        return web.json_response({
+            "success": True,
+            "last_poll_time": None
+        })
+
+
 async def _check_switch_exists(entity_id: str) -> bool:
     """Check if switch entity exists in Home Assistant."""
     try:
@@ -1241,6 +1341,7 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/api/sensors", get_sensors_handler)
     app.router.add_post("/api/sensors/save", save_sensor_handler)
     app.router.add_post("/api/sensors/update-modes", update_sensor_modes_handler)
+    app.router.add_get("/api/background-poll-time", get_background_poll_time_handler)
     app.router.add_get("/api/switches", get_switches_handler)
     app.router.add_post("/api/switches", update_switches_handler)
     

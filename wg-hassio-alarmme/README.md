@@ -6,7 +6,7 @@ AlarmMe add-on for Home Assistant.
 
 ## Description
 
-This add-on provides alarm management functionality for Home Assistant.
+This add-on provides alarm management functionality for Home Assistant with background sensor monitoring and virtual switch control.
 
 ## Installation
 
@@ -32,7 +32,11 @@ After installation, the add-on is ready to use. No additional configuration is r
 ## Features
 
 - **Web Interface** for alarm management
-- **Home Assistant Integration**
+- **Background Sensor Monitoring**: Automatically polls sensors every 5 seconds, even when web page is closed
+- **Sensor Trigger Detection**: Logs and tracks when sensors trigger (state changes from off to on)
+- **Virtual Switches**: Two mutually exclusive modes (Away Mode and Night Mode)
+- **Sensor Database**: SQLite database for storing sensor configurations and trigger history
+- **Home Assistant Integration**: Works with AlarmMe custom integration for switch management
 
 ## Support
 
