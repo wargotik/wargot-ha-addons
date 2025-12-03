@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.15] - 2025-01-30
+
+### Changed
+- `send_notification` now automatically detects and sends to all available mobile devices (iPhone/Android)
+- Added `persistent_notification` parameter to `send_notification` method (default: False)
+- Startup notification now includes persistent notification in Home Assistant UI
+- Added `get_available_notify_services()` function to detect available mobile devices
+
+### Removed
+- Removed `service_name` parameter from `send_notification` - now automatically sends to all devices
+
 ## [0.6.14] - 2025-01-30
 
 ### Fixed
@@ -465,6 +476,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.15]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.15
 [0.6.14]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.14
 [0.6.13]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.13
 [0.6.12]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.12
