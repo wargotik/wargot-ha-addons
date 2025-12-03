@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.4] - 2025-01-30
+
+### Added
+- **Sensor mode buttons**: Added toggle buttons for each sensor to enable/disable in Away Mode and Night Mode
+- Mode buttons displayed next to each sensor with visual active state (blue for Away, purple for Night)
+- POST API endpoint `/api/sensors/update-modes` for updating sensor mode settings
+- JavaScript function `toggleSensorMode()` for handling mode button clicks
+- Visual feedback: active buttons are highlighted with mode-specific colors
+
+### Changed
+- Sensor items now display mode control buttons below sensor state
+- UI updated to show current mode state for each sensor
+
 ## [0.5.3] - 2025-01-30
 
 ### Added
@@ -291,6 +304,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.5.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.4
 [0.5.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.3
 [0.5.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.2
 [0.5.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.1

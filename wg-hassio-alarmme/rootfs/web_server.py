@@ -160,6 +160,40 @@ async def index_handler(request):
                 font-family: monospace;
                 margin-bottom: 6px;
             }
+            .sensor-modes {
+                display: flex;
+                gap: 6px;
+                margin-top: 8px;
+                flex-wrap: wrap;
+            }
+            .sensor-mode-btn {
+                padding: 4px 10px;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                background-color: white;
+                color: #333;
+                font-size: 11px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .sensor-mode-btn:hover {
+                border-color: #3498db;
+                background-color: #f0f8ff;
+            }
+            .sensor-mode-btn.active {
+                border-color: #3498db;
+                background-color: #3498db;
+                color: white;
+            }
+            .sensor-mode-btn.active.away {
+                border-color: #3498db;
+                background-color: #3498db;
+            }
+            .sensor-mode-btn.active.night {
+                border-color: #9b59b6;
+                background-color: #9b59b6;
+            }
             .sensor-state {
                 display: inline-block;
                 padding: 2px 8px;
@@ -410,6 +444,28 @@ async def index_handler(request):
                                       sensor.state === 'off' ? 'off' : 'unknown';
                     // All sensors are auto-saved, so always show saved icon
                     const savedIcon = '<span class="sensor-saved-icon" title="Сохранён в базу">💾</span>';
+                    
+                    // Mode buttons
+                    const awayModeActive = sensor.enabled_in_away_mode ? 'active' : '';
+                    const nightModeActive = sensor.enabled_in_night_mode ? 'active' : '';
+                    const awayEnabled = sensor.enabled_in_away_mode || false;
+                    const nightEnabled = sensor.enabled_in_night_mode || false;
+                    
+                    const modeButtons = `
+                        <div class="sensor-modes">
+                            <button class="sensor-mode-btn away ${awayModeActive}" 
+                                    onclick="toggleSensorMode(${JSON.stringify(sensor.entity_id)}, 'away', ${!awayEnabled})"
+                                    title="Включён в Away Mode">
+                                Away
+                            </button>
+                            <button class="sensor-mode-btn night ${nightModeActive}" 
+                                    onclick="toggleSensorMode(${JSON.stringify(sensor.entity_id)}, 'night', ${!nightEnabled})"
+                                    title="Включён в Night Mode">
+                                Night
+                            </button>
+                        </div>
+                    `;
+                    
                     return `
                         <div class="sensor-item">
                             <div class="sensor-name">
@@ -418,6 +474,7 @@ async def index_handler(request):
                             </div>
                             <div class="sensor-id">${sensor.entity_id}</div>
                             <div class="sensor-state ${stateClass}">${sensor.state}</div>
+                            ${modeButtons}
                         </div>
                     `;
                 }).join('');
@@ -452,6 +509,45 @@ async def index_handler(request):
                     }
                 } catch (error) {
                     console.error('Error saving sensor:', error);
+                    alert('Ошибка: ' + error.message);
+                }
+            }
+            
+            async function toggleSensorMode(entityId, mode, enabled) {
+                try {
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/sensors/update-modes';
+                    const requestData = {
+                        entity_id: entityId
+                    };
+                    
+                    if (mode === 'away') {
+                        requestData.enabled_in_away_mode = enabled;
+                    } else if (mode === 'night') {
+                        requestData.enabled_in_night_mode = enabled;
+                    }
+                    
+                    const response = await fetch(apiPath, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            // Reload sensors to update UI
+                            await loadSensors();
+                        } else {
+                            alert('Ошибка: ' + (data.error || 'Не удалось обновить режим датчика'));
+                        }
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+                        alert('Ошибка: ' + (errorData.error || 'Не удалось обновить режим датчика'));
+                    }
+                } catch (error) {
+                    console.error('Error toggling sensor mode:', error);
                     alert('Ошибка: ' + error.message);
                 }
             }
@@ -839,6 +935,66 @@ async def save_sensor_handler(request):
         }, status=500)
 
 
+async def update_sensor_modes_handler(request):
+    """Update sensor mode settings (POST)."""
+    try:
+        global _db
+        
+        # Parse request body
+        try:
+            data = await request.json()
+        except Exception as json_err:
+            _LOGGER.warning("[web_server] Invalid JSON in request: %s", json_err)
+            return web.json_response({
+                "success": False,
+                "error": "Invalid JSON"
+            }, status=400)
+        
+        entity_id = data.get("entity_id")
+        
+        if not entity_id:
+            return web.json_response({
+                "success": False,
+                "error": "entity_id is required"
+            }, status=400)
+        
+        enabled_in_away_mode = data.get("enabled_in_away_mode")
+        enabled_in_night_mode = data.get("enabled_in_night_mode")
+        
+        if enabled_in_away_mode is None and enabled_in_night_mode is None:
+            return web.json_response({
+                "success": False,
+                "error": "At least one mode (enabled_in_away_mode or enabled_in_night_mode) must be provided"
+            }, status=400)
+        
+        _LOGGER.info("[web_server] Updating sensor modes: %s (away: %s, night: %s)", 
+                    entity_id, enabled_in_away_mode, enabled_in_night_mode)
+        
+        success = _db.update_sensor_modes(
+            entity_id=entity_id,
+            enabled_in_away_mode=enabled_in_away_mode,
+            enabled_in_night_mode=enabled_in_night_mode
+        )
+        
+        if success:
+            return web.json_response({
+                "success": True,
+                "message": "Sensor modes updated successfully"
+            })
+        else:
+            return web.json_response({
+                "success": False,
+                "error": "Failed to update sensor modes"
+            }, status=500)
+            
+    except Exception as err:
+        _LOGGER.error("[web_server] Error updating sensor modes: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err)
+        }, status=500)
+
+
 async def _check_switch_exists(entity_id: str) -> bool:
     """Check if switch entity exists in Home Assistant."""
     try:
@@ -1025,6 +1181,7 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/health", health_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
     app.router.add_post("/api/sensors/save", save_sensor_handler)
+    app.router.add_post("/api/sensors/update-modes", update_sensor_modes_handler)
     app.router.add_get("/api/switches", get_switches_handler)
     app.router.add_post("/api/switches", update_switches_handler)
     
