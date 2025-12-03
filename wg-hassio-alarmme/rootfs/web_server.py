@@ -112,6 +112,11 @@ async def index_handler(request):
                 align-items: center;
                 gap: 10px;
             }
+            .addon-icon {
+                width: 32px;
+                height: 32px;
+                object-fit: contain;
+            }
             .version-badge {
                 display: inline-block;
                 background-color: #95a5a6;
@@ -343,7 +348,7 @@ async def index_handler(request):
     </head>
     <body>
         <div class="container">
-            <h1>AlarmMe<span class="version-badge">v{version}</span></h1>
+            <h1><img src="/icon.png" alt="AlarmMe" class="addon-icon" onerror="this.style.display='none'">AlarmMe<span class="version-badge">v{version}</span></h1>
             <p>AlarmMe add-on is running. 
                 <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
                 <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">Фоновое обновление: проверка...</span>
@@ -828,6 +833,37 @@ async def index_handler(request):
 async def health_handler(request):
     """Handle health check endpoint."""
     return web.json_response({"status": "ok"})
+
+
+async def icon_handler(request):
+    """Handle icon request."""
+    from pathlib import Path
+    
+    # Try multiple possible paths for icon.png
+    possible_paths = [
+        "/data/icon.png",  # User data directory
+        "/icon.png",  # Root directory
+        os.path.join(os.path.dirname(__file__), "..", "..", "icon.png"),  # Relative to script
+        "/app/icon.png",  # If icon is copied to /app
+    ]
+    
+    for icon_path in possible_paths:
+        if os.path.exists(icon_path):
+            try:
+                with open(icon_path, 'rb') as f:
+                    icon_data = f.read()
+                    return web.Response(
+                        body=icon_data,
+                        content_type='image/png',
+                        headers={'Cache-Control': 'public, max-age=3600'}
+                    )
+            except Exception as err:
+                _LOGGER.debug("[web_server] Error reading icon from %s: %s", icon_path, err)
+                continue
+    
+    # If icon not found, return 404
+    _LOGGER.debug("[web_server] Icon not found in any of the paths: %s", possible_paths)
+    return web.Response(status=404)
 
 
 async def get_available_notify_services() -> dict:
@@ -1426,6 +1462,7 @@ async def run_web_server(port: int = 8099):
     # Routes
     app.router.add_get("/", index_handler)
     app.router.add_get("/health", health_handler)
+    app.router.add_get("/icon.png", icon_handler)
     app.router.add_get("/api/sensors", get_sensors_handler)
     app.router.add_post("/api/sensors/save", save_sensor_handler)
     app.router.add_post("/api/sensors/update-modes", update_sensor_modes_handler)

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.20] - 2025-01-30
+
+### Added
+- **Add-on icon support**: Added icon display in web UI header
+- Icon endpoint `/icon.png` that serves the add-on icon from multiple possible locations
+- Icon automatically displayed next to "AlarmMe" title in the web interface
+- Icon lookup in `/data/icon.png`, `/icon.png`, and other standard locations
+
 ## [0.6.19] - 2025-01-30
 
 ### Changed
@@ -507,6 +515,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.20]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.20
 [0.6.19]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.19
 [0.6.18]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.18
 [0.6.17]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.17
