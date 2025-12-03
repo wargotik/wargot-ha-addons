@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2025-01-30
+
+### Fixed
+- Fixed SyntaxError in web_server.py caused by f-string interpretation of CSS and JavaScript code
+- Replaced f-string with regular string and `.replace()` method for version substitution
+- Fixed Python parser error: "invalid decimal literal" when parsing CSS `repeat(4, 1fr)` syntax
+
 ## [0.5.1] - 2025-01-30
 
 ### Added
@@ -270,7 +277,8 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
-[0.6.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.0
+[0.5.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.2
+[0.5.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.1
 [0.5.0]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.0
 [0.4.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.2
 [0.4.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.4.1

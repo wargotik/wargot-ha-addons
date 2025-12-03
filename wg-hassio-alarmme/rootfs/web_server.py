@@ -51,7 +51,7 @@ async def index_handler(request):
         _LOGGER.debug("[web_server] Could not read version: %s", err)
         version = os.environ.get("ADDON_VERSION", "unknown")
     
-    html = f"""
+    html = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -557,6 +557,8 @@ async def index_handler(request):
     </body>
     </html>
     """
+    # Replace version placeholder
+    html = html.replace("{version}", version)
     return web.Response(text=html, content_type="text/html")
 
 
