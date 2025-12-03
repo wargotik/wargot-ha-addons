@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.23] - 2025-01-30
+
+### Changed
+- **Intrusion alert message**: Updated to include sensor area/space in the alert message
+- Alert message format: "⚠️ ПРОНИКНОВЕНИЕ {area}! Сработал датчик: {sensor_name}"
+- If area is not available, message falls back to: "⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: {sensor_name}"
+
 ## [0.6.22] - 2025-01-30
 
 ### Added
@@ -531,6 +538,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.23]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.23
 [0.6.22]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.22
 [0.6.21]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.21
 [0.6.20]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.20

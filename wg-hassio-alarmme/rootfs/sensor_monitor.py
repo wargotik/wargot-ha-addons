@@ -182,9 +182,19 @@ class SensorMonitor:
                                 
                                 if current_mode in ("away", "night") and sensor_enabled_in_mode:
                                     # INTRUSION DETECTED!
-                                    intrusion_message = f"⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: {friendly_name}"
-                                    _LOGGER.error("[sensor_monitor] 🚨 INTRUSION DETECTED: %s (%s) - Mode: %s, Sensor enabled in mode: %s", 
-                                                friendly_name, entity_id, current_mode, sensor_enabled_in_mode)
+                                    # Get area from saved sensor or fetch it
+                                    sensor_area = saved_sensor.get("area") if saved_sensor else None
+                                    if not sensor_area:
+                                        sensor_area = await self._get_area_for_entity(entity_id)
+                                    
+                                    # Format intrusion message with area
+                                    if sensor_area:
+                                        intrusion_message = f"⚠️ ПРОНИКНОВЕНИЕ {sensor_area}! Сработал датчик: {friendly_name}"
+                                    else:
+                                        intrusion_message = f"⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: {friendly_name}"
+                                    
+                                    _LOGGER.error("[sensor_monitor] 🚨 INTRUSION DETECTED: %s (%s) - Mode: %s, Sensor enabled in mode: %s, Area: %s", 
+                                                friendly_name, entity_id, current_mode, sensor_enabled_in_mode, sensor_area or "None")
                                     
                                     if self._notification_callback:
                                         _LOGGER.info("[sensor_monitor] Calling notification callback to send alert")
