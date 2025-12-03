@@ -89,6 +89,9 @@ class SensorMonitor:
                     
                     # Save last poll time
                     self._save_last_poll_time()
+                    _LOGGER.debug("[sensor_monitor] Polled %d sensors, saved poll time", len([s for s in states if s.get("attributes", {}).get("device_class") in ("motion", "moving", "occupancy", "presence")]))
+                else:
+                    _LOGGER.warning("[sensor_monitor] HA API returned status %s", resp.status)
                     
         except Exception as err:
             _LOGGER.error("[sensor_monitor] Error polling sensors: %s", err, exc_info=True)
@@ -108,8 +111,9 @@ class SensorMonitor:
                 except Exception:
                     state_data = {}
             
-            # Update last sensor poll time
-            state_data["last_sensor_poll"] = datetime.utcnow().isoformat()
+            # Update last sensor poll time (use UTC with 'Z' suffix for proper ISO format)
+            poll_time = datetime.utcnow().isoformat() + 'Z'
+            state_data["last_sensor_poll"] = poll_time
             
             # Write to file atomically
             temp_file = self._state_file.with_suffix('.tmp')
@@ -118,7 +122,7 @@ class SensorMonitor:
             
             # Replace original file
             temp_file.replace(self._state_file)
-            _LOGGER.debug("[sensor_monitor] Saved last poll time")
+            _LOGGER.debug("[sensor_monitor] Saved last poll time: %s", poll_time)
         except Exception as err:
             _LOGGER.error("[sensor_monitor] Error saving last poll time: %s", err, exc_info=True)
     
@@ -138,8 +142,11 @@ class SensorMonitor:
     async def _monitor_loop(self):
         """Background monitoring loop."""
         _LOGGER.info("[sensor_monitor] Starting background sensor monitoring (every 5 seconds)")
+        poll_count = 0
         while self._running:
             try:
+                poll_count += 1
+                _LOGGER.debug("[sensor_monitor] Polling sensors (iteration #%d)", poll_count)
                 await self._poll_sensors()
                 await asyncio.sleep(5)  # Poll every 5 seconds
             except asyncio.CancelledError:

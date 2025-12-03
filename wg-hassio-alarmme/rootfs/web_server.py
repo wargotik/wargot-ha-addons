@@ -345,7 +345,6 @@ async def index_handler(request):
         <div class="container">
             <h1>AlarmMe<span class="version-badge">v{version}</span></h1>
             <p>AlarmMe add-on is running. 
-                <span id="update-badge" class="update-badge">Обновление...</span>
                 <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
                 <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">Фоновое обновление: проверка...</span>
             </p>
@@ -395,24 +394,6 @@ async def index_handler(request):
             </div>
         </div>
         <script>
-            let lastUpdateTime = null;
-            
-            function updateBadge() {
-                const badge = document.getElementById('update-badge');
-                if (!badge || !lastUpdateTime) return;
-                
-                const secondsAgo = Math.floor((Date.now() - lastUpdateTime) / 1000);
-                if (secondsAgo < 60) {
-                    badge.textContent = secondsAgo + ' секунд назад';
-                } else if (secondsAgo < 3600) {
-                    const minutesAgo = Math.floor(secondsAgo / 60);
-                    badge.textContent = minutesAgo + ' минут назад';
-                } else {
-                    const hoursAgo = Math.floor(secondsAgo / 3600);
-                    badge.textContent = hoursAgo + ' часов назад';
-                }
-            }
-            
             async function loadSensors() {
                 try {
                     console.log('Loading sensors...');
@@ -441,8 +422,6 @@ async def index_handler(request):
                         renderSensors('moving-sensors', data.moving_sensors || []);
                         renderSensors('occupancy-sensors', data.occupancy_sensors || []);
                         renderSensors('presence-sensors', data.presence_sensors || []);
-                        lastUpdateTime = Date.now();
-                        updateBadge();
                     } else {
                         console.error('API returned success=false:', data.error);
                         const errorMsg = '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
@@ -803,7 +782,13 @@ async def index_handler(request):
                         timeAgo = diffHour + ' ч назад';
                     }
                     
-                    badge.textContent = 'Фоновое обновление: ' + timeAgo;
+                    // Format time as HH:MM:SS
+                    const hours = String(pollDate.getHours()).padStart(2, '0');
+                    const minutes = String(pollDate.getMinutes()).padStart(2, '0');
+                    const seconds = String(pollDate.getSeconds()).padStart(2, '0');
+                    const timeStr = hours + ':' + minutes + ':' + seconds;
+                    
+                    badge.textContent = 'Фоновое обновление: ' + timeAgo + ' в ' + timeStr;
                 } catch (e) {
                     badge.textContent = 'Фоновое обновление: ошибка';
                 }

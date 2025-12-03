@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2025-01-30
+
+### Changed
+- Removed UI update badge (browser-based update time)
+- Background poll badge now automatically updates every 5 seconds by fetching time from JSON
+- Simplified status display to show only REST API connection and background polling status
+
+## [0.6.3] - 2025-01-30
+
+### Changed
+- UI update badge now shows "UI обновление: X сек/мин/ч назад в ЧЧ:ММ:СС" for clarity
+- Background poll badge format improved to show both relative time and exact time
+- Better distinction between UI updates (browser) and background updates (server)
+
+## [0.6.2] - 2025-01-30
+
+### Changed
+- Background poll time display now shows both relative time and exact time (e.g., "5 сек назад в 14:30:25")
+- Improved time formatting with HH:MM:SS format for better clarity
+- Added 'Z' suffix to UTC timestamps for proper ISO format parsing
+
+### Fixed
+- Fixed UTC time parsing in JavaScript by adding 'Z' suffix to ISO timestamps
+- Added debug logging for sensor monitoring to help diagnose issues
+
 ## [0.6.1] - 2025-01-30
 
 ### Added
@@ -350,6 +375,9 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.4
+[0.6.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.3
+[0.6.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.2
 [0.6.1]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.1
 [0.5.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.6
 [0.5.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.5.5
