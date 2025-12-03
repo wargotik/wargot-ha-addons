@@ -39,6 +39,7 @@ class SensorDatabase:
                     enabled_in_away_mode INTEGER DEFAULT 0,
                     enabled_in_night_mode INTEGER DEFAULT 0,
                     last_triggered_at TIMESTAMP,
+                    area TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -47,6 +48,13 @@ class SensorDatabase:
             # Add last_triggered_at column if it doesn't exist (for existing databases)
             try:
                 cursor.execute("ALTER TABLE sensors ADD COLUMN last_triggered_at TIMESTAMP")
+            except sqlite3.OperationalError:
+                # Column already exists, ignore
+                pass
+            
+            # Add area column if it doesn't exist (for existing databases)
+            try:
+                cursor.execute("ALTER TABLE sensors ADD COLUMN area TEXT")
             except sqlite3.OperationalError:
                 # Column already exists, ignore
                 pass
@@ -70,7 +78,8 @@ class SensorDatabase:
         name: str, 
         device_class: str,
         enabled_in_away_mode: bool = False,
-        enabled_in_night_mode: bool = False
+        enabled_in_night_mode: bool = False,
+        area: Optional[str] = None
     ) -> bool:
         """Save or update sensor in database."""
         try:
@@ -79,19 +88,20 @@ class SensorDatabase:
             
             cursor.execute("""
                 INSERT OR REPLACE INTO sensors 
-                (entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                (entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, area, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 entity_id,
                 name,
                 device_class,
                 1 if enabled_in_away_mode else 0,
-                1 if enabled_in_night_mode else 0
+                1 if enabled_in_night_mode else 0,
+                area
             ))
             
             conn.commit()
             conn.close()
-            _LOGGER.debug("[database] Saved sensor: %s (%s)", name, entity_id)
+            _LOGGER.debug("[database] Saved sensor: %s (%s) - area: %s", name, entity_id, area)
             return True
         except Exception as err:
             _LOGGER.error("[database] Error saving sensor %s: %s", entity_id, err, exc_info=True)
@@ -104,7 +114,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at, area
                 FROM sensors
                 WHERE entity_id = ?
             """, (entity_id,))
@@ -119,7 +129,8 @@ class SensorDatabase:
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
                     "enabled_in_night_mode": bool(row[4]),
-                    "last_triggered_at": row[5] if len(row) > 5 else None
+                    "last_triggered_at": row[5] if len(row) > 5 else None,
+                    "area": row[6] if len(row) > 6 else None
                 }
             return None
         except Exception as err:
@@ -133,7 +144,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at, area
                 FROM sensors
                 ORDER BY name
             """)
@@ -148,7 +159,8 @@ class SensorDatabase:
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
                     "enabled_in_night_mode": bool(row[4]),
-                    "last_triggered_at": row[5] if len(row) > 5 else None
+                    "last_triggered_at": row[5] if len(row) > 5 else None,
+                    "area": row[6] if len(row) > 6 else None
                 }
                 for row in rows
             ]

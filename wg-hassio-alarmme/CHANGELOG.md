@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.22] - 2025-01-30
+
+### Added
+- **Area/space support for sensors**: Added ability to get and display the area (space/room) where each sensor is located
+- Sensors now automatically fetch area information from Home Assistant Entity Registry and Area Registry
+- Area name is saved to database and displayed in UI next to sensor name
+- Area information is cached for performance
+- Area is automatically updated if it changes in Home Assistant
+
 ## [0.6.21] - 2025-01-30
 
 ### Fixed
@@ -522,6 +531,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.22]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.22
 [0.6.21]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.21
 [0.6.20]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.20
 [0.6.19]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.19

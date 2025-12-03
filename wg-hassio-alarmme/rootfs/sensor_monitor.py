@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Dict
 from pprint import pformat
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,12 +29,54 @@ class SensorMonitor:
         self._session: Optional[aiohttp.ClientSession] = None
         self._state_file = Path(STATE_FILE)
         self._running = False
+        self._areas_cache: Dict[str, str] = {}  # Cache for area_id -> area_name mapping
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession()
         return self._session
+    
+    async def _get_area_for_entity(self, entity_id: str) -> Optional[str]:
+        """Get area name for entity from Home Assistant Entity Registry and Areas."""
+        try:
+            session = await self._get_session()
+            headers = {"Authorization": f"Bearer {self.ha_token}"}
+            
+            # Get entity registry to find area_id
+            entity_registry_url = f"{self.ha_url}/api/config/entity_registry/{entity_id}"
+            async with session.get(entity_registry_url, headers=headers) as resp:
+                if resp.status == 200:
+                    entity_data = await resp.json()
+                    area_id = entity_data.get("area_id")
+                    
+                    if not area_id:
+                        return None
+                    
+                    # Check cache first
+                    if area_id in self._areas_cache:
+                        return self._areas_cache[area_id]
+                    
+                    # Get area name from areas API
+                    areas_url = f"{self.ha_url}/api/config/area_registry"
+                    async with session.get(areas_url, headers=headers) as areas_resp:
+                        if areas_resp.status == 200:
+                            areas = await areas_resp.json()
+                            for area in areas:
+                                if area.get("area_id") == area_id:
+                                    area_name = area.get("name", area_id)
+                                    # Cache it
+                                    self._areas_cache[area_id] = area_name
+                                    return area_name
+                elif resp.status == 404:
+                    # Entity not found in registry, that's ok
+                    return None
+                else:
+                    _LOGGER.debug("[sensor_monitor] Failed to get entity registry for %s: status %s", entity_id, resp.status)
+                    return None
+        except Exception as err:
+            _LOGGER.debug("[sensor_monitor] Error getting area for entity %s: %s", entity_id, err)
+            return None
     
     async def _poll_sensors(self):
         """Poll sensors from Home Assistant API."""
@@ -77,19 +119,39 @@ class SensorMonitor:
                         # Check if sensor is saved in database
                         saved_sensor = self._db.get_sensor(entity_id)
                         
+                        # Get area for sensor
+                        area_name = await self._get_area_for_entity(entity_id)
+                        
                         # Auto-save sensor if not in database
                         if not saved_sensor:
-                            _LOGGER.info("[sensor_monitor] Auto-saving new sensor: %s (%s) - %s", 
-                                       friendly_name, entity_id, device_class)
+                            _LOGGER.info("[sensor_monitor] Auto-saving new sensor: %s (%s) - %s - area: %s", 
+                                       friendly_name, entity_id, device_class, area_name or "None")
                             self._db.save_sensor(
                                 entity_id=entity_id,
                                 name=friendly_name,
                                 device_class=device_class,
                                 enabled_in_away_mode=False,
-                                enabled_in_night_mode=False
+                                enabled_in_night_mode=False,
+                                area=area_name
                             )
                             saved_sensor = self._db.get_sensor(entity_id)
                             new_sensors_count += 1
+                        elif area_name and (not saved_sensor.get("area") or saved_sensor.get("area") != area_name):
+                            # Update area if it changed or wasn't set before
+                            _LOGGER.debug("[sensor_monitor] Updating area for sensor %s: %s -> %s", 
+                                        entity_id, saved_sensor.get("area"), area_name)
+                            # Update area in database
+                            conn = self._db._db_path  # Access db_path
+                            import sqlite3
+                            try:
+                                conn_db = sqlite3.connect(self._db.db_path)
+                                cursor = conn_db.cursor()
+                                cursor.execute("UPDATE sensors SET area = ?, updated_at = CURRENT_TIMESTAMP WHERE entity_id = ?", 
+                                              (area_name, entity_id))
+                                conn_db.commit()
+                                conn_db.close()
+                            except Exception as update_err:
+                                _LOGGER.debug("[sensor_monitor] Error updating area: %s", update_err)
                         
                         # Detect trigger: sensor is in "on" state
                         current_state = state.get("state", "unknown").lower()

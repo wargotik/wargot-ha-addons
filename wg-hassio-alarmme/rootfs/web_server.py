@@ -506,12 +506,15 @@ async def index_handler(request):
                         lastTriggeredHtml = '<div class="sensor-last-triggered">Срабатываний не было</div>';
                     }
                     
+                    const areaHtml = sensor.area ? `<div class="sensor-area" style="font-size: 10px; color: #95a5a6; margin-top: 2px;">📍 ${sensor.area}</div>` : '';
+                    
                     return `
                         <div class="sensor-item">
                             <div class="sensor-name">
                                 ${sensor.name || sensor.entity_id}
                                 ${savedIcon}
                             </div>
+                            ${areaHtml}
                             <div class="sensor-id">${sensor.entity_id}</div>
                             <div class="sensor-state ${stateClass}">${sensor.state}</div>
                             ${lastTriggeredHtml}
