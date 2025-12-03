@@ -66,8 +66,8 @@ async def main():
         _LOGGER.warning("Failed to start background sensor monitoring")
         set_sensor_monitor(sensor_monitor)
     
-    # Send notification on startup
-    await send_notification("mobile_app_iphone", "AlarmMe add-on started")
+    # Send notification on startup (mobile devices + persistent notification)
+    await send_notification("AlarmMe add-on started", persistent_notification=True, title="AlarmMe")
     
     # Start web server
     await run_web_server(port=8099)
