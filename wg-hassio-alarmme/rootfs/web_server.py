@@ -463,12 +463,16 @@ async def index_handler(request):
                     const modeButtons = `
                         <div class="sensor-modes">
                             <button class="sensor-mode-btn away ${awayModeActive}" 
-                                    onclick="toggleSensorMode(${JSON.stringify(sensor.entity_id)}, 'away', ${!awayEnabled})"
+                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
+                                    data-mode="away"
+                                    data-enabled="${!awayEnabled}"
                                     title="Включён в Away Mode">
                                 Away
                             </button>
                             <button class="sensor-mode-btn night ${nightModeActive}" 
-                                    onclick="toggleSensorMode(${JSON.stringify(sensor.entity_id)}, 'night', ${!nightEnabled})"
+                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
+                                    data-mode="night"
+                                    data-enabled="${!nightEnabled}"
                                     title="Включён в Night Mode">
                                 Night
                             </button>
@@ -784,6 +788,18 @@ async def index_handler(request):
                     badge.textContent = 'Фоновое обновление: ошибка';
                 }
             }
+            
+            // Event delegation for sensor mode buttons
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('sensor-mode-btn')) {
+                    const entityId = event.target.getAttribute('data-entity-id');
+                    const mode = event.target.getAttribute('data-mode');
+                    const enabled = event.target.getAttribute('data-enabled') === 'true';
+                    if (entityId && mode) {
+                        toggleSensorMode(entityId, mode, enabled);
+                    }
+                }
+            });
             
             // Load sensors on page load
             loadSensors();

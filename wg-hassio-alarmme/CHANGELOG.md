@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.14] - 2025-01-30
+
+### Fixed
+- Fixed sensor mode toggle buttons (Away/Night) not working - replaced inline onclick with event delegation
+- Buttons now use data attributes and event delegation for proper event handling with dynamically generated HTML
+
 ## [0.6.13] - 2025-01-30
 
 ### Added
@@ -459,6 +465,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.14]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.14
 [0.6.13]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.13
 [0.6.12]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.12
 [0.6.11]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.11

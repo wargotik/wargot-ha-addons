@@ -2,6 +2,8 @@
 
 ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
+![Russian Language][ru-shield]
+
 AlarmMe add-on for Home Assistant.
 
 ## Description
@@ -51,5 +53,6 @@ This add-on is provided as-is.
 [armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
 [armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+[ru-shield]: https://img.shields.io/badge/🇷🇺%20Russian-supported-blue.svg
 [repository]: https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-alarmme
 
