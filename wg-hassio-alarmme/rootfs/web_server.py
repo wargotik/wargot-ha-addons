@@ -454,11 +454,11 @@ async def index_handler(request):
                     // All sensors are auto-saved, so always show saved icon
                     const savedIcon = '<span class="sensor-saved-icon" title="Сохранён в базу">💾</span>';
                     
-                    // Mode buttons
-                    const awayModeActive = sensor.enabled_in_away_mode ? 'active' : '';
-                    const nightModeActive = sensor.enabled_in_night_mode ? 'active' : '';
-                    const awayEnabled = sensor.enabled_in_away_mode || false;
-                    const nightEnabled = sensor.enabled_in_night_mode || false;
+                    // Mode buttons - ensure boolean values
+                    const awayEnabled = Boolean(sensor.enabled_in_away_mode);
+                    const nightEnabled = Boolean(sensor.enabled_in_night_mode);
+                    const awayModeActive = awayEnabled ? 'active' : '';
+                    const nightModeActive = nightEnabled ? 'active' : '';
                     
                     const modeButtons = `
                         <div class="sensor-modes">
@@ -480,25 +480,16 @@ async def index_handler(request):
                     if (sensor.last_triggered_at) {
                         try {
                             const triggerDate = new Date(sensor.last_triggered_at);
-                            const now = new Date();
-                            const diffMs = now - triggerDate;
-                            const diffSec = Math.floor(diffMs / 1000);
-                            const diffMin = Math.floor(diffSec / 60);
-                            const diffHour = Math.floor(diffMin / 60);
-                            const diffDay = Math.floor(diffHour / 24);
+                            const hours = String(triggerDate.getHours()).padStart(2, '0');
+                            const minutes = String(triggerDate.getMinutes()).padStart(2, '0');
+                            const seconds = String(triggerDate.getSeconds()).padStart(2, '0');
+                            const day = String(triggerDate.getDate()).padStart(2, '0');
+                            const month = String(triggerDate.getMonth() + 1).padStart(2, '0');
+                            const year = triggerDate.getFullYear();
+                            const timeStr = hours + ':' + minutes + ':' + seconds;
+                            const dateStr = day + '.' + month + '.' + year;
                             
-                            let timeAgo = '';
-                            if (diffSec < 60) {
-                                timeAgo = diffSec + ' сек назад';
-                            } else if (diffMin < 60) {
-                                timeAgo = diffMin + ' мин назад';
-                            } else if (diffHour < 24) {
-                                timeAgo = diffHour + ' ч назад';
-                            } else {
-                                timeAgo = diffDay + ' дн назад';
-                            }
-                            
-                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${timeAgo}</div>`;
+                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${dateStr} ${timeStr}</div>`;
                         } catch (e) {
                             // If date parsing fails, show raw value
                             lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${sensor.last_triggered_at}</div>`;
@@ -557,6 +548,7 @@ async def index_handler(request):
             
             async function toggleSensorMode(entityId, mode, enabled) {
                 try {
+                    console.log('toggleSensorMode:', entityId, mode, enabled);
                     const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/sensors/update-modes';
                     const requestData = {
                         entity_id: entityId
@@ -568,6 +560,7 @@ async def index_handler(request):
                         requestData.enabled_in_night_mode = enabled;
                     }
                     
+                    console.log('Sending request:', requestData);
                     const response = await fetch(apiPath, {
                         method: 'POST',
                         headers: {
@@ -576,17 +569,15 @@ async def index_handler(request):
                         body: JSON.stringify(requestData)
                     });
                     
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success) {
-                            // Reload sensors to update UI
-                            await loadSensors();
-                        } else {
-                            alert('Ошибка: ' + (data.error || 'Не удалось обновить режим датчика'));
-                        }
+                    console.log('Response status:', response.status);
+                    const data = await response.json();
+                    console.log('Response data:', data);
+                    
+                    if (response.ok && data.success) {
+                        // Reload sensors to update UI
+                        await loadSensors();
                     } else {
-                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-                        alert('Ошибка: ' + (errorData.error || 'Не удалось обновить режим датчика'));
+                        alert('Ошибка: ' + (data.error || 'Не удалось обновить режим датчика'));
                     }
                 } catch (error) {
                     console.error('Error toggling sensor mode:', error);
@@ -948,9 +939,15 @@ async def get_sensors_handler(request):
                                 
                                 # Add mode settings and last_triggered_at if sensor is saved
                                 if saved_sensor:
-                                    sensor_data["enabled_in_away_mode"] = saved_sensor.get("enabled_in_away_mode", False)
-                                    sensor_data["enabled_in_night_mode"] = saved_sensor.get("enabled_in_night_mode", False)
+                                    # Ensure boolean values (handle None, 0, 1, etc.)
+                                    sensor_data["enabled_in_away_mode"] = bool(saved_sensor.get("enabled_in_away_mode", False))
+                                    sensor_data["enabled_in_night_mode"] = bool(saved_sensor.get("enabled_in_night_mode", False))
                                     sensor_data["last_triggered_at"] = saved_sensor.get("last_triggered_at")
+                                else:
+                                    # Default values if sensor not in database yet
+                                    sensor_data["enabled_in_away_mode"] = False
+                                    sensor_data["enabled_in_night_mode"] = False
+                                    sensor_data["last_triggered_at"] = None
                                 
                                 if device_class == "motion":
                                     motion_sensors.append(sensor_data)
@@ -1079,6 +1076,12 @@ async def update_sensor_modes_handler(request):
         
         enabled_in_away_mode = data.get("enabled_in_away_mode")
         enabled_in_night_mode = data.get("enabled_in_night_mode")
+        
+        # Convert to boolean if provided (handles both None and explicit False)
+        if enabled_in_away_mode is not None:
+            enabled_in_away_mode = bool(enabled_in_away_mode)
+        if enabled_in_night_mode is not None:
+            enabled_in_night_mode = bool(enabled_in_night_mode)
         
         if enabled_in_away_mode is None and enabled_in_night_mode is None:
             return web.json_response({

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.6] - 2025-01-30
+
+### Fixed
+- Fixed sensor mode toggle buttons (Away/Night) not updating database values
+- Improved boolean value handling in API handler to properly convert values to boolean
+- Fixed active button styling - buttons now correctly show colored background when enabled:
+  - Away mode: blue (#3498db) when active
+  - Night mode: purple (#9b59b6) when active
+- Added console logging for debugging sensor mode toggles
+- Ensured sensor mode values are always properly initialized (default to False if not in database)
+
+## [0.6.5] - 2025-01-30
+
+### Changed
+- Sensor last triggered time now shows exact timestamp (DD.MM.YYYY HH:MM:SS) instead of relative time (e.g., "X минут назад")
+- Improved clarity by displaying precise time from database
+
 ## [0.6.4] - 2025-01-30
 
 ### Changed
@@ -375,6 +392,8 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.6]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.6
+[0.6.5]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.5
 [0.6.4]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.4
 [0.6.3]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.3
 [0.6.2]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.2
