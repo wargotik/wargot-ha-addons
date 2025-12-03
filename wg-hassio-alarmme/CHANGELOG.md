@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.21] - 2025-01-30
+
+### Fixed
+- **Notification service detection**: Fixed `AttributeError: 'list' object has no attribute 'get'` when getting notify services
+- `get_available_notify_services()` now correctly handles both dict and list response formats from Home Assistant API
+- Mobile notifications should now work correctly when mobile devices are available
+
 ## [0.6.20] - 2025-01-30
 
 ### Added
@@ -515,6 +522,7 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.21]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.21
 [0.6.20]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.20
 [0.6.19]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.19
 [0.6.18]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.18

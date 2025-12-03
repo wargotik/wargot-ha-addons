@@ -884,10 +884,31 @@ async def get_available_notify_services() -> dict:
             async with session.get(api_url, headers=headers) as resp:
                 if resp.status == 200:
                     services = await resp.json()
-                    _LOGGER.debug("[web_server] Received services response, keys: %s", list(services.keys()) if isinstance(services, dict) else "Not a dict")
+                    _LOGGER.debug("[web_server] Received services response type: %s, sample: %s", 
+                                 type(services).__name__, str(services)[:200] if services else "None")
                     
-                    notify_services = services.get("notify", {})
-                    _LOGGER.info("[web_server] All notify services found: %s", list(notify_services.keys()) if notify_services else "None")
+                    notify_services = {}
+                    
+                    # Handle both dict and list responses
+                    if isinstance(services, dict):
+                        # Standard format: {"notify": {"mobile_app_iphone": {}, ...}}
+                        notify_services = services.get("notify", {})
+                        _LOGGER.info("[web_server] All notify services found (dict format): %s", 
+                                   list(notify_services.keys()) if notify_services else "None")
+                    elif isinstance(services, list):
+                        # List format: [{"domain": "notify", "services": {"mobile_app_iphone": {}, ...}}, ...]
+                        _LOGGER.debug("[web_server] Services response is a list, converting...")
+                        for service_item in services:
+                            if isinstance(service_item, dict) and service_item.get("domain") == "notify":
+                                notify_services = service_item.get("services", {})
+                                _LOGGER.info("[web_server] All notify services found (list format): %s", 
+                                           list(notify_services.keys()) if notify_services else "None")
+                                break
+                        if not notify_services:
+                            _LOGGER.warning("[web_server] No 'notify' domain found in services list")
+                    else:
+                        _LOGGER.error("[web_server] Unexpected services response format: %s", type(services))
+                        notify_services = {}
                     
                     iphone_services = []
                     android_services = []
