@@ -18,12 +18,13 @@ STATE_FILE = "/data/switches_state.json"
 class SensorMonitor:
     """Background monitor for sensors."""
     
-    def __init__(self, database, sensor_states_cache):
+    def __init__(self, database, sensor_states_cache, notification_callback=None):
         """Initialize sensor monitor."""
         self.ha_token = os.environ.get("SUPERVISOR_TOKEN")
         self.ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
         self._db = database
         self._sensor_states_cache = sensor_states_cache
+        self._notification_callback = notification_callback
         self._monitoring_task: Optional[asyncio.Task] = None
         self._session: Optional[aiohttp.ClientSession] = None
         self._state_file = Path(STATE_FILE)
@@ -106,6 +107,25 @@ class SensorMonitor:
                                            entity_id, last_changed)
                             else:
                                 _LOGGER.error("[sensor_monitor] ❌ Failed to record trigger in database for: %s", entity_id)
+                            
+                            # Check for intrusion: sensor triggered while add-on is in active mode
+                            if saved_sensor:
+                                current_mode = self._get_current_addon_mode()
+                                sensor_enabled_in_mode = False
+                                
+                                if current_mode == "away":
+                                    sensor_enabled_in_mode = bool(saved_sensor.get("enabled_in_away_mode", False))
+                                elif current_mode == "night":
+                                    sensor_enabled_in_mode = bool(saved_sensor.get("enabled_in_night_mode", False))
+                                
+                                if current_mode in ("away", "night") and sensor_enabled_in_mode:
+                                    # INTRUSION DETECTED!
+                                    intrusion_message = f"⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: {friendly_name}"
+                                    _LOGGER.error("[sensor_monitor] 🚨 INTRUSION DETECTED: %s (%s) - Mode: %s", 
+                                                friendly_name, entity_id, current_mode)
+                                    
+                                    if self._notification_callback:
+                                        await self._notification_callback(intrusion_message, persistent_notification=True, title="🚨 ТРЕВОГА")
                     
                     # Save last poll time
                     self._save_last_poll_time()
@@ -161,6 +181,29 @@ class SensorMonitor:
         except Exception as err:
             _LOGGER.debug("[sensor_monitor] Error reading last poll time: %s", err)
             return None
+    
+    def _get_current_addon_mode(self) -> str:
+        """Get current add-on mode from switches state file."""
+        try:
+            if not self._state_file.exists():
+                return "off"
+            
+            with open(self._state_file, 'r', encoding='utf-8') as f:
+                state_data = json.load(f)
+                
+                # Switches are stored directly in root: "away": "on", "night": "off"
+                away_state = state_data.get("away", "off").lower()
+                night_state = state_data.get("night", "off").lower()
+                
+                if away_state == "on":
+                    return "away"
+                elif night_state == "on":
+                    return "night"
+                else:
+                    return "off"
+        except Exception as err:
+            _LOGGER.debug("[sensor_monitor] Error reading current mode: %s", err)
+            return "off"
     
     async def _monitor_loop(self):
         """Background monitoring loop."""

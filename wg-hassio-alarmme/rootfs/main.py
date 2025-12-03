@@ -58,7 +58,8 @@ async def main():
         set_virtual_switches(virtual_switches)
     
     # Initialize and start background sensor monitoring
-    sensor_monitor = SensorMonitor(db, sensor_states_cache)
+    from web_server import send_notification
+    sensor_monitor = SensorMonitor(db, sensor_states_cache, notification_callback=send_notification)
     if await sensor_monitor.start():
         _LOGGER.info("Background sensor monitoring started")
         set_sensor_monitor(sensor_monitor)

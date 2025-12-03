@@ -349,7 +349,6 @@ async def index_handler(request):
                 <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">Фоновое обновление: проверка...</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-                <h3 style="margin-top: 0; margin-bottom: 15px;">Режим работы</h3>
                 <div style="padding: 15px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
                     <div style="margin-bottom: 12px;">
                         <div style="font-weight: 600; margin-bottom: 8px;">Текущий режим</div>

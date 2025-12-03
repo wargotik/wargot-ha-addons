@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.17] - 2025-01-30
+
+### Added
+- **Intrusion detection**: When sensor triggers while add-on is in Away or Night mode, and sensor is enabled in that mode, sends alert notification
+- Alert message: "⚠️ ПРОНИКНОВЕНИЕ! Сработал датчик: [sensor name]"
+- Alert notifications sent to all mobile devices + persistent notification in HA UI
+- Automatic mode checking: compares current add-on mode (away/night) with sensor's enabled mode settings
+
+## [0.6.16] - 2025-01-30
+
+### Changed
+- Removed "Режим работы" heading from UI for cleaner interface
+
 ## [0.6.15] - 2025-01-30
 
 ### Changed
@@ -476,6 +489,8 @@ All notable changes to this project will be documented in this file.
 - Docker container setup
 - Home Assistant add-on configuration
 
+[0.6.17]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.17
+[0.6.16]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.16
 [0.6.15]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.15
 [0.6.14]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.14
 [0.6.13]: https://github.com/wargotik/wargot-ha-addons/releases/tag/wg-hassio-alarmme-0.6.13
