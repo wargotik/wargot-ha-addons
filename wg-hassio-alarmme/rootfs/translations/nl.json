@@ -49,6 +49,10 @@
   "unknown": "Onbekend",
   "secAgo": "{n} sec geleden",
   "minAgo": "{n} min geleden",
-  "hourAgo": "{n} u geleden"
+  "hourAgo": "{n} u geleden",
+  "modeActivatedAway": "Afwezigheidsmodus geactiveerd",
+  "modeActivatedNight": "Nachtmodus geactiveerd",
+  "modeActivatedPerimeter": "Perimetermodus geactiveerd",
+  "modeDeactivated": "Alarmmodus gedeactiveerd"
 }
 

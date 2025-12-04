@@ -49,6 +49,10 @@
   "unknown": "Nieznane",
   "secAgo": "{n} sek temu",
   "minAgo": "{n} min temu",
-  "hourAgo": "{n} godz. temu"
+  "hourAgo": "{n} godz. temu",
+  "modeActivatedAway": "Tryb nieobecności aktywowany",
+  "modeActivatedNight": "Tryb nocny aktywowany",
+  "modeActivatedPerimeter": "Tryb obwodowy aktywowany",
+  "modeDeactivated": "Tryb alarmu dezaktywowany"
 }
 

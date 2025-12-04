@@ -49,6 +49,10 @@
   "unknown": "Неизвестно",
   "secAgo": "{n} сек назад",
   "minAgo": "{n} мин назад",
-  "hourAgo": "{n} ч назад"
+  "hourAgo": "{n} ч назад",
+  "modeActivatedAway": "Режим отсутствия активирован",
+  "modeActivatedNight": "Ночной режим активирован",
+  "modeActivatedPerimeter": "Режим периметра активирован",
+  "modeDeactivated": "Режим охраны деактивирован"
 }
 

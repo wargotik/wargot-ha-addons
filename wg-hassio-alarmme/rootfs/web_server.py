@@ -1925,6 +1925,38 @@ async def update_switches_handler(request):
             # Get updated mode
             current_mode = _virtual_switches.get_current_mode()
             _LOGGER.info("[web_server] Successfully updated mode to: %s", current_mode)
+            
+            # Send notification about mode change
+            try:
+                lang = _get_ha_language()
+                translations = _load_translations(lang)
+                
+                if current_mode == "off":
+                    notification_message = _t("modeDeactivated", translations)
+                    notification_title = _t("title", translations)
+                elif current_mode == "away":
+                    notification_message = _t("modeActivatedAway", translations)
+                    notification_title = _t("title", translations)
+                elif current_mode == "night":
+                    notification_message = _t("modeActivatedNight", translations)
+                    notification_title = _t("title", translations)
+                elif current_mode == "perimeter":
+                    notification_message = _t("modeActivatedPerimeter", translations)
+                    notification_title = _t("title", translations)
+                else:
+                    notification_message = None
+                    notification_title = None
+                
+                if notification_message:
+                    await send_notification(
+                        notification_message,
+                        persistent_notification=True,
+                        title=notification_title
+                    )
+                    _LOGGER.info("[web_server] Sent notification about mode change: %s", notification_message)
+            except Exception as notif_err:
+                _LOGGER.error("[web_server] Error sending mode change notification: %s", notif_err, exc_info=True)
+            
             return web.json_response({
                 "success": True,
                 "mode": current_mode

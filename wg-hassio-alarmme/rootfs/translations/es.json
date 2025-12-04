@@ -49,6 +49,10 @@
   "unknown": "Desconocido",
   "secAgo": "hace {n} seg",
   "minAgo": "hace {n} min",
-  "hourAgo": "hace {n} h"
+  "hourAgo": "hace {n} h",
+  "modeActivatedAway": "Modo Ausente activado",
+  "modeActivatedNight": "Modo Noche activado",
+  "modeActivatedPerimeter": "Modo Perímetro activado",
+  "modeDeactivated": "Modo alarma desactivado"
 }
 
