@@ -22,9 +22,14 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /usr/bin/python* ix,
   /usr/local/bin/python* ix,
   
-  # Python standard library and all Python files - broad access
-  /usr/local/lib/python3*/** rmix,
-  /usr/lib/python3*/** rmix,
+  # Python standard library - CRITICAL: Must come BEFORE general /usr/lib rules
+  # Full access to Python standard library (read, map, execute)
+  /usr/local/lib/python3.*/** rmix,
+  /usr/local/lib/python3.*/ r,
+  /usr/lib/python3.*/** rmix,
+  /usr/lib/python3.*/ r,
+  
+  # Python zip archives (stdlib can be packaged in zip files)
   /usr/local/lib/python3*.zip rm,
   /usr/lib/python3*.zip rm,
   
@@ -54,7 +59,11 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /usr/local/lib/**/libpython*.so* rm,
   /lib/**/libpython*.so* rm,
   
-  # Standard system libraries
+  # Python site-packages (installed packages)
+  /usr/lib/python3.*/site-packages/** rmix,
+  /usr/local/lib/python3.*/site-packages/** rmix,
+  
+  # Standard system libraries - must come AFTER Python-specific rules
   /lib/** rm,
   /lib64/** rm,
   /usr/lib/** rm,

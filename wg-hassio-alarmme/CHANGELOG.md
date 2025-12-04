@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.19] - 2025-01-30
+
+### Fixed
+- **Python standard library access (order fix)**: Fixed order of AppArmor rules to ensure Python standard library access
+- Moved Python standard library rules BEFORE general `/usr/lib/**` rules (order is critical in AppArmor)
+- Added explicit access to Python standard library directories (`/usr/local/lib/python3.*/`, `/usr/lib/python3.*/`)
+- Added access to Python zip archives and site-packages
+- Python should now be able to import `encodings` and all other standard library modules
+- Fixed `ModuleNotFoundError: No module named 'encodings'` error
+
 ## [0.7.18] - 2025-01-30
 
 ### Fixed
