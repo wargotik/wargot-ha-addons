@@ -43,9 +43,13 @@ async def main():
     signal.signal(signal.SIGTERM, signal_handler)
     
     # Get and save Home Assistant language
-    from web_server import get_and_save_ha_language
+    from web_server import get_and_save_ha_language, get_and_save_addon_version
     ha_language = await get_and_save_ha_language()
     _LOGGER.info("Home Assistant language detected and saved: %s", ha_language)
+    
+    # Get and save add-on version
+    addon_version = get_and_save_addon_version()
+    _LOGGER.info("Add-on version detected and saved: %s", addon_version)
     
     # Get database and sensor states cache
     db = get_db()

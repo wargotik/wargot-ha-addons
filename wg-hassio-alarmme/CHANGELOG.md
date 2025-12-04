@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.33] - 2025-01-30
+
+### Added
+- **Configuration viewer**: Added help icon (?) in the header that opens a modal window
+- Modal displays the content of `switches_state.json` configuration file
+- JSON is formatted and displayed in a scrollable, readable format
+- Modal can be closed by clicking the X button or clicking outside the modal
+
+## [0.6.32] - 2025-01-30
+
+### Added
+- **Version tracking**: Add-on version is now automatically saved to `switches_state.json` on startup
+- Version is read from `config.json` and stored in `addon_version` field in the state file
+- This allows tracking the current add-on version in the state JSON file
+
+## [0.6.31] - 2025-01-30
+
+### Fixed
+- **UI freezing**: Fixed JavaScript error caused by calling undefined `updateBadge()` function
+- Removed `setInterval(updateBadge, 1000)` call that was causing script execution to fail
+- UI should now load correctly without freezing on "loading/checking" state
+
 ## [0.6.30] - 2025-01-30
 
 ### Fixed

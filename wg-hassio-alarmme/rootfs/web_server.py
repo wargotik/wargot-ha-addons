@@ -96,6 +96,50 @@ async def get_and_save_ha_language():
     return language
 
 
+def get_and_save_addon_version():
+    """Get add-on version from config.json and save it to JSON file."""
+    STATE_FILE = "/data/switches_state.json"
+    state_file = Path(STATE_FILE)
+    
+    # Default version
+    version = "unknown"
+    
+    try:
+        # Try multiple possible paths for config.json
+        possible_paths = [
+            "/config.json",  # Standard add-on config location
+            "/data/options.json",  # Add-on options (usually doesn't have version)
+            os.path.join(os.path.dirname(__file__), "..", "..", "config.json"),  # Relative to script
+            "/app/config.json",  # If config is copied to /app
+        ]
+        
+        for config_path in possible_paths:
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        if "version" in config:
+                            version = config.get("version", "unknown")
+                            _LOGGER.info("[web_server] Read version %s from %s", version, config_path)
+                            break
+                except Exception as path_err:
+                    _LOGGER.debug("[web_server] Error reading %s: %s", config_path, path_err)
+                    continue
+        
+        # Fallback: try environment variable
+        if version == "unknown":
+            version = os.environ.get("ADDON_VERSION", os.environ.get("VERSION", "unknown"))
+            if version != "unknown":
+                _LOGGER.info("[web_server] Read version %s from environment variable", version)
+    except Exception as err:
+        _LOGGER.warning("[web_server] Could not read version: %s", err, exc_info=True)
+        version = os.environ.get("ADDON_VERSION", "unknown")
+    
+    # Save version to file
+    _save_version_to_file(state_file, version)
+    return version
+
+
 def _save_language_to_file(state_file: Path, language: str):
     """Save language to switches_state.json file."""
     try:
@@ -124,6 +168,36 @@ def _save_language_to_file(state_file: Path, language: str):
         _LOGGER.info("[web_server] Saved language '%s' to state file", language)
     except Exception as err:
         _LOGGER.error("[web_server] Error saving language to file: %s", err, exc_info=True)
+
+
+def _save_version_to_file(state_file: Path, version: str):
+    """Save add-on version to switches_state.json file."""
+    try:
+        # Ensure /data directory exists
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Read existing state if file exists (to preserve other data)
+        state_data = {}
+        if state_file.exists():
+            try:
+                with open(state_file, 'r', encoding='utf-8') as f:
+                    state_data = json.load(f)
+            except Exception:
+                state_data = {}
+        
+        # Update version
+        state_data["addon_version"] = version
+        
+        # Write to file atomically
+        temp_file = state_file.with_suffix('.tmp')
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(state_data, f, indent=2, ensure_ascii=False)
+        
+        # Replace original file
+        temp_file.replace(state_file)
+        _LOGGER.info("[web_server] Saved add-on version '%s' to state file", version)
+    except Exception as err:
+        _LOGGER.error("[web_server] Error saving version to file: %s", err, exc_info=True)
 
 
 def _get_ha_language() -> str:
@@ -278,7 +352,31 @@ async def index_handler(request):
                 margin-bottom: 20px;
                 display: flex;
                 align-items: center;
+                justify-content: space-between;
                 gap: 10px;
+            }
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .help-icon {
+                width: 24px;
+                height: 24px;
+                cursor: pointer;
+                color: #7f8c8d;
+                transition: color 0.2s;
+                font-size: 20px;
+                line-height: 24px;
+                text-align: center;
+                border: 1px solid #e0e0e0;
+                border-radius: 50%;
+                background-color: #f8f9fa;
+            }
+            .help-icon:hover {
+                color: #3498db;
+                border-color: #3498db;
+                background-color: #f0f8ff;
             }
             .addon-icon {
                 width: 32px;
@@ -512,11 +610,94 @@ async def index_handler(request):
                     width: 100%;
                 }
             }
+            /* Modal styles */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                overflow: auto;
+            }
+            .modal-content {
+                background-color: #fefefe;
+                margin: 5% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                border-radius: 8px;
+                width: 90%;
+                max-width: 800px;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .modal-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #333;
+            }
+            .modal-close {
+                color: #aaa;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+                line-height: 20px;
+                transition: color 0.2s;
+            }
+            .modal-close:hover,
+            .modal-close:focus {
+                color: #000;
+            }
+            .modal-body {
+                flex: 1;
+                overflow: auto;
+            }
+            .json-content {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 4px;
+                border: 1px solid #e0e0e0;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                max-height: 60vh;
+                overflow: auto;
+            }
+            .json-loading {
+                text-align: center;
+                padding: 40px;
+                color: #7f8c8d;
+            }
+            .json-error {
+                color: #e74c3c;
+                padding: 15px;
+                background-color: #fee;
+                border-radius: 4px;
+                border: 1px solid #fcc;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1><img src="/icon.png" alt="{title_text}" class="addon-icon" onerror="this.style.display='none'">{title_text}<span class="version-badge">v{version}</span></h1>
+            <h1>
+                <div class="header-left">
+                    <img src="/icon.png" alt="{title_text}" class="addon-icon" onerror="this.style.display='none'">
+                    {title_text}<span class="version-badge">v{version}</span>
+                </div>
+                <div class="help-icon" id="help-icon" title="Показать конфигурацию">?</div>
+            </h1>
             <p>{addon_running_text} 
                 <span id="connection-badge" class="connection-badge unknown">{rest_api_checking_text}</span>
                 <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">{background_update_checking_text}</span>
@@ -1005,8 +1186,58 @@ async def index_handler(request):
             // Refresh background poll time every 5 seconds
             setInterval(loadBackgroundPollTime, 5000);
             
-            // Update badge every second
-            setInterval(updateBadge, 1000);
+            // Modal for JSON config
+            const modal = document.createElement('div');
+            modal.id = 'config-modal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">Конфигурация (switches_state.json)</div>
+                        <span class="modal-close" id="modal-close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div id="json-content" class="json-loading">Загрузка...</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            const helpIcon = document.getElementById('help-icon');
+            const modalClose = document.getElementById('modal-close');
+            const jsonContent = document.getElementById('json-content');
+            
+            helpIcon.addEventListener('click', async function() {{
+                modal.style.display = 'block';
+                jsonContent.className = 'json-loading';
+                jsonContent.textContent = 'Загрузка...';
+                
+                try {{
+                    const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/state-json?format=json';
+                    const response = await fetch(apiPath);
+                    
+                    if (!response.ok) {{
+                        throw new Error('HTTP ' + response.status);
+                    }}
+                    
+                    const data = await response.json();
+                    jsonContent.className = 'json-content';
+                    jsonContent.textContent = JSON.stringify(data, null, 2);
+                }} catch (error) {{
+                    jsonContent.className = 'json-error';
+                    jsonContent.textContent = 'Ошибка загрузки: ' + error.message;
+                }}
+            }});
+            
+            modalClose.addEventListener('click', function() {{
+                modal.style.display = 'none';
+            }});
+            
+            window.addEventListener('click', function(event) {{
+                if (event.target === modal) {{
+                    modal.style.display = 'none';
+                }}
+            }});
         </script>
     </body>
     </html>
