@@ -1,6 +1,6 @@
 {
   "name": "AlarmMe",
-  "version": "0.7.18",
+  "version": "0.7.19",
   "slug": "wg-hassio-alarmme",
   "description": "AlarmMe add-on for Home Assistant",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-alarmme",
