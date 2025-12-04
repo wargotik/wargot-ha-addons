@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.28] - 2025-01-30
+
+### Added
+- **Documentation**: Added comprehensive DOCS.md file with complete documentation
+- Installation guide with step-by-step instructions
+- Configuration guide with all settings explained
+- Usage guide with daily workflow examples
+- Complete API reference with all endpoints documented
+- Alarm modes detailed explanation with examples
+- Sensor configuration guide
+- Notification setup and troubleshooting
+- Advanced topics including database structure and automation examples
+
 ## [0.6.27] - 2025-01-30
 
 ### Added
