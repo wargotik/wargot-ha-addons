@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.18] - 2025-01-30
+
+### Fixed
+- **Python shared libraries access (restored)**: Restored explicit Python library paths in AppArmor profile
+- Added back explicit paths for Python shared libraries (libpython*.so*) for all architectures
+- Added support for both `.so` and `.so.*` patterns (e.g., libpython3.11.so.1.0)
+- Includes paths for x86_64, aarch64, arm, i386 architectures
+- Kept wildcard patterns as fallback for any other architectures
+- Fixed `libpython3.11.so.1.0: cannot open shared object file` error that returned after simplification
+
 ## [0.7.17] - 2025-01-30
 
 ### Changed

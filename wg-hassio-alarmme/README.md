@@ -8,8 +8,6 @@
 
 ## 🌐 Languages
 
-![English Language][en-shield] ![German Language][de-shield] ![French Language][fr-shield] ![Spanish Language][es-shield] ![Italian Language][it-shield] ![Dutch Language][nl-shield] ![Polish Language][pl-shield] ![Portuguese Language][pt-shield] ![Czech Language][cs-shield] ![Swedish Language][sv-shield] ![Norwegian Language][no-shield] ![Danish Language][da-shield] ![Turkish Language][tr-shield] ![Belarusian Language][be-shield] ![Ukrainian Language][uk-shield] ![Russian Language][ru-shield] ![Japanese Language][ja-shield] ![Chinese Language][zh-shield]
-
 [**English**](#-english) | [**Deutsch**](#-german) | [**Français**](#-french) | [**Español**](#-spanish) | [**Italiano**](#-italian) | [**Nederlands**](#-dutch) | [**Polski**](#-polish) | [**Português**](#-portuguese) | [**Čeština**](#-czech) | [**Svenska**](#-swedish) | [**Norsk**](#-norwegian) | [**Dansk**](#-danish) | [**Türkçe**](#-turkish) | [**Беларуская**](#-belarusian) | [**Українська**](#-ukrainian) | [**Русский**](#-russian) | [**日本語**](#-japanese) | [**中文**](#-chinese)
 
 ---
