@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.16] - 2025-01-30
+
+### Fixed
+- **Database locking during operations**: Fixed database locking issue that occurred after successful connection
+- Removed autocommit mode (`isolation_level=None`) which was causing locking conflicts
+- Added explicit `commit()` after each database operation during initialization
+- Connection is now properly closed immediately after initialization completes
+- Each SQL operation (CREATE TABLE, ALTER TABLE, CREATE INDEX) now has its own commit
+- Database should no longer lock during schema initialization
+
 ## [0.7.15] - 2025-01-30
 
 ### Added

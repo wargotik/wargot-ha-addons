@@ -59,17 +59,15 @@ class SensorDatabase:
             try:
                 # Add timeout to prevent database locked errors
                 # Use check_same_thread=False to allow connections from different threads
-                # Use isolation_level=None for autocommit mode to reduce locking
                 conn = sqlite3.connect(
                     self.db_path, 
                     timeout=15.0,  # Increased timeout
-                    check_same_thread=False,
-                    isolation_level=None  # Autocommit mode
+                    check_same_thread=False
                 )
                 # Enable WAL mode for better concurrency (must be done before any other operations)
                 try:
                     conn.execute("PRAGMA journal_mode=WAL")
-                    # No commit needed in autocommit mode
+                    conn.commit()  # Commit WAL mode change
                 except:
                     pass  # WAL mode might already be set
                 cursor = conn.cursor()
@@ -102,7 +100,6 @@ class SensorDatabase:
             raise sqlite3.OperationalError("Failed to establish database connection after all retries")
         
         try:
-            
             # Create sensors table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sensors (
@@ -117,10 +114,12 @@ class SensorDatabase:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            conn.commit()
             
             # Add last_triggered_at column if it doesn't exist (for existing databases)
             try:
                 cursor.execute("ALTER TABLE sensors ADD COLUMN last_triggered_at TIMESTAMP")
+                conn.commit()
             except sqlite3.OperationalError:
                 # Column already exists, ignore
                 pass
@@ -128,6 +127,7 @@ class SensorDatabase:
             # Add area column if it doesn't exist (for existing databases)
             try:
                 cursor.execute("ALTER TABLE sensors ADD COLUMN area TEXT")
+                conn.commit()
             except sqlite3.OperationalError:
                 # Column already exists, ignore
                 pass
@@ -137,12 +137,9 @@ class SensorDatabase:
                 CREATE INDEX IF NOT EXISTS idx_device_class 
                 ON sensors(device_class)
             """)
+            conn.commit()
             
-            # In autocommit mode, no explicit commit needed, but we'll do it for safety
-            try:
-                conn.commit()
-            except:
-                pass  # In autocommit mode, commit might not be needed
+            # Close connection immediately after initialization
             conn.close()
             _LOGGER.info("[database] Database initialized successfully")
         except sqlite3.OperationalError as err:
