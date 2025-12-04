@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.10] - 2025-01-30
+
+### Fixed
+- **AppArmor application directory access**: Simplified and fixed `/app/` directory access rules
+- Removed conflicting rules that were overriding general `/app/** rmix` permission
+- Removed specific rules for translations, JSON, and TXT files that were limiting access
+- Added explicit access to `/app/` and `/app/` directory itself for Python to read directory listings
+- Simplified Python file execution rules to avoid conflicts
+- Python should now be able to import all modules from `/app/` directory including `web_server`, `switches`, `sensor_monitor`, etc.
+
 ## [0.7.9] - 2025-01-30
 
 ### Fixed

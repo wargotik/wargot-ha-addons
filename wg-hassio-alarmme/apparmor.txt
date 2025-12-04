@@ -16,12 +16,11 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /data/switches_state.json.tmp rw,
   /data/icon.png r,
   
-  # Application files - Python needs read and execute for imports
+  # Application files - Python needs read, map, and execute for imports
+  # Full access to /app directory (including __pycache__ directories created by Python)
   /app/** rmix,
-  /app/**/translations/** r,
-  /app/**/*.py rmix,
-  /app/**/*.json r,
-  /app/**/*.txt r,
+  /app/ r,
+  /app r,
   
   # Config access (read-only)
   /config.json r,
@@ -71,10 +70,10 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /usr/lib/python3.*/site-packages/** rmix,
   /usr/local/lib/python3.*/site-packages/** rmix,
   
-  # Python scripts execution (already covered by /app/** rmix above, but explicit for clarity)
-  /app/main.py ix,
-  /app/*.py ix,
-  /app/**/*.py ix,
+  # Python scripts execution and module imports
+  # Explicit permissions for Python files (redundant but ensures clarity)
+  /app/*.py rmix,
+  /app/**/*.py rmix,
   
   # Standard system libraries (needed for Python) - must come AFTER Python-specific rules
   /lib/** rm,
