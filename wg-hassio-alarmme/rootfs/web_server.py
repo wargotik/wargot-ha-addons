@@ -441,19 +441,6 @@ async def index_handler(request):
                 align-items: center;
                 gap: 6px;
             }
-            .sensor-save-icon, .sensor-saved-icon {
-                font-size: 16px;
-                cursor: pointer;
-                opacity: 0.6;
-                transition: opacity 0.2s;
-            }
-            .sensor-save-icon:hover {
-                opacity: 1;
-            }
-            .sensor-saved-icon {
-                opacity: 1;
-                cursor: default;
-            }
             .sensor-id {
                 font-size: 11px;
                 color: #7f8c8d;
@@ -837,8 +824,6 @@ async def index_handler(request):
                 container.innerHTML = sensors.map(sensor => {
                     const stateClass = sensor.state === 'on' ? 'on' : 
                                       sensor.state === 'off' ? 'off' : 'unknown';
-                    // All sensors are auto-saved, so always show saved icon
-                    const savedIcon = '<span class="sensor-saved-icon" title="' + t('savedToDb') + '">💾</span>';
                     
                     // Mode buttons - ensure boolean values
                     const awayEnabled = Boolean(sensor.enabled_in_away_mode);
@@ -903,7 +888,6 @@ async def index_handler(request):
                         <div class="sensor-item">
                             <div class="sensor-name">
                                 ${sensor.name || sensor.entity_id}
-                                ${savedIcon}
                             </div>
                             ${areaHtml}
                             <div class="sensor-id">${sensor.entity_id}</div>
@@ -1581,7 +1565,8 @@ async def get_sensors_handler(request):
                 "enabled_in_away_mode": bool(saved_sensor.get("enabled_in_away_mode", False)),
                 "enabled_in_night_mode": bool(saved_sensor.get("enabled_in_night_mode", False)),
                 "enabled_in_perimeter_mode": bool(saved_sensor.get("enabled_in_perimeter_mode", False)),
-                "last_triggered_at": saved_sensor.get("last_triggered_at")
+                "last_triggered_at": saved_sensor.get("last_triggered_at"),
+                "area": saved_sensor.get("area")
             }
             
             # Group by device_class
@@ -1702,11 +1687,13 @@ async def update_sensor_modes_handler(request):
             enabled_in_away_mode = bool(enabled_in_away_mode)
         if enabled_in_night_mode is not None:
             enabled_in_night_mode = bool(enabled_in_night_mode)
+        if enabled_in_perimeter_mode is not None:
+            enabled_in_perimeter_mode = bool(enabled_in_perimeter_mode)
         
-        if enabled_in_away_mode is None and enabled_in_night_mode is None:
+        if enabled_in_away_mode is None and enabled_in_night_mode is None and enabled_in_perimeter_mode is None:
             return web.json_response({
                 "success": False,
-                "error": "At least one mode (enabled_in_away_mode or enabled_in_night_mode) must be provided"
+                "error": "At least one mode (enabled_in_away_mode, enabled_in_night_mode, or enabled_in_perimeter_mode) must be provided"
             }, status=400)
         
         # Get sensor info for logging
@@ -1724,8 +1711,13 @@ async def update_sensor_modes_handler(request):
             _LOGGER.info("[web_server] 🔧 Sensor mode changed: %s (%s) - Night Mode: %s", 
                         sensor_name, entity_id, mode_status)
         
-        _LOGGER.info("[web_server] Updating sensor modes: %s (%s) - away: %s, night: %s", 
-                    sensor_name, entity_id, enabled_in_away_mode, enabled_in_night_mode)
+        if enabled_in_perimeter_mode is not None:
+            mode_status = "enabled" if enabled_in_perimeter_mode else "disabled"
+            _LOGGER.info("[web_server] 🔧 Sensor mode changed: %s (%s) - Perimeter Mode: %s", 
+                        sensor_name, entity_id, mode_status)
+        
+        _LOGGER.info("[web_server] Updating sensor modes: %s (%s) - away: %s, night: %s, perimeter: %s", 
+                    sensor_name, entity_id, enabled_in_away_mode, enabled_in_night_mode, enabled_in_perimeter_mode)
         
         success = _db.update_sensor_modes(
             entity_id=entity_id,
