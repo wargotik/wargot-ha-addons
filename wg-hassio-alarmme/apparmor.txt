@@ -51,9 +51,12 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /sbin/tini ix,
   
   # Process and network information (for Home Assistant API)
+  # Note: /proc/** r already covers most /proc access above
   owner @{PROC}/[0-9]*/fd/ r,
   owner @{PROC}/[0-9]*/net/ r,
   owner @{PROC}/[0-9]*/status r,
+  owner @{PROC}/[0-9]*/cmdline r,
+  owner @{PROC}/[0-9]*/exe r,
   
   # Logging
   /var/log/** w,
@@ -66,18 +69,17 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /data/alarmme.db-journal rw,
   /data/alarmme.db-wal rw,
   
-  # Deny access to sensitive system files
-  deny /etc/shadow r,
-  deny /etc/passwd r,
-  deny /root/** r,
-  deny /home/** r,
-  
-  # Allow minimal /etc access for system configuration
+  # Allow minimal /etc access for system configuration (needed for Python)
   /etc/passwd r,
   /etc/group r,
   /etc/nsswitch.conf r,
   /etc/hosts r,
   /etc/resolv.conf r,
+  
+  # Deny access to sensitive system files
+  deny /etc/shadow r,
+  deny /root/** r,
+  deny /home/** r,
   
   # Allow /sys read access (needed for some Python operations)
   /sys/** r,
