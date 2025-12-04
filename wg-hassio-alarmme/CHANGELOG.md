@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.30] - 2025-01-30
+
+### Fixed
+- **Repository visibility**: Fixed `schema` format in `config.json` that prevented Home Assistant from recognizing the add-on repository
+- Removed invalid nested object structure from `schema` field
+- `schema` now uses correct format: empty object `{}` (no configuration fields needed)
+- Add-on should now be visible in Home Assistant repository again
+
 ## [0.6.29] - 2025-01-30
 
 ### Fixed
