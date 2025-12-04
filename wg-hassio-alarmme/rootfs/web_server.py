@@ -223,13 +223,37 @@ async def index_handler(request):
     # Escape translations for JavaScript
     translations_js = json.dumps(translations, ensure_ascii=False)
     
-    html = f"""
+    # Pre-compute translated strings
+    title_text = _t("title", translations)
+    addon_running_text = _t("addonRunning", translations)
+    rest_api_checking_text = _t("restApiChecking", translations)
+    background_update_checking_text = _t("backgroundUpdateChecking", translations)
+    current_mode_text = _t("currentMode", translations)
+    loading_text = _t("loading", translations)
+    switches_checking_text = _t("switchesChecking", translations)
+    mode_off_text = _t("modeOff", translations)
+    mode_away_text = _t("modeAway", translations)
+    mode_night_text = _t("modeNight", translations)
+    mode_off_desc_text = _t("modeOffDesc", translations)
+    mode_away_desc_text = _t("modeAwayDesc", translations)
+    mode_night_desc_text = _t("modeNightDesc", translations)
+    motion_text = _t("motion", translations)
+    motion_desc_text = _t("motionDesc", translations)
+    moving_text = _t("moving", translations)
+    moving_desc_text = _t("movingDesc", translations)
+    occupancy_text = _t("occupancy", translations)
+    occupancy_desc_text = _t("occupancyDesc", translations)
+    presence_text = _t("presence", translations)
+    presence_desc_text = _t("presenceDesc", translations)
+    
+    # Use regular string instead of f-string to avoid CSS brace issues
+    html = """
     <!DOCTYPE html>
     <html lang="{lang}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{_t("title", translations)}</title>
+        <title>{title_text}</title>
         <style>
             * {
                 margin: 0;
@@ -271,17 +295,17 @@ async def index_handler(request):
                 font-weight: 500;
                 font-family: monospace;
             }
-            .sensors-grid {{
+            .sensors-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
                 margin-top: 30px;
-            }}
-            @media (min-width: 1200px) {{
-                .sensors-grid {{
+            }
+            @media (min-width: 1200px) {
+                .sensors-grid {
                     grid-template-columns: repeat(4, 1fr);
-                }}
-            }}
+                }
+            }
             .sensor-column {
                 background-color: #f8f9fa;
                 padding: 20px;
@@ -492,52 +516,52 @@ async def index_handler(request):
     </head>
     <body>
         <div class="container">
-            <h1><img src="/icon.png" alt="{_t("title", translations)}" class="addon-icon" onerror="this.style.display='none'">{_t("title", translations)}<span class="version-badge">v{version}</span></h1>
-            <p>{_t("addonRunning", translations)} 
-                <span id="connection-badge" class="connection-badge unknown">{_t("restApiChecking", translations)}</span>
-                <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">{_t("backgroundUpdateChecking", translations)}</span>
+            <h1><img src="/icon.png" alt="{title_text}" class="addon-icon" onerror="this.style.display='none'">{title_text}<span class="version-badge">v{version}</span></h1>
+            <p>{addon_running_text} 
+                <span id="connection-badge" class="connection-badge unknown">{rest_api_checking_text}</span>
+                <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">{background_update_checking_text}</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <div style="padding: 15px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
                     <div style="margin-bottom: 12px;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">{_t("currentMode", translations)}</div>
-                        <div id="current-mode" style="display: inline-block; padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">{_t("loading", translations)}</div>
-                        <span id="switches-installed" style="font-size: 11px; color: #7f8c8d;">{_t("switchesChecking", translations)}</span>
+                        <div style="font-weight: 600; margin-bottom: 8px;">{current_mode_text}</div>
+                        <div id="current-mode" style="display: inline-block; padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">{loading_text}</div>
+                        <span id="switches-installed" style="font-size: 11px; color: #7f8c8d;">{switches_checking_text}</span>
                     </div>
                     <div class="mode-buttons">
                         <button class="mode-button off" id="mode-button-off" onclick="setMode('off')">
-                            {_t("modeOff", translations)}
+                            {mode_off_text}
                         </button>
                         <button class="mode-button away" id="mode-button-away" onclick="setMode('away')">
-                            {_t("modeAway", translations)}
+                            {mode_away_text}
                         </button>
                         <button class="mode-button night" id="mode-button-night" onclick="setMode('night')">
-                            {_t("modeNight", translations)}
+                            {mode_night_text}
                         </button>
                     </div>
                     <div style="font-size: 12px; color: #7f8c8d; margin-top: 12px;">
-                        <div>{_t("modeOffDesc", translations)}</div>
-                        <div>{_t("modeAwayDesc", translations)}</div>
-                        <div>{_t("modeNightDesc", translations)}</div>
+                        <div>{mode_off_desc_text}</div>
+                        <div>{mode_away_desc_text}</div>
+                        <div>{mode_night_desc_text}</div>
                     </div>
                 </div>
             </div>
             <div class="sensors-grid">
                 <div class="sensor-column">
-                    <h3>{_t("motion", translations)}<br><small>({_t("motionDesc", translations)})</small></h3>
-                    <div id="motion-sensors" class="loading">{_t("loading", translations)}</div>
+                    <h3>{motion_text}<br><small>({motion_desc_text})</small></h3>
+                    <div id="motion-sensors" class="loading">{loading_text}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>{_t("moving", translations)}<br><small>({_t("movingDesc", translations)})</small></h3>
-                    <div id="moving-sensors" class="loading">{_t("loading", translations)}</div>
+                    <h3>{moving_text}<br><small>({moving_desc_text})</small></h3>
+                    <div id="moving-sensors" class="loading">{loading_text}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>{_t("occupancy", translations)}<br><small>({_t("occupancyDesc", translations)})</small></h3>
-                    <div id="occupancy-sensors" class="loading">{_t("loading", translations)}</div>
+                    <h3>{occupancy_text}<br><small>({occupancy_desc_text})</small></h3>
+                    <div id="occupancy-sensors" class="loading">{loading_text}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>{_t("presence", translations)}<br><small>({_t("presenceDesc", translations)})</small></h3>
-                    <div id="presence-sensors" class="loading">{_t("loading", translations)}</div>
+                    <h3>{presence_text}<br><small>({presence_desc_text})</small></h3>
+                    <div id="presence-sensors" class="loading">{loading_text}</div>
                 </div>
             </div>
         </div>
@@ -987,8 +1011,31 @@ async def index_handler(request):
     </body>
     </html>
     """
-    # Replace version placeholder
-    html = html.replace("{{version}}", version)
+    # Replace all placeholders
+    html = html.replace("{lang}", lang)
+    html = html.replace("{title_text}", title_text)
+    html = html.replace("{addon_running_text}", addon_running_text)
+    html = html.replace("{rest_api_checking_text}", rest_api_checking_text)
+    html = html.replace("{background_update_checking_text}", background_update_checking_text)
+    html = html.replace("{current_mode_text}", current_mode_text)
+    html = html.replace("{loading_text}", loading_text)
+    html = html.replace("{switches_checking_text}", switches_checking_text)
+    html = html.replace("{mode_off_text}", mode_off_text)
+    html = html.replace("{mode_away_text}", mode_away_text)
+    html = html.replace("{mode_night_text}", mode_night_text)
+    html = html.replace("{mode_off_desc_text}", mode_off_desc_text)
+    html = html.replace("{mode_away_desc_text}", mode_away_desc_text)
+    html = html.replace("{mode_night_desc_text}", mode_night_desc_text)
+    html = html.replace("{motion_text}", motion_text)
+    html = html.replace("{motion_desc_text}", motion_desc_text)
+    html = html.replace("{moving_text}", moving_text)
+    html = html.replace("{moving_desc_text}", moving_desc_text)
+    html = html.replace("{occupancy_text}", occupancy_text)
+    html = html.replace("{occupancy_desc_text}", occupancy_desc_text)
+    html = html.replace("{presence_text}", presence_text)
+    html = html.replace("{presence_desc_text}", presence_desc_text)
+    html = html.replace("{version}", version)
+    html = html.replace("{translations_js}", translations_js)
     return web.Response(text=html, content_type="text/html")
 
 

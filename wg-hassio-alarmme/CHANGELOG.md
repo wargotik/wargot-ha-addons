@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.29] - 2025-01-30
+
+### Fixed
+- **Syntax errors**: Fixed `NameError: name 'Path' is not defined` by removing duplicate local import
+- **CSS syntax error**: Fixed `SyntaxError: invalid decimal literal` in CSS `grid-template-columns: repeat(4, 1fr)`
+- Changed HTML template from f-string to regular string with `.replace()` to avoid CSS brace interpretation issues
+- All CSS braces now work correctly without escaping
+
 ## [0.6.28] - 2025-01-30
 
 ### Added
