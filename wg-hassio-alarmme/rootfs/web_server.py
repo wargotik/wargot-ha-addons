@@ -46,6 +46,86 @@ def get_sensor_states_cache():
     return _sensor_states_cache
 
 
+async def get_and_save_ha_language():
+    """Get language from Home Assistant and save it to JSON file."""
+    import aiohttp
+    from pathlib import Path
+    
+    STATE_FILE = "/data/switches_state.json"
+    state_file = Path(STATE_FILE)
+    
+    # Default language
+    language = "en"
+    
+    ha_token = os.environ.get("SUPERVISOR_TOKEN")
+    ha_url = os.environ.get("HASSIO_URL", "http://supervisor/core")
+    
+    if not ha_token:
+        _LOGGER.warning("[web_server] SUPERVISOR_TOKEN not found, cannot get language from HA")
+        # Still save default language
+        _save_language_to_file(state_file, language)
+        return language
+    
+    try:
+        _LOGGER.info("[web_server] Fetching language from Home Assistant API: %s/api/config", ha_url)
+        async with aiohttp.ClientSession() as session:
+            headers = {"Authorization": f"Bearer {ha_token}"}
+            api_url = f"{ha_url}/api/config"
+            
+            async with session.get(api_url, headers=headers) as resp:
+                if resp.status == 200:
+                    config_data = await resp.json()
+                    ha_language = config_data.get("language", "en")
+                    
+                    # Convert HA language code to our format (e.g., "ru_RU" -> "ru", "en_US" -> "en")
+                    if ha_language:
+                        language = ha_language.split("_")[0].lower() if "_" in ha_language else ha_language.lower()
+                    
+                    _LOGGER.info("[web_server] Successfully retrieved HA language: %s (from HA: %s)", 
+                               language, ha_language)
+                else:
+                    response_text = await resp.text()
+                    _LOGGER.warning("[web_server] HA API returned status %s, response: %s, using default language: %s", 
+                                  resp.status, response_text[:200], language)
+    except Exception as err:
+        _LOGGER.warning("[web_server] Could not get language from HA API: %s, using default language: %s", 
+                      err, language, exc_info=True)
+    
+    # Save language to file
+    _save_language_to_file(state_file, language)
+    return language
+
+
+def _save_language_to_file(state_file: Path, language: str):
+    """Save language to switches_state.json file."""
+    try:
+        # Ensure /data directory exists
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Read existing state if file exists (to preserve other data)
+        state_data = {}
+        if state_file.exists():
+            try:
+                with open(state_file, 'r', encoding='utf-8') as f:
+                    state_data = json.load(f)
+            except Exception:
+                state_data = {}
+        
+        # Update language
+        state_data["language"] = language
+        
+        # Write to file atomically
+        temp_file = state_file.with_suffix('.tmp')
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(state_data, f, indent=2, ensure_ascii=False)
+        
+        # Replace original file
+        temp_file.replace(state_file)
+        _LOGGER.info("[web_server] Saved language '%s' to state file", language)
+    except Exception as err:
+        _LOGGER.error("[web_server] Error saving language to file: %s", err, exc_info=True)
+
+
 async def index_handler(request):
     """Handle index page."""
     # Read version from config.json

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.24] - 2025-01-30
+
+### Added
+- **Home Assistant language detection**: Added automatic detection and saving of Home Assistant language setting
+- Language is fetched from HA API (`/api/config`) on add-on startup
+- Language is saved to `/data/switches_state.json` for persistence
+- Language code is normalized (e.g., "ru_RU" -> "ru", "en_US" -> "en")
+- Falls back to "en" if language cannot be retrieved from HA
+
 ## [0.6.23] - 2025-01-30
 
 ### Changed

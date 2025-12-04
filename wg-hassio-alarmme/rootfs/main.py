@@ -42,6 +42,11 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     
+    # Get and save Home Assistant language
+    from web_server import get_and_save_ha_language
+    ha_language = await get_and_save_ha_language()
+    _LOGGER.info("Home Assistant language detected and saved: %s", ha_language)
+    
     # Get database and sensor states cache
     db = get_db()
     sensor_states_cache = get_sensor_states_cache()
