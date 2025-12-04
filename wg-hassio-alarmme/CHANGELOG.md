@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.2] - 2025-12-04
+
+### Changed
+- **UI Improvements**:
+  - Translated "Away Mode" and "Night Mode" button labels to match selected language (Russian: "Режим отсутствия", "Ночной режим")
+  - Added area (space) display for sensors in the sensor list
+  - Removed save icon (💾) from sensor list as all sensors are now auto-saved
+
+### Technical Details
+- Updated Russian translation file (`ru.json`) with proper translations for `modeAway` and `modeNight`
+- Added `area` field to sensor data in `get_sensors_handler` API response
+- Removed `savedIcon` variable and related CSS styles from sensor rendering
+
 ## [0.9.1] - 2025-12-04
 
 ### Added
