@@ -53,7 +53,7 @@ After installation, the add-on is ready to use. No additional configuration is r
 
 ### Alarm Modes
 
-The add-on supports two mutually exclusive alarm modes, each designed for different security scenarios:
+The add-on supports three mutually exclusive alarm modes, each designed for different security scenarios:
 
 #### 🚪 Away Mode (Режим отсутствия)
 
@@ -105,12 +105,38 @@ You go to bed at 11:00 PM:
    "⚠️ ПРОНИКНОВЕНИЕ Прихожая! Сработал датчик: Датчик на входной двери"
 ```
 
+#### 🏡 Perimeter Mode (Режим периметра)
+
+**Purpose**: Activate when you're home during the day and want to monitor only outdoor sensors (perimeter).
+
+**Use Cases**:
+- You're working from home during the day
+- You're moving around inside the house (kitchen, living room, office)
+- You want to be alerted if something happens outside (yard, driveway, perimeter)
+- You want to avoid false alarms from your own movement inside
+
+**Typical Sensor Configuration**:
+- ✅ **Enable outdoor sensors**: yard motion sensors, driveway sensors, perimeter cameras
+- ❌ **Disable indoor sensors**: living room, kitchen, bedrooms, office
+- ✅ **Monitor perimeter only**: focus on external threats while allowing free movement inside
+
+**Example Scenario**:
+```
+You're working from home at 2:00 PM:
+1. Activate "Perimeter Mode" in the add-on
+2. Only outdoor sensors enabled for Perimeter Mode are active
+3. Indoor sensors are disabled (won't trigger when you move around)
+4. Yard motion sensor is enabled (will trigger if motion detected outside)
+5. If motion is detected in the yard, an alert is sent:
+   "⚠️ ПРОНИКНОВЕНИЕ Двор! Сработал датчик: Датчик движения во дворе"
+```
+
 #### ⚙️ Mode Behavior
 
-- **Mutually Exclusive**: Only one mode can be active at a time (Off, Away, or Night)
-- **Automatic Switching**: Activating one mode automatically deactivates the other
-- **Three States**: 
-  - **Off**: Both modes disabled, no intrusion detection
+- **Mutually Exclusive**: Only one mode can be active at a time (Off, Away, Night, or Perimeter)
+- **Automatic Switching**: Activating one mode automatically deactivates the others
+- **Four States**: 
+  - **Off**: All modes disabled, no intrusion detection
   - **Away**: Away Mode active, Night Mode disabled
   - **Night**: Night Mode active, Away Mode disabled
 - **💾 Local State Storage**: Switch states persist across restarts in `/data/switches_state.json`

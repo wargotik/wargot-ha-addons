@@ -36,6 +36,14 @@ class VirtualSwitches:
                 "friendly_name": "Ночной режим",
                 "icon": "mdi:weather-night",
                 "state": "off"
+            },
+            "perimeter": {
+                "entity_id": "switch.alarmme_perimeter_mode",
+                "unique_id": "alarmme_perimeter_mode",
+                "name": "Perimeter Mode",
+                "friendly_name": "Режим периметра",
+                "icon": "mdi:shield-outline",
+                "state": "off"
             }
         }
         self._session: Optional[aiohttp.ClientSession] = None
@@ -107,7 +115,7 @@ class VirtualSwitches:
     async def update_switch_state(self, switch_type: str, state: str) -> bool:
         """Update switch state in Home Assistant using services.
         
-        Switches are mutually exclusive: if one is turned on, the other is turned off.
+        Switches are mutually exclusive: if one is turned on, the others are turned off.
         """
         if switch_type not in self.switches:
             _LOGGER.error("[switches] Unknown switch type: %s", switch_type)
@@ -118,7 +126,8 @@ class VirtualSwitches:
             return False
         
         target_state = state.lower() in ("on", "true", "1")
-        other_switch_type = "night" if switch_type == "away" else "away"
+        # Get all other switch types (mutually exclusive)
+        other_switch_types = [st for st in self.switches.keys() if st != switch_type]
         switch_data = self.switches[switch_type]
         
         session = await self._get_session()
@@ -128,20 +137,21 @@ class VirtualSwitches:
         }
         
         try:
-            # If turning on this switch, turn off the other one
+            # If turning on this switch, turn off all other switches (mutually exclusive)
             if target_state:
-                # Turn off the other switch first
-                other_switch_data = self.switches[other_switch_type]
-                service_url = f"{self.ha_url}/api/services/switch/turn_off"
-                service_data = {"entity_id": other_switch_data["entity_id"]}
-                
-                async with session.post(service_url, headers=headers, json=service_data) as resp:
-                    if resp.status == 200:
-                        other_switch_data["state"] = "off"
-                        _LOGGER.info("[switches] Turned off %s (mutually exclusive)", other_switch_data["name"])
-                    else:
-                        _LOGGER.warning("[switches] Failed to turn off %s: status %s",
-                                      other_switch_data["entity_id"], resp.status)
+                # Turn off all other switches first
+                for other_switch_type in other_switch_types:
+                    other_switch_data = self.switches[other_switch_type]
+                    service_url = f"{self.ha_url}/api/services/switch/turn_off"
+                    service_data = {"entity_id": other_switch_data["entity_id"]}
+                    
+                    async with session.post(service_url, headers=headers, json=service_data) as resp:
+                        if resp.status == 200:
+                            other_switch_data["state"] = "off"
+                            _LOGGER.info("[switches] Turned off %s (mutually exclusive)", other_switch_data["name"])
+                        else:
+                            _LOGGER.warning("[switches] Failed to turn off %s: status %s",
+                                          other_switch_data["entity_id"], resp.status)
                 
                 # Now turn on the target switch
                 service_url = f"{self.ha_url}/api/services/switch/turn_on"
@@ -224,18 +234,19 @@ class VirtualSwitches:
                         _LOGGER.info("[switches] Switch %s changed from %s to %s", 
                                    switch_data["name"], old_state, new_state)
                         
-                        # If this switch was turned on, ensure the other is off
+                        # If this switch was turned on, ensure all other switches are off
                         if new_state.lower() == "on":
-                            other_switch_type = "night" if switch_type == "away" else "away"
-                            other_switch_data = self.switches[other_switch_type]
+                            other_switch_types = [st for st in self.switches.keys() if st != switch_type]
                             
-                            # Check if other switch is also on
-                            other_state = await self.get_switch_state_from_ha(other_switch_type)
-                            if other_state and other_state.lower() == "on":
-                                # Turn off the other switch
-                                _LOGGER.info("[switches] Ensuring mutual exclusivity: turning off %s", 
-                                           other_switch_data["name"])
-                                await self.update_switch_state(other_switch_type, "off")
+                            for other_switch_type in other_switch_types:
+                                other_switch_data = self.switches[other_switch_type]
+                                # Check if other switch is also on
+                                other_state = await self.get_switch_state_from_ha(other_switch_type)
+                                if other_state and other_state.lower() == "on":
+                                    # Turn off the other switch
+                                    _LOGGER.info("[switches] Ensuring mutual exclusivity: turning off %s", 
+                                               other_switch_data["name"])
+                                    await self.update_switch_state(other_switch_type, "off")
                         
                         # Save state to local storage
                         self._save_states()
@@ -255,21 +266,25 @@ class VirtualSwitches:
         return {switch_type: switch_data["state"].upper() for switch_type, switch_data in self.switches.items()}
     
     def get_current_mode(self) -> str:
-        """Get current mode: 'off', 'away', or 'night'.
+        """Get current mode: 'off', 'away', 'night', or 'perimeter'.
         
         Returns:
-            'off' - both switches are off
+            'off' - all switches are off
             'away' - away mode is on
             'night' - night mode is on
+            'perimeter' - perimeter mode is on
         """
         away_state = self.switches["away"]["state"].lower()
         night_state = self.switches["night"]["state"].lower()
+        perimeter_state = self.switches["perimeter"]["state"].lower()
         
-        # Ensure mutual exclusivity: if both are on, prioritize away
+        # Ensure mutual exclusivity: prioritize in order: away > night > perimeter
         if away_state == "on":
             return "away"
         elif night_state == "on":
             return "night"
+        elif perimeter_state == "on":
+            return "perimeter"
         else:
             return "off"
     

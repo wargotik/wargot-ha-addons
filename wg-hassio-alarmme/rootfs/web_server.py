@@ -312,9 +312,11 @@ async def index_handler(request):
     mode_off_text = _t("modeOff", translations)
     mode_away_text = _t("modeAway", translations)
     mode_night_text = _t("modeNight", translations)
+    mode_perimeter_text = _t("modePerimeter", translations)
     mode_off_desc_text = _t("modeOffDesc", translations)
     mode_away_desc_text = _t("modeAwayDesc", translations)
     mode_night_desc_text = _t("modeNightDesc", translations)
+    mode_perimeter_desc_text = _t("modePerimeterDesc", translations)
     motion_text = _t("motion", translations)
     motion_desc_text = _t("motionDesc", translations)
     moving_text = _t("moving", translations)
@@ -492,6 +494,10 @@ async def index_handler(request):
                 border-color: #9b59b6;
                 background-color: #9b59b6;
             }
+            .sensor-mode-btn.active.perimeter {
+                border-color: #e67e22;
+                background-color: #e67e22;
+            }
             .sensor-state {
                 display: inline-block;
                 padding: 2px 8px;
@@ -598,6 +604,10 @@ async def index_handler(request):
             .mode-button.active.night {
                 border-color: #9b59b6;
                 background-color: #9b59b6;
+            }
+            .mode-button.active.perimeter {
+                border-color: #e67e22;
+                background-color: #e67e22;
             }
             .mode-button:disabled {
                 opacity: 0.5;
@@ -723,11 +733,15 @@ async def index_handler(request):
                         <button class="mode-button night" id="mode-button-night" onclick="setMode('night')">
                             {mode_night_text}
                         </button>
+                        <button class="mode-button perimeter" id="mode-button-perimeter" onclick="setMode('perimeter')">
+                            {mode_perimeter_text}
+                        </button>
                     </div>
                     <div style="font-size: 12px; color: #7f8c8d; margin-top: 12px;">
                         <div>{mode_off_desc_text}</div>
                         <div>{mode_away_desc_text}</div>
                         <div>{mode_night_desc_text}</div>
+                        <div>{mode_perimeter_desc_text}</div>
                     </div>
                 </div>
             </div>
@@ -829,8 +843,10 @@ async def index_handler(request):
                     // Mode buttons - ensure boolean values
                     const awayEnabled = Boolean(sensor.enabled_in_away_mode);
                     const nightEnabled = Boolean(sensor.enabled_in_night_mode);
+                    const perimeterEnabled = Boolean(sensor.enabled_in_perimeter_mode || false);
                     const awayModeActive = awayEnabled ? 'active' : '';
                     const nightModeActive = nightEnabled ? 'active' : '';
+                    const perimeterModeActive = perimeterEnabled ? 'active' : '';
                     
                     const modeButtons = `
                         <div class="sensor-modes">
@@ -847,6 +863,13 @@ async def index_handler(request):
                                     data-enabled="${!nightEnabled}"
                                     title="${t('enabledInNightMode')}">
                                 ${t('night')}
+                            </button>
+                            <button class="sensor-mode-btn perimeter ${perimeterModeActive}" 
+                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
+                                    data-mode="perimeter"
+                                    data-enabled="${!perimeterEnabled}"
+                                    title="${t('enabledInPerimeterMode')}">
+                                ${t('perimeter')}
                             </button>
                         </div>
                     `;
@@ -937,6 +960,10 @@ async def index_handler(request):
                         requestData.enabled_in_away_mode = enabled;
                     } else if (mode === 'night') {
                         requestData.enabled_in_night_mode = enabled;
+                    } else if (mode === 'perimeter') {
+                        requestData.enabled_in_perimeter_mode = enabled;
+                    } else if (mode === 'perimeter') {
+                        requestData.enabled_in_perimeter_mode = enabled;
                     }
                     
                     console.log('Sending request:', requestData);
@@ -974,10 +1001,10 @@ async def index_handler(request):
                             updateCurrentMode(data.mode || 'off');
                             updateConnectionBadge(data.connected !== undefined ? data.connected : false);
                             
-                            // Update installation status (both switches should be installed)
+                            // Update installation status (all switches should be installed)
                             if (data.switches_installed) {
-                                const bothInstalled = data.switches_installed.away && data.switches_installed.night;
-                                updateSwitchesInstalled(bothInstalled);
+                                const allInstalled = data.switches_installed.away && data.switches_installed.night && data.switches_installed.perimeter;
+                                updateSwitchesInstalled(allInstalled);
                             }
                         }
                     }
@@ -995,13 +1022,15 @@ async def index_handler(request):
                 const modeLabels = {
                     'off': t('modeOff'),
                     'away': t('modeAway'),
-                    'night': t('modeNight')
+                    'night': t('modeNight'),
+                    'perimeter': t('modePerimeter')
                 };
                 
                 const modeColors = {
                     'off': '#7f8c8d',
                     'away': '#3498db',
-                    'night': '#9b59b6'
+                    'night': '#9b59b6',
+                    'perimeter': '#e67e22'
                 };
                 
                 const label = modeLabels[mode] || t('unknown');
@@ -1018,7 +1047,8 @@ async def index_handler(request):
                 const buttons = {
                     'off': document.getElementById('mode-button-off'),
                     'away': document.getElementById('mode-button-away'),
-                    'night': document.getElementById('mode-button-night')
+                    'night': document.getElementById('mode-button-night'),
+                    'perimeter': document.getElementById('mode-button-perimeter')
                 };
                 
                 for (const [mode, button] of Object.entries(buttons)) {
@@ -1036,7 +1066,7 @@ async def index_handler(request):
             
             async function setMode(mode) {
                 // Disable all buttons during update
-                const buttons = ['off', 'away', 'night'].map(m => document.getElementById('mode-button-' + m));
+                const buttons = ['off', 'away', 'night', 'perimeter'].map(m => document.getElementById('mode-button-' + m));
                 buttons.forEach(btn => {
                     if (btn) btn.disabled = true;
                 });
@@ -1258,9 +1288,12 @@ async def index_handler(request):
     html = html.replace("{mode_off_text}", mode_off_text)
     html = html.replace("{mode_away_text}", mode_away_text)
     html = html.replace("{mode_night_text}", mode_night_text)
+    html = html.replace("{mode_perimeter_text}", mode_perimeter_text)
     html = html.replace("{mode_off_desc_text}", mode_off_desc_text)
     html = html.replace("{mode_away_desc_text}", mode_away_desc_text)
     html = html.replace("{mode_night_desc_text}", mode_night_desc_text)
+    html = html.replace("{mode_perimeter_desc_text}", mode_perimeter_desc_text)
+    html = html.replace("{mode_perimeter_desc_text}", mode_perimeter_desc_text)
     html = html.replace("{motion_text}", motion_text)
     html = html.replace("{motion_desc_text}", motion_desc_text)
     html = html.replace("{moving_text}", moving_text)
@@ -1547,6 +1580,7 @@ async def get_sensors_handler(request):
                 "saved": True,  # All sensors from database are saved
                 "enabled_in_away_mode": bool(saved_sensor.get("enabled_in_away_mode", False)),
                 "enabled_in_night_mode": bool(saved_sensor.get("enabled_in_night_mode", False)),
+                "enabled_in_perimeter_mode": bool(saved_sensor.get("enabled_in_perimeter_mode", False)),
                 "last_triggered_at": saved_sensor.get("last_triggered_at")
             }
             
@@ -1613,8 +1647,9 @@ async def save_sensor_handler(request):
             name=name,
             device_class=device_class,
             enabled_in_away_mode=False,
-            enabled_in_night_mode=False
-        )
+            enabled_in_night_mode=False,
+            enabled_in_perimeter_mode=False
+            )
         
         if success:
             return web.json_response({
@@ -1660,6 +1695,7 @@ async def update_sensor_modes_handler(request):
         
         enabled_in_away_mode = data.get("enabled_in_away_mode")
         enabled_in_night_mode = data.get("enabled_in_night_mode")
+        enabled_in_perimeter_mode = data.get("enabled_in_perimeter_mode")
         
         # Convert to boolean if provided (handles both None and explicit False)
         if enabled_in_away_mode is not None:
@@ -1694,7 +1730,8 @@ async def update_sensor_modes_handler(request):
         success = _db.update_sensor_modes(
             entity_id=entity_id,
             enabled_in_away_mode=enabled_in_away_mode,
-            enabled_in_night_mode=enabled_in_night_mode
+            enabled_in_night_mode=enabled_in_night_mode,
+            enabled_in_perimeter_mode=enabled_in_perimeter_mode
         )
         
         if success:
@@ -1769,12 +1806,13 @@ async def get_switches_handler(request):
         global _virtual_switches
         
         # Default states if switches not available
-        default_states = {"away": "OFF", "night": "OFF"}
+        default_states = {"away": "OFF", "night": "OFF", "perimeter": "OFF"}
         default_mode = "off"
         
         # Check if switches exist in Home Assistant (created by integration)
         away_exists = await _check_switch_exists("switch.alarmme_away_mode")
         night_exists = await _check_switch_exists("switch.alarmme_night_mode")
+        perimeter_exists = await _check_switch_exists("switch.alarmme_perimeter_mode")
         
         if _virtual_switches is None:
             _LOGGER.debug("[web_server] Virtual switches not initialized, returning default states")
@@ -1785,7 +1823,8 @@ async def get_switches_handler(request):
                 "connected": False,
                 "switches_installed": {
                     "away": away_exists,
-                    "night": night_exists
+                    "night": night_exists,
+                    "perimeter": perimeter_exists
                 }
             })
         
@@ -1797,7 +1836,8 @@ async def get_switches_handler(request):
             "mode": current_mode,
             "switches": {
                 "away": states.get("away", "OFF"),
-                "night": states.get("night", "OFF")
+                "night": states.get("night", "OFF"),
+                "perimeter": states.get("perimeter", "OFF")
             },
             "connected": _virtual_switches.is_connected if hasattr(_virtual_switches, 'is_connected') else False,
             "switches_installed": {
@@ -1811,7 +1851,7 @@ async def get_switches_handler(request):
             "success": True,
             "error": str(err),
             "mode": "off",
-            "switches": {"away": "OFF", "night": "OFF"},
+            "switches": {"away": "OFF", "night": "OFF", "perimeter": "OFF"},
             "connected": False,
             "switches_installed": {
                 "away": False,
@@ -1844,31 +1884,40 @@ async def update_switches_handler(request):
         
         mode = data.get("mode", "").lower()
         
-        if mode not in ("off", "away", "night"):
+        if mode not in ("off", "away", "night", "perimeter"):
             _LOGGER.warning("[web_server] Invalid mode: %s", mode)
             return web.json_response({
                 "success": False,
-                "error": f"Invalid mode: {mode}. Must be 'off', 'away', or 'night'"
+                "error": f"Invalid mode: {mode}. Must be 'off', 'away', 'night', or 'perimeter'"
             }, status=400)
         
         _LOGGER.info("[web_server] Updating mode to: %s", mode)
         
         # Update switches based on mode
         if mode == "off":
-            # Turn off both switches
+            # Turn off all switches
             away_success = await _virtual_switches.update_switch_state("away", "off")
             night_success = await _virtual_switches.update_switch_state("night", "off")
-            success = away_success and night_success
+            perimeter_success = await _virtual_switches.update_switch_state("perimeter", "off")
+            success = away_success and night_success and perimeter_success
         elif mode == "away":
-            # Turn on away, turn off night
+            # Turn on away, turn off others
             away_success = await _virtual_switches.update_switch_state("away", "on")
             night_success = await _virtual_switches.update_switch_state("night", "off")
-            success = away_success and night_success
+            perimeter_success = await _virtual_switches.update_switch_state("perimeter", "off")
+            success = away_success and night_success and perimeter_success
         elif mode == "night":
-            # Turn on night, turn off away
+            # Turn on night, turn off others
             away_success = await _virtual_switches.update_switch_state("away", "off")
             night_success = await _virtual_switches.update_switch_state("night", "on")
-            success = away_success and night_success
+            perimeter_success = await _virtual_switches.update_switch_state("perimeter", "off")
+            success = away_success and night_success and perimeter_success
+        elif mode == "perimeter":
+            # Turn on perimeter, turn off others
+            away_success = await _virtual_switches.update_switch_state("away", "off")
+            night_success = await _virtual_switches.update_switch_state("night", "off")
+            perimeter_success = await _virtual_switches.update_switch_state("perimeter", "on")
+            success = away_success and night_success and perimeter_success
         else:
             success = False
         

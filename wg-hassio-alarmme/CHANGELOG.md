@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2025-12-04
+
+### Added
+- **Perimeter Mode (Режим периметра)**: New alarm mode for monitoring outdoor sensors while you're home during the day
+  - Perfect for working from home scenarios
+  - Allows free movement inside while monitoring perimeter
+  - Supports all sensor types (motion, moving, occupancy, presence)
+  - Full multilingual support (18 languages)
+  - Mutually exclusive with Away Mode and Night Mode
+
+### Changed
+- Updated alarm mode system to support three modes instead of two
+- Updated UI to display Perimeter Mode button and description
+- Updated database schema to include `enabled_in_perimeter_mode` field
+- Updated all translation files with Perimeter Mode translations
+
+### Technical Details
+- Added `switch.alarmme_perimeter_mode` virtual switch
+- Updated `switches.py` to handle three mutually exclusive modes
+- Updated `sensor_monitor.py` to process Perimeter Mode triggers
+- Updated `database.py` to store and retrieve perimeter mode settings
+- Updated `web_server.py` UI to display and manage Perimeter Mode
+- Updated all 18 language translation files
+
+## [0.8.0] - 2025-12-04
+
 ## [0.8.1] - 2025-12-04
 
 ### Added

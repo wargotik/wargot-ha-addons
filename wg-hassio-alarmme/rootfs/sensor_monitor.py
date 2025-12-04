@@ -179,7 +179,7 @@ class SensorMonitor:
                         # Get area for sensor
                         area_name = await self._get_area_for_entity(entity_id)
                         
-                        # Auto-save sensor if not in database
+                            # Auto-save sensor if not in database
                         if not saved_sensor:
                             _LOGGER.info("[sensor_monitor] Auto-saving new sensor: %s (%s) - %s - area: %s", 
                                        friendly_name, entity_id, device_class, area_name or "None")
@@ -189,6 +189,7 @@ class SensorMonitor:
                                 device_class=device_class,
                                 enabled_in_away_mode=False,
                                 enabled_in_night_mode=False,
+                                enabled_in_perimeter_mode=False,
                                 area=area_name
                             )
                             saved_sensor = self._db.get_sensor(entity_id)
@@ -251,8 +252,10 @@ class SensorMonitor:
                                     sensor_enabled_in_mode = bool(saved_sensor.get("enabled_in_away_mode", False))
                                 elif current_mode == "night":
                                     sensor_enabled_in_mode = bool(saved_sensor.get("enabled_in_night_mode", False))
+                                elif current_mode == "perimeter":
+                                    sensor_enabled_in_mode = bool(saved_sensor.get("enabled_in_perimeter_mode", False))
                                 
-                                if current_mode in ("away", "night") and sensor_enabled_in_mode:
+                                if current_mode in ("away", "night", "perimeter") and sensor_enabled_in_mode:
                                     # INTRUSION DETECTED!
                                     # Get area from saved sensor or fetch it
                                     sensor_area = saved_sensor.get("area") if saved_sensor else None
@@ -354,14 +357,17 @@ class SensorMonitor:
             with open(self._state_file, 'r', encoding='utf-8') as f:
                 state_data = json.load(f)
                 
-                # Switches are stored directly in root: "away": "on", "night": "off"
+                # Switches are stored directly in root: "away": "on", "night": "off", "perimeter": "off"
                 away_state = state_data.get("away", "off").lower()
                 night_state = state_data.get("night", "off").lower()
+                perimeter_state = state_data.get("perimeter", "off").lower()
                 
                 if away_state == "on":
                     return "away"
                 elif night_state == "on":
                     return "night"
+                elif perimeter_state == "on":
+                    return "perimeter"
                 else:
                     return "off"
         except Exception as err:

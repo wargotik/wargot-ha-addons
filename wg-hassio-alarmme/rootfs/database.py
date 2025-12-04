@@ -108,6 +108,7 @@ class SensorDatabase:
                     device_class TEXT NOT NULL,
                     enabled_in_away_mode INTEGER DEFAULT 0,
                     enabled_in_night_mode INTEGER DEFAULT 0,
+                    enabled_in_perimeter_mode INTEGER DEFAULT 0,
                     last_triggered_at TIMESTAMP,
                     area TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -115,6 +116,14 @@ class SensorDatabase:
                 )
             """)
             conn.commit()
+            
+            # Add enabled_in_perimeter_mode column if it doesn't exist (for existing databases)
+            try:
+                cursor.execute("ALTER TABLE sensors ADD COLUMN enabled_in_perimeter_mode INTEGER DEFAULT 0")
+                conn.commit()
+            except sqlite3.OperationalError:
+                # Column already exists, ignore
+                pass
             
             # Add last_triggered_at column if it doesn't exist (for existing databases)
             try:
@@ -176,6 +185,7 @@ class SensorDatabase:
         device_class: str,
         enabled_in_away_mode: bool = False,
         enabled_in_night_mode: bool = False,
+        enabled_in_perimeter_mode: bool = False,
         area: Optional[str] = None
     ) -> bool:
         """Save or update sensor in database."""
@@ -185,14 +195,15 @@ class SensorDatabase:
             
             cursor.execute("""
                 INSERT OR REPLACE INTO sensors 
-                (entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, area, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                (entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, enabled_in_perimeter_mode, area, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 entity_id,
                 name,
                 device_class,
                 1 if enabled_in_away_mode else 0,
                 1 if enabled_in_night_mode else 0,
+                1 if enabled_in_perimeter_mode else 0,
                 area
             ))
             
@@ -211,7 +222,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at, area
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, enabled_in_perimeter_mode, last_triggered_at, area
                 FROM sensors
                 WHERE entity_id = ?
             """, (entity_id,))
@@ -226,8 +237,9 @@ class SensorDatabase:
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
                     "enabled_in_night_mode": bool(row[4]),
-                    "last_triggered_at": row[5] if len(row) > 5 else None,
-                    "area": row[6] if len(row) > 6 else None
+                    "enabled_in_perimeter_mode": bool(row[5]) if len(row) > 5 else False,
+                    "last_triggered_at": row[6] if len(row) > 6 else None,
+                    "area": row[7] if len(row) > 7 else None
                 }
             return None
         except Exception as err:
@@ -241,7 +253,7 @@ class SensorDatabase:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, last_triggered_at, area
+                SELECT entity_id, name, device_class, enabled_in_away_mode, enabled_in_night_mode, enabled_in_perimeter_mode, last_triggered_at, area
                 FROM sensors
                 ORDER BY name
             """)
@@ -256,8 +268,9 @@ class SensorDatabase:
                     "device_class": row[2],
                     "enabled_in_away_mode": bool(row[3]),
                     "enabled_in_night_mode": bool(row[4]),
-                    "last_triggered_at": row[5] if len(row) > 5 else None,
-                    "area": row[6] if len(row) > 6 else None
+                    "enabled_in_perimeter_mode": bool(row[5]) if len(row) > 5 else False,
+                    "last_triggered_at": row[6] if len(row) > 6 else None,
+                    "area": row[7] if len(row) > 7 else None
                 }
                 for row in rows
             ]
@@ -269,7 +282,8 @@ class SensorDatabase:
         self, 
         entity_id: str, 
         enabled_in_away_mode: Optional[bool] = None,
-        enabled_in_night_mode: Optional[bool] = None
+        enabled_in_night_mode: Optional[bool] = None,
+        enabled_in_perimeter_mode: Optional[bool] = None
     ) -> bool:
         """Update sensor mode settings."""
         try:
@@ -286,6 +300,10 @@ class SensorDatabase:
             if enabled_in_night_mode is not None:
                 updates.append("enabled_in_night_mode = ?")
                 params.append(1 if enabled_in_night_mode else 0)
+            
+            if enabled_in_perimeter_mode is not None:
+                updates.append("enabled_in_perimeter_mode = ?")
+                params.append(1 if enabled_in_perimeter_mode else 0)
             
             if not updates:
                 conn.close()
