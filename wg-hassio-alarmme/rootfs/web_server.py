@@ -830,19 +830,19 @@ async def index_handler(request):
                     
                     const modeButtons = `
                         <div class="sensor-modes">
-                            <button class="sensor-mode-btn away ${{awayModeActive}}" 
-                                    data-entity-id="${{sensor.entity_id.replace(/"/g, '&quot;')}}"
+                            <button class="sensor-mode-btn away ${awayModeActive}" 
+                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
                                     data-mode="away"
-                                    data-enabled="${{!awayEnabled}}"
-                                    title="${{t('enabledInAwayMode')}}">
-                                ${{t('away')}}
+                                    data-enabled="${!awayEnabled}"
+                                    title="${t('enabledInAwayMode')}">
+                                ${t('away')}
                             </button>
-                            <button class="sensor-mode-btn night ${{nightModeActive}}" 
-                                    data-entity-id="${{sensor.entity_id.replace(/"/g, '&quot;')}}"
+                            <button class="sensor-mode-btn night ${nightModeActive}" 
+                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
                                     data-mode="night"
-                                    data-enabled="${{!nightEnabled}}"
-                                    title="${{t('enabledInNightMode')}}">
-                                ${{t('night')}}
+                                    data-enabled="${!nightEnabled}"
+                                    title="${t('enabledInNightMode')}">
+                                ${t('night')}
                             </button>
                         </div>
                     `;

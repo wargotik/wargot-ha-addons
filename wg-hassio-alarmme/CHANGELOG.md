@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.35] - 2025-01-30
+
+### Fixed
+- **JavaScript template literals**: Fixed `${{...}}` syntax error in JavaScript template strings
+- Changed `${{variable}}` to `${variable}` in all template literals
+- Fixed syntax error in sensor mode buttons rendering
+- JavaScript code should now execute without syntax errors
+
 ## [0.6.34] - 2025-01-30
 
 ### Fixed
