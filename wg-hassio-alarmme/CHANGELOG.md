@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.34] - 2025-01-30
+
+### Fixed
+- **JavaScript syntax error**: Fixed `Uncaught SyntaxError: Unexpected token '{'` error
+- Corrected object literal syntax in JavaScript code - all object keys now properly quoted
+- Fixed `{{key: value}}` to `{{'key': value}}` format in all `t()` function calls
+- JavaScript code should now execute without syntax errors
+
 ## [0.6.33] - 2025-01-30
 
 ### Added
