@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.23] - 2025-12-04
+
+### Removed
+- **AppArmor support removed**: Removed AppArmor profile and configuration due to compatibility issues
+- Deleted `apparmor.txt` file
+- Removed `"apparmor": true` from `config.json`
+
 ## [0.7.22] - 2025-12-04
 
 ### Changed
