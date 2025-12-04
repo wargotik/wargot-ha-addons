@@ -109,6 +109,10 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   # SQLite database files (lock and journal files)
   /data/alarmme.db-journal rw,
   /data/alarmme.db-wal rw,
+  /data/alarmme.db-shm rw,
+  /data/*.db-shm rw,
+  /data/*.db-wal rw,
+  /data/*.db-journal rw,
   
   # Allow minimal /etc access for system configuration (needed for Python)
   /etc/passwd r,

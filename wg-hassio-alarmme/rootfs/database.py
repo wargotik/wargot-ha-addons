@@ -26,9 +26,30 @@ class SensorDatabase:
     
     def _init_database(self):
         """Initialize database schema."""
+        import time
+        max_retries = 5
+        retry_delay = 0.5
+        
+        for attempt in range(max_retries):
+            try:
+                # Add timeout to prevent database locked errors
+                conn = sqlite3.connect(self.db_path, timeout=10.0)
+                cursor = conn.cursor()
+                break
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                    _LOGGER.warning(
+                        "[database] Database is locked, retrying in %.1f seconds (attempt %d/%d)...",
+                        retry_delay, attempt + 1, max_retries
+                    )
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    _LOGGER.error("[database] Failed to connect to database after %d attempts: %s", attempt + 1, e)
+                    raise
+        
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
             
             # Create sensors table
             cursor.execute("""
@@ -83,7 +104,7 @@ class SensorDatabase:
     ) -> bool:
         """Save or update sensor in database."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             cursor.execute("""
@@ -110,7 +131,7 @@ class SensorDatabase:
     def get_sensor(self, entity_id: str) -> Optional[Dict]:
         """Get sensor from database by entity_id."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             cursor.execute("""
@@ -140,7 +161,7 @@ class SensorDatabase:
     def get_all_sensors(self) -> List[Dict]:
         """Get all sensors from database."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             cursor.execute("""
@@ -176,7 +197,7 @@ class SensorDatabase:
     ) -> bool:
         """Update sensor mode settings."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             updates = []
@@ -216,7 +237,7 @@ class SensorDatabase:
     def delete_sensor(self, entity_id: str) -> bool:
         """Delete sensor from database."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             cursor.execute("DELETE FROM sensors WHERE entity_id = ?", (entity_id,))
@@ -236,7 +257,7 @@ class SensorDatabase:
     def record_sensor_trigger(self, entity_id: str, last_changed: str = None) -> bool:
         """Record sensor trigger using last_changed timestamp from Home Assistant."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=10.0)
             cursor = conn.cursor()
             
             # Use last_changed from HA if provided, otherwise use current timestamp

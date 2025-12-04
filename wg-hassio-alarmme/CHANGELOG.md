@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.11] - 2025-01-30
+
+### Fixed
+- **SQLite database locking**: Fixed `database is locked` error with retry mechanism and timeout
+- Added timeout (10 seconds) to all `sqlite3.connect()` calls to prevent indefinite blocking
+- Added retry logic with exponential backoff (5 attempts) for database initialization
+- Added AppArmor rules for SQLite shared memory files (`*.db-shm`) which are created by SQLite
+- Database connection now handles temporary locks gracefully with automatic retries
+- All database operations now use timeout to prevent hanging on locked database
+
 ## [0.7.10] - 2025-01-30
 
 ### Fixed
