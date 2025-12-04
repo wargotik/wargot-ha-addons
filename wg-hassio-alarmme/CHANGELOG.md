@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.5] - 2025-01-30
+
+### Fixed
+- **AppArmor profile permissions**: Fixed Python execution permission denied error
+- Added execution permissions for Python interpreters (`python` and `python3` in multiple paths)
+- Added execution permissions for Python scripts (`/app/*.py`)
+- Added execution permissions for Tini init system
+- Added read access to essential system files (`/etc/passwd`, `/etc/group`, `/etc/hosts`, etc.)
+- Added read access to `/sys` and `/proc` (needed for Python operations)
+- Fixed deny rules conflicts by allowing essential system files before denying others
+- AppArmor profile should now allow the add-on to start correctly
+
 ## [0.7.4] - 2025-01-30
 
 ### Fixed
