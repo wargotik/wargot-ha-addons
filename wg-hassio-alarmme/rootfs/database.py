@@ -27,27 +27,66 @@ class SensorDatabase:
     def _init_database(self):
         """Initialize database schema."""
         import time
-        max_retries = 5
-        retry_delay = 0.5
+        import os
         
+        # Clean up any stale lock files that might prevent database access
+        lock_files = [
+            self.db_path + "-shm",
+            self.db_path + "-wal",
+            self.db_path + "-journal"
+        ]
+        for lock_file in lock_files:
+            if os.path.exists(lock_file):
+                try:
+                    # Check if file is actually locked (not just exists)
+                    # If it's very old (more than 1 minute), it's probably stale
+                    file_age = time.time() - os.path.getmtime(lock_file)
+                    if file_age > 60:
+                        _LOGGER.warning("[database] Removing stale lock file: %s (age: %.1f seconds)", lock_file, file_age)
+                        os.remove(lock_file)
+                except Exception as e:
+                    _LOGGER.debug("[database] Could not remove lock file %s: %s", lock_file, e)
+        
+        max_retries = 10
+        retry_delay = 0.2
+        
+        conn = None
         for attempt in range(max_retries):
             try:
                 # Add timeout to prevent database locked errors
-                conn = sqlite3.connect(self.db_path, timeout=10.0)
+                # Use check_same_thread=False to allow connections from different threads
+                conn = sqlite3.connect(
+                    self.db_path, 
+                    timeout=10.0,
+                    check_same_thread=False
+                )
+                # Enable WAL mode for better concurrency
+                conn.execute("PRAGMA journal_mode=WAL")
                 cursor = conn.cursor()
                 break
             except sqlite3.OperationalError as e:
-                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
+                error_msg = str(e).lower()
+                if "database is locked" in error_msg and attempt < max_retries - 1:
                     _LOGGER.warning(
                         "[database] Database is locked, retrying in %.1f seconds (attempt %d/%d)...",
                         retry_delay, attempt + 1, max_retries
                     )
                     time.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
+                    retry_delay = min(retry_delay * 1.5, 2.0)  # Exponential backoff, max 2 seconds
+                    # Try to clean up lock files again
+                    for lock_file in lock_files:
+                        if os.path.exists(lock_file):
+                            try:
+                                os.remove(lock_file)
+                            except:
+                                pass
                     continue
                 else:
                     _LOGGER.error("[database] Failed to connect to database after %d attempts: %s", attempt + 1, e)
                     raise
+        
+        if conn is None:
+            raise sqlite3.OperationalError("Failed to establish database connection after all retries")
         
         try:
             
@@ -87,11 +126,29 @@ class SensorDatabase:
             """)
             
             conn.commit()
+            # Don't close connection immediately, let it be managed by connection pool
+            # But we need to close it here since this is initialization
             conn.close()
             _LOGGER.info("[database] Database initialized successfully")
+        except sqlite3.OperationalError as err:
+            if "database is locked" in str(err).lower():
+                _LOGGER.error(
+                    "[database] Database is still locked after initialization. "
+                    "This might indicate another process is using the database. Error: %s", err
+                )
+            else:
+                _LOGGER.error("[database] Error initializing database: %s", err, exc_info=True)
+            raise
         except Exception as err:
             _LOGGER.error("[database] Error initializing database: %s", err, exc_info=True)
             raise
+        finally:
+            # Ensure connection is closed even if there's an error
+            if conn:
+                try:
+                    conn.close()
+                except:
+                    pass
     
     def save_sensor(
         self, 
