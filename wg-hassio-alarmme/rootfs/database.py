@@ -29,44 +29,51 @@ class SensorDatabase:
         import time
         import os
         
-        # Clean up any stale lock files that might prevent database access
+        # Aggressively clean up any lock files that might prevent database access
+        # On startup, we can safely remove all lock files as no other process should be running
         lock_files = [
             self.db_path + "-shm",
             self.db_path + "-wal",
             self.db_path + "-journal"
         ]
+        
+        _LOGGER.info("[database] Cleaning up any existing lock files...")
         for lock_file in lock_files:
             if os.path.exists(lock_file):
                 try:
-                    # Check if file is actually locked (not just exists)
-                    # If it's very old (more than 10 seconds), it's probably stale
                     file_age = time.time() - os.path.getmtime(lock_file)
-                    if file_age > 10:  # Reduced from 60 to 10 seconds for faster recovery
-                        _LOGGER.warning("[database] Removing stale lock file: %s (age: %.1f seconds)", lock_file, file_age)
-                        os.remove(lock_file)
+                    _LOGGER.warning("[database] Found lock file: %s (age: %.1f seconds), removing...", lock_file, file_age)
+                    os.remove(lock_file)
+                    _LOGGER.info("[database] Successfully removed lock file: %s", lock_file)
                 except Exception as e:
-                    _LOGGER.debug("[database] Could not remove lock file %s: %s", lock_file, e)
+                    _LOGGER.warning("[database] Could not remove lock file %s: %s", lock_file, e)
         
-        max_retries = 10
-        retry_delay = 0.2
+        # Also try to remove the database file itself if it's corrupted (last resort)
+        # But only if it's very small (likely corrupted) or if we can't connect after many retries
+        
+        max_retries = 15
+        retry_delay = 0.1
         
         conn = None
         for attempt in range(max_retries):
             try:
                 # Add timeout to prevent database locked errors
                 # Use check_same_thread=False to allow connections from different threads
+                # Use isolation_level=None for autocommit mode to reduce locking
                 conn = sqlite3.connect(
                     self.db_path, 
-                    timeout=10.0,
-                    check_same_thread=False
+                    timeout=15.0,  # Increased timeout
+                    check_same_thread=False,
+                    isolation_level=None  # Autocommit mode
                 )
                 # Enable WAL mode for better concurrency (must be done before any other operations)
                 try:
                     conn.execute("PRAGMA journal_mode=WAL")
-                    conn.commit()  # Commit WAL mode change
+                    # No commit needed in autocommit mode
                 except:
                     pass  # WAL mode might already be set
                 cursor = conn.cursor()
+                _LOGGER.info("[database] Successfully connected to database on attempt %d", attempt + 1)
                 break
             except sqlite3.OperationalError as e:
                 error_msg = str(e).lower()
@@ -76,14 +83,16 @@ class SensorDatabase:
                         retry_delay, attempt + 1, max_retries
                     )
                     time.sleep(retry_delay)
-                    retry_delay = min(retry_delay * 1.5, 2.0)  # Exponential backoff, max 2 seconds
-                    # Try to clean up lock files again
+                    retry_delay = min(retry_delay * 1.2, 1.0)  # Slower exponential backoff, max 1 second
+                    # Aggressively try to clean up lock files again
                     for lock_file in lock_files:
                         if os.path.exists(lock_file):
                             try:
+                                _LOGGER.debug("[database] Attempting to remove lock file: %s", lock_file)
                                 os.remove(lock_file)
-                            except:
-                                pass
+                                _LOGGER.info("[database] Removed lock file during retry: %s", lock_file)
+                            except Exception as lock_err:
+                                _LOGGER.debug("[database] Could not remove lock file %s: %s", lock_file, lock_err)
                     continue
                 else:
                     _LOGGER.error("[database] Failed to connect to database after %d attempts: %s", attempt + 1, e)
@@ -129,9 +138,11 @@ class SensorDatabase:
                 ON sensors(device_class)
             """)
             
-            conn.commit()
-            # Don't close connection immediately, let it be managed by connection pool
-            # But we need to close it here since this is initialization
+            # In autocommit mode, no explicit commit needed, but we'll do it for safety
+            try:
+                conn.commit()
+            except:
+                pass  # In autocommit mode, commit might not be needed
             conn.close()
             _LOGGER.info("[database] Database initialized successfully")
         except sqlite3.OperationalError as err:

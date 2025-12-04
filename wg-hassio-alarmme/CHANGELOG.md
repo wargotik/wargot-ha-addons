@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.14] - 2025-01-30
+
+### Fixed
+- **Database locking (aggressive cleanup)**: Improved database initialization with more aggressive lock file cleanup
+- Lock files are now removed immediately on startup without age check (safe on startup)
+- Increased retry attempts from 10 to 15 with slower exponential backoff
+- Increased connection timeout from 10 to 15 seconds
+- Added autocommit mode (`isolation_level=None`) to reduce database locking
+- More aggressive lock file cleanup during retry attempts
+- Better logging for lock file removal operations
+- Database should now initialize reliably even with stale lock files
+
 ## [0.7.13] - 2025-01-30
 
 ### Fixed
