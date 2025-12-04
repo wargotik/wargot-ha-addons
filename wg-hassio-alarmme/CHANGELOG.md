@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.22] - 2025-12-04
+
+### Changed
+- **Enhanced AppArmor rules for application files**: Added explicit rules for `/app/` directory access and Python module imports
+- Added explicit permissions for `__pycache__` directories that Python creates during module imports
+
+### Fixed
+- Fixed `ModuleNotFoundError: No module named 'web_server'` by adding explicit directory and file access rules
+
 ## [0.7.21] - 2025-12-04
 
 ### Changed
