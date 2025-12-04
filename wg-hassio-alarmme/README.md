@@ -1,6 +1,6 @@
 # AlarmMe Add-on for Home Assistant
 
-![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
+![GitHub Repo stars](https://img.shields.io/github/stars/wargotik/wargot-ha-addons?logo=github&style=flat-square) ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
 ![English Language][en-shield] ![German Language][de-shield] ![French Language][fr-shield] ![Spanish Language][es-shield] ![Italian Language][it-shield] ![Dutch Language][nl-shield] ![Polish Language][pl-shield] ![Portuguese Language][pt-shield] ![Czech Language][cs-shield] ![Swedish Language][sv-shield] ![Norwegian Language][no-shield] ![Danish Language][da-shield] ![Turkish Language][tr-shield] ![Belarusian Language][be-shield] ![Ukrainian Language][uk-shield] ![Russian Language][ru-shield] ![Japanese Language][ja-shield] ![Chinese Language][zh-shield]
 
