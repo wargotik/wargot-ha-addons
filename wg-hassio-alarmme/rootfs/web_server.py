@@ -15,8 +15,8 @@ _LOGGER = logging.getLogger(__name__)
 # Global virtual switches instance
 _virtual_switches = None
 
-# Global database instance
-_db = SensorDatabase()
+# Global database instance (lazy initialization)
+_db = None
 
 # Global sensor states cache for tracking changes
 _sensor_states_cache = {}
@@ -38,7 +38,11 @@ def set_sensor_monitor(sensor_monitor):
 
 
 def get_db():
-    """Get database instance."""
+    """Get database instance (lazy initialization)."""
+    global _db
+    if _db is None:
+        _LOGGER.info("[web_server] Initializing database...")
+        _db = SensorDatabase()
     return _db
 
 

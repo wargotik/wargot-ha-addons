@@ -39,9 +39,9 @@ class SensorDatabase:
             if os.path.exists(lock_file):
                 try:
                     # Check if file is actually locked (not just exists)
-                    # If it's very old (more than 1 minute), it's probably stale
+                    # If it's very old (more than 10 seconds), it's probably stale
                     file_age = time.time() - os.path.getmtime(lock_file)
-                    if file_age > 60:
+                    if file_age > 10:  # Reduced from 60 to 10 seconds for faster recovery
                         _LOGGER.warning("[database] Removing stale lock file: %s (age: %.1f seconds)", lock_file, file_age)
                         os.remove(lock_file)
                 except Exception as e:
@@ -60,8 +60,12 @@ class SensorDatabase:
                     timeout=10.0,
                     check_same_thread=False
                 )
-                # Enable WAL mode for better concurrency
-                conn.execute("PRAGMA journal_mode=WAL")
+                # Enable WAL mode for better concurrency (must be done before any other operations)
+                try:
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    conn.commit()  # Commit WAL mode change
+                except:
+                    pass  # WAL mode might already be set
                 cursor = conn.cursor()
                 break
             except sqlite3.OperationalError as e:
