@@ -3,112 +3,52 @@
 profile alarmme flags=(attach_disconnected,mediate_deleted) {
   #include <abstractions/base>
   
-  # Network access for Home Assistant API and web server
+  # Network access
   network,
   capability net_bind_service,
   
-  # File system access - data directory (full read/write access)
+  # File system - full access to data and app directories
   /data/** rw,
-  /data/ rw,
-  
-  # Application files - CRITICAL: Must have full access for Python imports
-  # Full read, map, and execute access to all files in /app/
   /app/** rmix,
-  /app/ r,
-  /app r,
   
-  # Explicit Python file execution permissions (redundant but ensures clarity)
-  /app/*.py rmix,
-  /app/**/*.py rmix,
-  /app/web_server.py rmix,
-  /app/main.py rmix,
-  /app/database.py rmix,
-  /app/switches.py rmix,
-  /app/sensor_monitor.py rmix,
-  
-  # Config access
+  # Config files
   /config.json r,
   /data/options.json r,
   
-  # Python interpreter and libraries
+  # Python interpreter
   /usr/bin/python* ix,
-  /usr/bin/python3* ix,
   /usr/local/bin/python* ix,
-  /usr/local/bin/python3* ix,
   
-  # Python standard library - CRITICAL: Must come BEFORE general /usr/lib rules
-  # Full access to Python standard library (read, map, execute)
-  /usr/local/lib/python3.*/** rmix,
-  /usr/local/lib/python3.*/ r,
-  /usr/lib/python3.*/** rmix,
-  /usr/lib/python3.*/ r,
-  
-  # Python zip archives (stdlib can be packaged in zip files)
-  /usr/local/lib/python3*.zip rm,
-  /usr/lib/python3*.zip rm,
-  
-  # Python shared libraries - all architectures (explicit paths)
-  /usr/lib/python3.*/libpython*.so* rm,
-  /usr/lib/python3.*/libpython*.so.* rm,
-  /usr/local/lib/python3.*/libpython*.so* rm,
-  /usr/local/lib/python3.*/libpython*.so.* rm,
-  /usr/local/lib/libpython*.so* rm,
-  /usr/local/lib/libpython*.so.* rm,
-  /usr/lib/x86_64-linux-gnu/libpython*.so* rm,
-  /usr/lib/x86_64-linux-gnu/libpython*.so.* rm,
-  /usr/lib/aarch64-linux-gnu/libpython*.so* rm,
-  /usr/lib/aarch64-linux-gnu/libpython*.so.* rm,
-  /usr/lib/arm-linux-gnueabihf/libpython*.so* rm,
-  /usr/lib/arm-linux-gnueabihf/libpython*.so.* rm,
-  /usr/lib/arm-linux-gnueabi/libpython*.so* rm,
-  /usr/lib/arm-linux-gnueabi/libpython*.so.* rm,
-  /usr/lib/i386-linux-gnu/libpython*.so* rm,
-  /usr/lib/i386-linux-gnu/libpython*.so.* rm,
-  /lib/x86_64-linux-gnu/libpython*.so* rm,
-  /lib/aarch64-linux-gnu/libpython*.so* rm,
-  /lib/arm-linux-gnueabihf/libpython*.so* rm,
-  /lib/arm-linux-gnueabi/libpython*.so* rm,
-  # Also allow wildcard patterns for any architecture
-  /usr/lib/**/libpython*.so* rm,
-  /usr/local/lib/**/libpython*.so* rm,
-  /lib/**/libpython*.so* rm,
-  
-  # Python site-packages (installed packages)
-  /usr/lib/python3.*/site-packages/** rmix,
-  /usr/local/lib/python3.*/site-packages/** rmix,
-  
-  # Standard system libraries - must come AFTER Python-specific rules
+  # Python libraries - broad access
+  /usr/local/lib/** rmix,
+  /usr/lib/** rmix,
   /lib/** rm,
   /lib64/** rm,
-  /usr/lib/** rm,
   
-  # Tini (init system)
+  # Tini init system
   /usr/bin/tini ix,
   /sbin/tini ix,
   
-  # Process and network information
+  # Process information
   owner @{PROC}/[0-9]*/** r,
   /proc/** r,
   
-  # Logging
+  # Logging and temp files
   /var/log/** w,
-  
-  # Temporary files
   /tmp/** rw,
   /var/tmp/** rw,
   
-  # System configuration (minimal)
+  # System config (minimal)
   /etc/passwd r,
   /etc/group r,
   /etc/nsswitch.conf r,
   /etc/hosts r,
   /etc/resolv.conf r,
   
-  # System information (read-only)
+  # System info (read-only)
   /sys/** r,
   
-  # Deny only most sensitive files
+  # Deny sensitive files only
   deny /etc/shadow r,
   deny /root/** r,
 }
-

@@ -139,8 +139,15 @@ class SensorDatabase:
             """)
             conn.commit()
             
+            # Close cursor first
+            cursor.close()
+            
             # Close connection immediately after initialization
             conn.close()
+            
+            # Small delay to ensure SQLite releases all locks
+            time.sleep(0.1)
+            
             _LOGGER.info("[database] Database initialized successfully")
         except sqlite3.OperationalError as err:
             if "database is locked" in str(err).lower():
