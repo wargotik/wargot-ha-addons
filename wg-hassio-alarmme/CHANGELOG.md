@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.12] - 2025-01-30
+
+### Fixed
+- **SQLite database locking (improved)**: Enhanced database initialization with better lock handling
+- Added automatic cleanup of stale SQLite lock files (shm, wal, journal) older than 1 minute
+- Increased retry attempts from 5 to 10 with improved exponential backoff
+- Added `check_same_thread=False` to allow connections from different threads
+- Enabled WAL (Write-Ahead Logging) mode for better concurrency and performance
+- Added explicit AppArmor rules for alarmme.db lock files (shm, wal, journal)
+- Improved error handling with specific messages for locked database
+- Added finally block to ensure database connection is always closed
+
 ## [0.7.11] - 2025-01-30
 
 ### Fixed
