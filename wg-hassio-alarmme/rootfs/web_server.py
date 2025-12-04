@@ -5,6 +5,7 @@ from aiohttp import web
 import logging
 import os
 import json
+from pathlib import Path
 
 from database import SensorDatabase
 from sensor_monitor import SensorMonitor
@@ -126,8 +127,69 @@ def _save_language_to_file(state_file: Path, language: str):
         _LOGGER.error("[web_server] Error saving language to file: %s", err, exc_info=True)
 
 
+def _get_ha_language() -> str:
+    """Get language from switches_state.json file."""
+    STATE_FILE = "/data/switches_state.json"
+    state_file = Path(STATE_FILE)
+    
+    if not state_file.exists():
+        _LOGGER.debug("[web_server] State file not found, using default language: en")
+        return "en"
+    
+    try:
+        with open(state_file, 'r', encoding='utf-8') as f:
+            state_data = json.load(f)
+        language = state_data.get("language", "en")
+        _LOGGER.debug("[web_server] Loaded language from state file: %s", language)
+        return language
+    except Exception as err:
+        _LOGGER.warning("[web_server] Error loading language from state file: %s, using default: en", err)
+        return "en"
+
+
+def _load_translations(lang: str) -> dict:
+    """Load translations for specified language."""
+    translations_dir = Path(__file__).parent / "translations"
+    translation_file = translations_dir / f"{lang}.json"
+    
+    # Fallback to English if translation file doesn't exist
+    if not translation_file.exists():
+        _LOGGER.warning("[web_server] Translation file not found for language '%s', falling back to English", lang)
+        translation_file = translations_dir / "en.json"
+    
+    # Read translation file
+    if translation_file.exists():
+        try:
+            with open(translation_file, 'r', encoding='utf-8') as f:
+                translations = json.load(f)
+            _LOGGER.debug("[web_server] Loaded translations from %s", translation_file)
+            return translations
+        except Exception as err:
+            _LOGGER.error("[web_server] Error loading translation file %s: %s", translation_file, err)
+            return {}
+    else:
+        _LOGGER.error("[web_server] English translation file not found!")
+        return {}
+
+
+def _t(key: str, translations: dict, **kwargs) -> str:
+    """Translate key with optional format arguments."""
+    text = translations.get(key, key)
+    if kwargs:
+        try:
+            return text.format(**kwargs)
+        except (KeyError, ValueError):
+            _LOGGER.warning("[web_server] Error formatting translation key '%s' with args %s", key, kwargs)
+            return text
+    return text
+
+
 async def index_handler(request):
     """Handle index page."""
+    # Get language from state file
+    lang = _get_ha_language()
+    translations = _load_translations(lang)
+    
     # Read version from config.json
     version = "unknown"
     try:
@@ -159,13 +221,16 @@ async def index_handler(request):
         _LOGGER.debug("[web_server] Could not read version: %s", err)
         version = os.environ.get("ADDON_VERSION", "unknown")
     
-    html = """
+    # Escape translations for JavaScript
+    translations_js = json.dumps(translations, ensure_ascii=False)
+    
+    html = f"""
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="{lang}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AlarmMe</title>
+        <title>{_t("title", translations)}</title>
         <style>
             * {
                 margin: 0;
@@ -428,56 +493,71 @@ async def index_handler(request):
     </head>
     <body>
         <div class="container">
-            <h1><img src="/icon.png" alt="AlarmMe" class="addon-icon" onerror="this.style.display='none'">AlarmMe<span class="version-badge">v{version}</span></h1>
-            <p>AlarmMe add-on is running. 
-                <span id="connection-badge" class="connection-badge unknown">REST API: проверка...</span>
-                <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">Фоновое обновление: проверка...</span>
+            <h1><img src="/icon.png" alt="{_t("title", translations)}" class="addon-icon" onerror="this.style.display='none'">{_t("title", translations)}<span class="version-badge">v{version}</span></h1>
+            <p>{_t("addonRunning", translations)} 
+                <span id="connection-badge" class="connection-badge unknown">{_t("restApiChecking", translations)}</span>
+                <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">{_t("backgroundUpdateChecking", translations)}</span>
             </p>
             <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                 <div style="padding: 15px; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
                     <div style="margin-bottom: 12px;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Текущий режим</div>
-                        <div id="current-mode" style="display: inline-block; padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">Загрузка...</div>
-                        <span id="switches-installed" style="font-size: 11px; color: #7f8c8d;">Проверка...</span>
+                        <div style="font-weight: 600; margin-bottom: 8px;">{_t("currentMode", translations)}</div>
+                        <div id="current-mode" style="display: inline-block; padding: 8px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; background-color: #7f8c8d; color: white; margin-right: 8px;">{_t("loading", translations)}</div>
+                        <span id="switches-installed" style="font-size: 11px; color: #7f8c8d;">{_t("switchesChecking", translations)}</span>
                     </div>
                     <div class="mode-buttons">
                         <button class="mode-button off" id="mode-button-off" onclick="setMode('off')">
-                            Выключено
+                            {_t("modeOff", translations)}
                         </button>
                         <button class="mode-button away" id="mode-button-away" onclick="setMode('away')">
-                            Away Mode
+                            {_t("modeAway", translations)}
                         </button>
                         <button class="mode-button night" id="mode-button-night" onclick="setMode('night')">
-                            Night Mode
+                            {_t("modeNight", translations)}
                         </button>
                     </div>
                     <div style="font-size: 12px; color: #7f8c8d; margin-top: 12px;">
-                        <div>• <strong>Выключено</strong> - оба режима отключены</div>
-                        <div>• <strong>Away Mode</strong> - режим отсутствия</div>
-                        <div>• <strong>Night Mode</strong> - ночной режим</div>
+                        <div>{_t("modeOffDesc", translations)}</div>
+                        <div>{_t("modeAwayDesc", translations)}</div>
+                        <div>{_t("modeNightDesc", translations)}</div>
                     </div>
                 </div>
             </div>
             <div class="sensors-grid">
                 <div class="sensor-column">
-                    <h3>Motion<br><small>(PIR движение)</small></h3>
-                    <div id="motion-sensors" class="loading">Загрузка...</div>
+                    <h3>{_t("motion", translations)}<br><small>({_t("motionDesc", translations)})</small></h3>
+                    <div id="motion-sensors" class="loading">{_t("loading", translations)}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>Moving<br><small>(движущийся объект)</small></h3>
-                    <div id="moving-sensors" class="loading">Загрузка...</div>
+                    <h3>{_t("moving", translations)}<br><small>({_t("movingDesc", translations)})</small></h3>
+                    <div id="moving-sensors" class="loading">{_t("loading", translations)}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>Occupancy<br><small>(занятость зоны)</small></h3>
-                    <div id="occupancy-sensors" class="loading">Загрузка...</div>
+                    <h3>{_t("occupancy", translations)}<br><small>({_t("occupancyDesc", translations)})</small></h3>
+                    <div id="occupancy-sensors" class="loading">{_t("loading", translations)}</div>
                 </div>
                 <div class="sensor-column">
-                    <h3>Presence<br><small>(статическое присутствие)</small></h3>
-                    <div id="presence-sensors" class="loading">Загрузка...</div>
+                    <h3>{_t("presence", translations)}<br><small>({_t("presenceDesc", translations)})</small></h3>
+                    <div id="presence-sensors" class="loading">{_t("loading", translations)}</div>
                 </div>
             </div>
         </div>
         <script>
+            // Translations object
+            const translations = {translations_js};
+            
+            // Translation function
+            function t(key, params) {{
+                let text = translations[key] || key;
+                if (params) {{
+                    for (const [k, v] of Object.entries(params)) {{
+                        // Replace {{key}} with value
+                        const regex = new RegExp('{{' + k + '}}', 'g');
+                        text = text.replace(regex, v);
+                    }}
+                }}
+                return text;
+            }}
             async function loadSensors() {
                 try {
                     console.log('Loading sensors...');
@@ -487,56 +567,56 @@ async def index_handler(request):
                     const response = await fetch(apiPath);
                     console.log('Response status:', response.status);
                     
-                    if (!response.ok) {
+                    if (!response.ok) {{
                         const errorText = await response.text();
                         console.error('Error response:', response.status, errorText);
-                        const errorMsg = '<div class="empty-state">Ошибка загрузки (статус: ' + response.status + ')</div>';
+                        const errorMsg = '<div class="empty-state">' + t('loadingError', {{status: response.status}}) + '</div>';
                         document.getElementById('motion-sensors').innerHTML = errorMsg;
                         document.getElementById('moving-sensors').innerHTML = errorMsg;
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                         document.getElementById('presence-sensors').innerHTML = errorMsg;
                         return;
-                    }
+                    }}
                     
                     const data = await response.json();
                     console.log('Received data:', data);
                     
-                    if (data.success) {
+                    if (data.success) {{
                         renderSensors('motion-sensors', data.motion_sensors || []);
                         renderSensors('moving-sensors', data.moving_sensors || []);
                         renderSensors('occupancy-sensors', data.occupancy_sensors || []);
                         renderSensors('presence-sensors', data.presence_sensors || []);
-                    } else {
+                    }} else {{
                         console.error('API returned success=false:', data.error);
-                        const errorMsg = '<div class="empty-state">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
+                        const errorMsg = '<div class="empty-state">' + t('error', {{error: data.error || t('unknownError')}}) + '</div>';
                         document.getElementById('motion-sensors').innerHTML = errorMsg;
                         document.getElementById('moving-sensors').innerHTML = errorMsg;
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                         document.getElementById('presence-sensors').innerHTML = errorMsg;
-                    }
-                } catch (error) {
+                    }}
+                }} catch (error) {{
                     console.error('Error loading sensors:', error);
-                    const errorMsg = '<div class="empty-state">Ошибка загрузки: ' + error.message + '</div>';
+                    const errorMsg = '<div class="empty-state">' + t('error', {{error: error.message}}) + '</div>';
                     document.getElementById('motion-sensors').innerHTML = errorMsg;
                     document.getElementById('moving-sensors').innerHTML = errorMsg;
                     document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                     document.getElementById('presence-sensors').innerHTML = errorMsg;
-                }
+                }}
             }
             
             function renderSensors(containerId, sensors) {
                 const container = document.getElementById(containerId);
                 
-                if (sensors.length === 0) {
-                    container.innerHTML = '<div class="empty-state">Нет датчиков</div>';
+                if (sensors.length === 0) {{
+                    container.innerHTML = '<div class="empty-state">' + t('noSensors') + '</div>';
                     return;
-                }
+                }}
                 
-                container.innerHTML = sensors.map(sensor => {
+                container.innerHTML = sensors.map(sensor => {{
                     const stateClass = sensor.state === 'on' ? 'on' : 
                                       sensor.state === 'off' ? 'off' : 'unknown';
                     // All sensors are auto-saved, so always show saved icon
-                    const savedIcon = '<span class="sensor-saved-icon" title="Сохранён в базу">💾</span>';
+                    const savedIcon = '<span class="sensor-saved-icon" title="' + t('savedToDb') + '">💾</span>';
                     
                     // Mode buttons - ensure boolean values
                     const awayEnabled = Boolean(sensor.enabled_in_away_mode);
@@ -546,27 +626,27 @@ async def index_handler(request):
                     
                     const modeButtons = `
                         <div class="sensor-modes">
-                            <button class="sensor-mode-btn away ${awayModeActive}" 
-                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
+                            <button class="sensor-mode-btn away ${{awayModeActive}}" 
+                                    data-entity-id="${{sensor.entity_id.replace(/"/g, '&quot;')}}"
                                     data-mode="away"
-                                    data-enabled="${!awayEnabled}"
-                                    title="Включён в Away Mode">
-                                Away
+                                    data-enabled="${{!awayEnabled}}"
+                                    title="${{t('enabledInAwayMode')}}">
+                                ${{t('away')}}
                             </button>
-                            <button class="sensor-mode-btn night ${nightModeActive}" 
-                                    data-entity-id="${sensor.entity_id.replace(/"/g, '&quot;')}"
+                            <button class="sensor-mode-btn night ${{nightModeActive}}" 
+                                    data-entity-id="${{sensor.entity_id.replace(/"/g, '&quot;')}}"
                                     data-mode="night"
-                                    data-enabled="${!nightEnabled}"
-                                    title="Включён в Night Mode">
-                                Night
+                                    data-enabled="${{!nightEnabled}}"
+                                    title="${{t('enabledInNightMode')}}">
+                                ${{t('night')}}
                             </button>
                         </div>
                     `;
                     
                     // Format last triggered time
                     let lastTriggeredHtml = '';
-                    if (sensor.last_triggered_at) {
-                        try {
+                    if (sensor.last_triggered_at) {{
+                        try {{
                             const triggerDate = new Date(sensor.last_triggered_at);
                             const hours = String(triggerDate.getHours()).padStart(2, '0');
                             const minutes = String(triggerDate.getMinutes()).padStart(2, '0');
@@ -577,14 +657,14 @@ async def index_handler(request):
                             const timeStr = hours + ':' + minutes + ':' + seconds;
                             const dateStr = day + '.' + month + '.' + year;
                             
-                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${dateStr} ${timeStr}</div>`;
-                        } catch (e) {
+                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{date: dateStr, time: timeStr}}) + '</div>';
+                        }} catch (e) {{
                             // If date parsing fails, show raw value
-                            lastTriggeredHtml = `<div class="sensor-last-triggered">Последнее срабатывание: ${sensor.last_triggered_at}</div>`;
-                        }
-                    } else {
-                        lastTriggeredHtml = '<div class="sensor-last-triggered">Срабатываний не было</div>';
-                    }
+                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{date: sensor.last_triggered_at, time: ''}}) + '</div>';
+                        }}
+                    }} else {{
+                        lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('noTriggers') + '</div>';
+                    }}
                     
                     const areaHtml = sensor.area ? `<div class="sensor-area" style="font-size: 10px; color: #95a5a6; margin-top: 2px;">📍 ${sensor.area}</div>` : '';
                     
@@ -624,17 +704,17 @@ async def index_handler(request):
                         if (data.success) {
                             // Reload sensors to update UI
                             await loadSensors();
-                        } else {
-                            alert('Ошибка: ' + (data.error || 'Не удалось сохранить датчик'));
-                        }
-                    } else {
-                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-                        alert('Ошибка: ' + (errorData.error || 'Не удалось сохранить датчик'));
-                    }
-                } catch (error) {
+                        }} else {{
+                            alert(t('saveSensorError') + ': ' + (data.error || ''));
+                        }}
+                    }} else {{
+                        const errorData = await response.json().catch(() => ({{ error: t('serverError') }}));
+                        alert(t('saveSensorError') + ': ' + (errorData.error || ''));
+                    }}
+                }} catch (error) {{
                     console.error('Error saving sensor:', error);
-                    alert('Ошибка: ' + error.message);
-                }
+                    alert(t('error', {{error: error.message}}));
+                }}
             }
             
             async function toggleSensorMode(entityId, mode, enabled) {
@@ -664,16 +744,16 @@ async def index_handler(request):
                     const data = await response.json();
                     console.log('Response data:', data);
                     
-                    if (response.ok && data.success) {
+                    if (response.ok && data.success) {{
                         // Reload sensors to update UI
                         await loadSensors();
-                    } else {
-                        alert('Ошибка: ' + (data.error || 'Не удалось обновить режим датчика'));
-                    }
-                } catch (error) {
+                    }} else {{
+                        alert(t('updateModeError') + ': ' + (data.error || ''));
+                    }}
+                }} catch (error) {{
                     console.error('Error toggling sensor mode:', error);
-                    alert('Ошибка: ' + error.message);
-                }
+                    alert(t('error', {{error: error.message}}));
+                }}
             }
             
             async function loadSwitches() {
@@ -704,11 +784,11 @@ async def index_handler(request):
                 const element = document.getElementById('current-mode');
                 if (!element) return;
                 
-                const modeLabels = {
-                    'off': 'Выключено',
-                    'away': 'Away Mode',
-                    'night': 'Night Mode'
-                };
+                const modeLabels = {{
+                    'off': t('modeOff'),
+                    'away': t('modeAway'),
+                    'night': t('modeNight')
+                }};
                 
                 const modeColors = {
                     'off': '#7f8c8d',
@@ -716,7 +796,7 @@ async def index_handler(request):
                     'night': '#9b59b6'
                 };
                 
-                const label = modeLabels[mode] || 'Неизвестно';
+                const label = modeLabels[mode] || t('unknown');
                 const color = modeColors[mode] || '#7f8c8d';
                 
                 element.textContent = label;
@@ -770,23 +850,23 @@ async def index_handler(request):
                             updateCurrentMode(data.mode || mode);
                             // Reload switches to get latest state
                             await loadSwitches();
-                        } else {
-                            alert('Ошибка: ' + (data.error || 'Не удалось изменить режим'));
+                        }} else {{
+                            alert(t('changeModeError') + ': ' + (data.error || ''));
                             // Reload to restore correct state
                             await loadSwitches();
-                        }
-                    } else {
-                        const errorData = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-                        alert('Ошибка: ' + (errorData.error || 'Не удалось изменить режим'));
+                        }}
+                    }} else {{
+                        const errorData = await response.json().catch(() => ({{ error: t('serverError') }}));
+                        alert(t('changeModeError') + ': ' + (errorData.error || ''));
                         // Reload to restore correct state
                         await loadSwitches();
-                    }
-                } catch (error) {
+                    }}
+                }} catch (error) {{
                     console.error('Error setting mode:', error);
-                    alert('Ошибка: ' + error.message);
+                    alert(t('error', {{error: error.message}}));
                     // Reload to restore correct state
                     await loadSwitches();
-                } finally {
+                }} finally {
                     // Re-enable buttons
                     buttons.forEach(btn => {
                         if (btn) btn.disabled = false;
@@ -798,26 +878,26 @@ async def index_handler(request):
                 const element = document.getElementById('switches-installed');
                 if (!element) return;
                 
-                if (installed) {
-                    element.textContent = '✓ Выключатели установлены';
+                if (installed) {{
+                    element.textContent = t('switchesInstalled');
                     element.style.color = '#27ae60';
-                } else {
-                    element.textContent = '✗ Выключатели не установлены';
+                }} else {{
+                    element.textContent = t('switchesNotInstalled');
                     element.style.color = '#e74c3c';
-                }
+                }}
             }
             
             function updateConnectionBadge(connected) {
                 const badge = document.getElementById('connection-badge');
                 if (!badge) return;
                 
-                if (connected) {
-                    badge.textContent = 'REST API: подключен';
+                if (connected) {{
+                    badge.textContent = t('restApiConnected');
                     badge.className = 'connection-badge connected';
-                } else {
-                    badge.textContent = 'REST API: отключен';
+                }} else {{
+                    badge.textContent = t('restApiDisconnected');
                     badge.className = 'connection-badge disconnected';
-                }
+                }}
             }
             
             async function loadBackgroundPollTime() {
@@ -842,12 +922,12 @@ async def index_handler(request):
                 const badge = document.getElementById('background-poll-badge');
                 if (!badge) return;
                 
-                if (!lastPollTime) {
-                    badge.textContent = 'Фоновое обновление: нет данных';
+                if (!lastPollTime) {{
+                    badge.textContent = t('backgroundUpdateNoData');
                     return;
-                }
+                }}
                 
-                try {
+                try {{
                     const pollDate = new Date(lastPollTime);
                     const now = new Date();
                     const diffMs = now - pollDate;
@@ -856,13 +936,13 @@ async def index_handler(request):
                     const diffHour = Math.floor(diffMin / 60);
                     
                     let timeAgo = '';
-                    if (diffSec < 60) {
-                        timeAgo = diffSec + ' сек назад';
-                    } else if (diffMin < 60) {
-                        timeAgo = diffMin + ' мин назад';
-                    } else {
-                        timeAgo = diffHour + ' ч назад';
-                    }
+                    if (diffSec < 60) {{
+                        timeAgo = t('secAgo', {{n: diffSec}});
+                    }} else if (diffMin < 60) {{
+                        timeAgo = t('minAgo', {{n: diffMin}});
+                    }} else {{
+                        timeAgo = t('hourAgo', {{n: diffHour}});
+                    }}
                     
                     // Format time as HH:MM:SS
                     const hours = String(pollDate.getHours()).padStart(2, '0');
@@ -870,10 +950,10 @@ async def index_handler(request):
                     const seconds = String(pollDate.getSeconds()).padStart(2, '0');
                     const timeStr = hours + ':' + minutes + ':' + seconds;
                     
-                    badge.textContent = 'Фоновое обновление: ' + timeAgo + ' в ' + timeStr;
-                } catch (e) {
-                    badge.textContent = 'Фоновое обновление: ошибка';
-                }
+                    badge.textContent = t('backgroundUpdate', {{timeAgo: timeAgo, time: timeStr}});
+                }} catch (e) {{
+                    badge.textContent = t('backgroundUpdateError');
+                }}
             }
             
             // Event delegation for sensor mode buttons
@@ -909,7 +989,7 @@ async def index_handler(request):
     </html>
     """
     # Replace version placeholder
-    html = html.replace("{version}", version)
+    html = html.replace("{{version}}", version)
     return web.Response(text=html, content_type="text/html")
 
 

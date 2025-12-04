@@ -2,7 +2,7 @@
 
 ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
-![Russian Language][ru-shield]
+![English Language][en-shield] ![Polish Language][pl-shield] ![Belarusian Language][be-shield] ![Ukrainian Language][uk-shield] ![Russian Language][ru-shield]
 
 ---
 
@@ -1667,5 +1667,9 @@ AlarmMe — это комплексный аддон для управления
 [armhf-shield]: https://img.shields.io/badge/armhf-yes-green.svg
 [armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
+[en-shield]: https://img.shields.io/badge/🇬🇧%20English-supported-blue.svg
+[pl-shield]: https://img.shields.io/badge/🇵🇱%20Polish-supported-blue.svg
+[be-shield]: https://img.shields.io/badge/🇧🇾%20Belarusian-supported-blue.svg
+[uk-shield]: https://img.shields.io/badge/🇺🇦%20Ukrainian-supported-blue.svg
 [ru-shield]: https://img.shields.io/badge/🇷🇺%20Russian-supported-blue.svg
 [repository]: https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-alarmme

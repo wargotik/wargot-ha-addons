@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.26] - 2025-01-30
+
+### Added
+- **Additional language support**: Added Polish, Belarusian, and Ukrainian translations
+- Complete translations for all UI texts in Polish (`pl.json`), Belarusian (`be.json`), and Ukrainian (`uk.json`)
+- README updated with language badges for all supported languages (English, Polish, Belarusian, Ukrainian, Russian)
+
+### Changed
+- Language detection now supports 5 languages: English (en), Polish (pl), Belarusian (be), Ukrainian (uk), Russian (ru)
+- UI automatically switches to the appropriate language based on Home Assistant settings
+
+## [0.6.25] - 2025-01-30
+
+### Added
+- **Multilingual support**: Added full localization support using JSON translation files
+- **English and Russian languages**: Complete translations for all UI texts in English and Russian
+- Language automatically detected from Home Assistant settings and applied to UI
+- Translation files located in `rootfs/translations/` directory (`en.json`, `ru.json`)
+- All UI texts, error messages, and status messages are now translatable
+- JavaScript translation function `t()` for client-side translations
+- Server-side translation function `_t()` for server-rendered HTML
+
+### Changed
+- **UI localization**: All hardcoded texts moved to translation files
+- Language is read from `/data/switches_state.json` on each page load
+- HTML `lang` attribute dynamically set based on detected language
+- README updated with English language support badge
+
 ## [0.6.24] - 2025-01-30
 
 ### Added
