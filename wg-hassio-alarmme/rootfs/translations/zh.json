@@ -49,6 +49,10 @@
   "unknown": "未知",
   "secAgo": "{n}秒前",
   "minAgo": "{n}分钟前",
-  "hourAgo": "{n}小时前"
+  "hourAgo": "{n}小时前",
+  "modeActivatedAway": "离开模式已激活",
+  "modeActivatedNight": "夜间模式已激活",
+  "modeActivatedPerimeter": "周边模式已激活",
+  "modeDeactivated": "警报模式已停用"
 }
 

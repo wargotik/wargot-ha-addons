@@ -49,6 +49,10 @@
   "unknown": "Neznámé",
   "secAgo": "před {n} sek",
   "minAgo": "před {n} min",
-  "hourAgo": "před {n} h"
+  "hourAgo": "před {n} h",
+  "modeActivatedAway": "Režim Nepřítomnost aktivován",
+  "modeActivatedNight": "Noční režim aktivován",
+  "modeActivatedPerimeter": "Režim Perimetr aktivován",
+  "modeDeactivated": "Alarmový režim deaktivován"
 }
 

@@ -49,6 +49,10 @@
   "unknown": "Bilinmeyen",
   "secAgo": "{n} sn önce",
   "minAgo": "{n} dk önce",
-  "hourAgo": "{n} sa önce"
+  "hourAgo": "{n} sa önce",
+  "modeActivatedAway": "Uzakta Modu etkinleştirildi",
+  "modeActivatedNight": "Gece Modu etkinleştirildi",
+  "modeActivatedPerimeter": "Çevre Modu etkinleştirildi",
+  "modeDeactivated": "Alarm modu devre dışı bırakıldı"
 }
 

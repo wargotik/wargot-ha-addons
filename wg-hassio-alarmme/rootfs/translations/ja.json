@@ -49,6 +49,10 @@
   "unknown": "不明",
   "secAgo": "{n}秒前",
   "minAgo": "{n}分前",
-  "hourAgo": "{n}時間前"
+  "hourAgo": "{n}時間前",
+  "modeActivatedAway": "不在モードが有効になりました",
+  "modeActivatedNight": "夜間モードが有効になりました",
+  "modeActivatedPerimeter": "周辺モードが有効になりました",
+  "modeDeactivated": "アラームモードが無効になりました"
 }
 

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] - 2025-12-04
+
+### Added
+- **Mode Change Notifications**: Automatic notifications when alarm modes are activated or deactivated
+  - Sends notifications to all mobile devices (iPhone, Android) and Home Assistant UI
+  - Multilingual notifications based on Home Assistant language setting
+  - Notifications for: Away Mode activation, Night Mode activation, Perimeter Mode activation, and mode deactivation
+  - Full support for all 18 languages
+
+### Technical Details
+- Added notification sending in `update_switches_handler` after successful mode change
+- Added translation keys: `modeActivatedAway`, `modeActivatedNight`, `modeActivatedPerimeter`, `modeDeactivated`
+- Notifications are sent via `send_notification` function to all available mobile services and persistent notifications
+
 ## [0.9.0] - 2025-12-04
 
 ### Added

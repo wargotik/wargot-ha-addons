@@ -49,6 +49,10 @@
   "unknown": "Okänt",
   "secAgo": "{n} sek sedan",
   "minAgo": "{n} min sedan",
-  "hourAgo": "{n} tim sedan"
+  "hourAgo": "{n} tim sedan",
+  "modeActivatedAway": "Frånvaroläge aktiverat",
+  "modeActivatedNight": "Nattläge aktiverat",
+  "modeActivatedPerimeter": "Perimetertläge aktiverat",
+  "modeDeactivated": "Larmläge inaktiverat"
 }
 

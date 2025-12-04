@@ -49,6 +49,10 @@
   "unknown": "Ukjent",
   "secAgo": "{n} sek siden",
   "minAgo": "{n} min siden",
-  "hourAgo": "{n} t siden"
+  "hourAgo": "{n} t siden",
+  "modeActivatedAway": "Bortemodus aktivert",
+  "modeActivatedNight": "Nattmodus aktivert",
+  "modeActivatedPerimeter": "Perimetermodus aktivert",
+  "modeDeactivated": "Alarmmodus deaktivert"
 }
 

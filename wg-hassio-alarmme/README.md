@@ -197,6 +197,10 @@ Bathroom Sensor:
 - **🔔 Persistent Notifications**: Optional persistent notifications in Home Assistant UI
 - **⚙️ Actionable Notifications**: Interactive buttons in mobile notifications (iOS/Android)
 - **📊 Notification Logging**: Detailed logging for debugging notification delivery
+- **🔔 Mode Change Notifications**: Automatically sends notifications when alarm modes are activated or deactivated
+  - Notifications sent to all mobile devices (iPhone, Android) and Home Assistant UI
+  - Multilingual notifications based on Home Assistant language setting
+  - Notifications for: Away Mode activation, Night Mode activation, Perimeter Mode activation, and mode deactivation
 
 ### User Interface
 
@@ -255,6 +259,7 @@ This roadmap outlines current features and planned improvements, sorted by prior
 - ✅ **Persistent Notifications** - Optional persistent notifications in Home Assistant UI
 - ✅ **Actionable Notifications** - Interactive buttons in mobile notifications (iOS/Android) with "Silence Alarm" action
 - ✅ **Notification Logging** - Detailed logging for debugging notification delivery
+- ✅ **Mode Change Notifications** - Automatically sends notifications when alarm modes are activated or deactivated
 
 #### User Interface (Medium Priority)
 - ✅ **Responsive Design** - Works on desktop, tablet, and mobile devices
