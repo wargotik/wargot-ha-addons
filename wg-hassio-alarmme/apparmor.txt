@@ -33,6 +33,17 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /usr/local/bin/python* ix,
   /usr/local/bin/python3* ix,
   
+  # Python standard library - CRITICAL: Must come BEFORE general /usr/lib rules
+  # Full access to Python standard library (read, map, execute)
+  /usr/local/lib/python3.*/** rmix,
+  /usr/local/lib/python3.*/ r,
+  /usr/lib/python3.*/** rmix,
+  /usr/lib/python3.*/ r,
+  
+  # Python zip archives (stdlib can be packaged in zip files like python311.zip)
+  /usr/local/lib/python3*.zip rm,
+  /usr/lib/python3*.zip rm,
+  
   # Python shared libraries (critical for Python execution)
   # Support for all Python versions and architectures
   /usr/lib/python3.*/libpython*.so* rm,
@@ -56,34 +67,7 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /lib/arm-linux-gnueabihf/libpython*.so* rm,
   /lib/arm-linux-gnueabi/libpython*.so* rm,
   
-  # Python standard library and site-packages
-  /usr/lib/python3*/** rmix,
-  /usr/local/lib/python3*/** rmix,
-  /usr/lib/python*/** rmix,
-  /usr/local/lib/python*/** rmix,
-  
-  # Python standard library files (critical for Python to work)
-  # Full access to Python standard library directories
-  /usr/local/lib/python3.*/** rmix,
-  /usr/local/lib/python3.*/lib-dynload/** rmix,
-  /usr/lib/python3.*/** rmix,
-  /usr/lib/python3.*/lib-dynload/** rmix,
-  
-  # Python zip files (stdlib can be in zip format)
-  /usr/local/lib/python3*.zip r,
-  /usr/lib/python3*.zip r,
-  
-  # Explicit access to encodings module (most critical)
-  /usr/local/lib/python3.*/encodings/** rmix,
-  /usr/local/lib/python3.*/encodings/*.py r,
-  /usr/local/lib/python3.*/encodings/*.pyc r,
-  /usr/local/lib/python3.*/encodings/*.pyo r,
-  /usr/lib/python3.*/encodings/** rmix,
-  /usr/lib/python3.*/encodings/*.py r,
-  /usr/lib/python3.*/encodings/*.pyc r,
-  /usr/lib/python3.*/encodings/*.pyo r,
-  
-  # Python site-packages
+  # Python site-packages (installed packages)
   /usr/lib/python3.*/site-packages/** rmix,
   /usr/local/lib/python3.*/site-packages/** rmix,
   
@@ -91,7 +75,7 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /app/main.py ix,
   /app/*.py ix,
   
-  # Standard system libraries (needed for Python)
+  # Standard system libraries (needed for Python) - must come AFTER Python-specific rules
   /lib/** rm,
   /lib64/** rm,
   /usr/lib/** rm,

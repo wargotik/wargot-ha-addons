@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.8] - 2025-01-30
+
+### Fixed
+- **AppArmor Python standard library access**: Reorganized AppArmor rules to fix `ModuleNotFoundError: No module named 'encodings'`
+- Moved Python standard library access rules BEFORE general `/usr/lib/**` rules (order matters in AppArmor)
+- Simplified Python standard library access rules to avoid conflicts
+- Changed Python zip archive access from read-only (`r`) to read+map (`rm`) to allow Python to load modules from zip files
+- Python standard library rules now have priority over general system library rules
+- This should fix the persistent `encodings` module error
+
 ## [0.7.7] - 2025-01-30
 
 ### Fixed
