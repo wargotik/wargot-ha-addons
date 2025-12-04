@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.3] - 2025-12-04
+
+### Changed
+- **UI Improvements**:
+  - Removed version badge ("vunknown") from the web interface header
+  - Cleaned up unused CSS styles for version badge
+  - Removed version placeholder replacement from HTML template
+
+### Technical Details
+- Removed `.version-badge` CSS class and styles
+- Removed `<span class="version-badge">v{version}</span>` from HTML header
+- Removed `{version}` placeholder replacement from template processing
+
 ## [0.9.2] - 2025-12-04
 
 ### Changed
