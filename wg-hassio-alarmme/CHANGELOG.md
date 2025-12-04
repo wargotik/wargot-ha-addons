@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2025-12-04
+
+### Removed
+- **AppArmor support completely removed**: AppArmor has been removed from the add-on as it was causing numerous compatibility issues and preventing stable operation of the application. The security profile was interfering with Python module imports, database access, and file system operations, making it impossible to maintain reliable functionality.
+
 ## [0.7.23] - 2025-12-04
 
 ### Removed
