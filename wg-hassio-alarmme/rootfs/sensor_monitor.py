@@ -5,8 +5,8 @@ import json
 import logging
 import os
 from pathlib import Path
-from datetime import datetime
-from typing import Optional, Dict, Dict
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Tuple
 from pprint import pformat
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +36,47 @@ class SensorMonitor:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession()
         return self._session
+    
+    def _check_camera_motion(self, attributes: Dict) -> Tuple[bool, Optional[str]]:
+        """
+        Check if camera has detected motion based on motion_video_time attribute.
+        Returns: (has_motion: bool, motion_time: Optional[str])
+        """
+        try:
+            # Check if motion detection is enabled
+            motion_detection = attributes.get("motion_detection", False)
+            if not motion_detection:
+                return False, None
+            
+            # Get motion_video_time from attributes
+            motion_video_time = attributes.get("motion_video_time")
+            if not motion_video_time:
+                return False, None
+            
+            # Parse motion_video_time (format: "2025-12-04 13:04:59.450000")
+            try:
+                # Try parsing with microseconds
+                if isinstance(motion_video_time, str):
+                    # Remove microseconds if present
+                    motion_time_str = motion_video_time.split('.')[0]
+                    motion_dt = datetime.strptime(motion_time_str, "%Y-%m-%d %H:%M:%S")
+                else:
+                    return False, None
+                
+                # Check if motion was detected in last 60 seconds
+                now = datetime.now()
+                time_diff = (now - motion_dt).total_seconds()
+                
+                if 0 <= time_diff <= 60:
+                    return True, motion_video_time
+                else:
+                    return False, motion_video_time
+            except (ValueError, TypeError) as parse_err:
+                _LOGGER.debug("[sensor_monitor] Error parsing motion_video_time '%s': %s", motion_video_time, parse_err)
+                return False, None
+        except Exception as err:
+            _LOGGER.debug("[sensor_monitor] Error checking camera motion: %s", err)
+            return False, None
     
     async def _get_area_for_entity(self, entity_id: str) -> Optional[str]:
         """Get area name for entity from Home Assistant Entity Registry and Areas."""
@@ -106,7 +147,23 @@ class SensorMonitor:
                         friendly_name = attributes.get("friendly_name", entity_id)
                         current_state = state.get("state", "unknown")
                         
-                        # Only process motion, moving, occupancy, presence sensors
+                        # Check if this is a camera entity with motion detection
+                        is_camera = entity_id.startswith("camera.")
+                        camera_has_motion = False
+                        camera_motion_time = None
+                        
+                        if is_camera:
+                            # Check camera motion detection
+                            camera_has_motion, camera_motion_time = self._check_camera_motion(attributes)
+                            if camera_has_motion or camera_motion_time:
+                                # Treat camera as "moving" device_class
+                                device_class = "moving"
+                                # Set state based on motion detection
+                                current_state = "on" if camera_has_motion else "off"
+                                _LOGGER.debug("[sensor_monitor] Camera %s: motion_detected=%s, motion_time=%s", 
+                                            entity_id, camera_has_motion, camera_motion_time)
+                        
+                        # Only process motion, moving, occupancy, presence sensors OR cameras with motion detection
                         if device_class not in ("motion", "moving", "occupancy", "presence"):
                             continue
                         
@@ -154,12 +211,27 @@ class SensorMonitor:
                                 _LOGGER.debug("[sensor_monitor] Error updating area: %s", update_err)
                         
                         # Detect trigger: sensor is in "on" state
-                        current_state = state.get("state", "unknown").lower()
+                        # For cameras, we already set current_state above
+                        if not is_camera:
+                            current_state = state.get("state", "unknown").lower()
+                        else:
+                            current_state = current_state.lower()
                         
                         # Record trigger if sensor is active (on/true)
                         if current_state in ("on", "true"):
-                            # Get last_changed from HA (when HA detected the state change)
-                            last_changed = state.get("last_changed")
+                            # For cameras, use motion_video_time as trigger time
+                            if is_camera and camera_motion_time:
+                                # Convert motion_video_time to ISO format for database
+                                try:
+                                    motion_time_str = camera_motion_time.split('.')[0]
+                                    motion_dt = datetime.strptime(motion_time_str, "%Y-%m-%d %H:%M:%S")
+                                    last_changed = motion_dt.isoformat() + 'Z'
+                                except Exception:
+                                    last_changed = state.get("last_changed")
+                            else:
+                                # Get last_changed from HA (when HA detected the state change)
+                                last_changed = state.get("last_changed")
+                            
                             _LOGGER.info("[sensor_monitor] 🔔 Sensor TRIGGERED: %s (%s) - state: %s, last_changed: %s", 
                                        friendly_name, entity_id, current_state, last_changed)
                             # Record trigger in database with last_changed from HA

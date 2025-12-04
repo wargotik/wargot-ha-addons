@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2025-12-04
+
+### Added
+- **Camera motion detection support**: Added direct support for camera entities with motion detection
+- Cameras are now automatically detected if they have `motion_detection: true` and `motion_video_time` attributes
+- Camera motion is determined by checking if `motion_video_time` is within the last 60 seconds
+- Cameras are saved with `device_class: moving` and appear in the "Moving" column in the UI
+- Camera motion triggers are recorded using the `motion_video_time` timestamp
+
+### Technical Details
+- Added `_check_camera_motion()` method to analyze camera attributes
+- Camera entities (starting with `camera.`) are now processed alongside binary sensors
+- Motion detection window: 60 seconds (configurable in code)
+- Camera motion state is calculated dynamically based on `motion_video_time` attribute
+
 ## [0.8.0] - 2025-12-04
 
 ### Removed
