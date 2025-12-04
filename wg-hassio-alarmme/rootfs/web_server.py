@@ -389,16 +389,6 @@ async def index_handler(request):
                 height: 32px;
                 object-fit: contain;
             }
-            .version-badge {
-                display: inline-block;
-                background-color: #95a5a6;
-                color: white;
-                padding: 2px 8px;
-                border-radius: 10px;
-                font-size: 11px;
-                font-weight: 500;
-                font-family: monospace;
-            }
             .sensors-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -695,7 +685,7 @@ async def index_handler(request):
             <h1>
                 <div class="header-left">
                     <img src="/icon.png" alt="{title_text}" class="addon-icon" onerror="this.style.display='none'">
-                    {title_text}<span class="version-badge">v{version}</span>
+                    {title_text}
                 </div>
                 <div class="help-icon" id="help-icon" title="Показать конфигурацию">?</div>
             </h1>
@@ -1286,7 +1276,6 @@ async def index_handler(request):
     html = html.replace("{occupancy_desc_text}", occupancy_desc_text)
     html = html.replace("{presence_text}", presence_text)
     html = html.replace("{presence_desc_text}", presence_desc_text)
-    html = html.replace("{version}", version)
     html = html.replace("{translations_js}", translations_js)
     return web.Response(text=html, content_type="text/html")
 
