@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2025-01-30
+
+### Added
+- **AppArmor security profile**: Added AppArmor support for enhanced security
+- Created `apparmor.txt` profile file with appropriate permissions for the add-on
+- AppArmor profile allows:
+  - Network access for Home Assistant API communication and web server
+  - File system access to `/data/` directory for state and database files
+  - Read access to translation files and configuration
+  - Standard Python library access
+  - Denies access to sensitive system files
+- Added `apparmor: true` to `config.json` to enable AppArmor profile
+- This improves the security rating of the add-on and follows Home Assistant best practices
+
 ## [0.7.2] - 2025-01-30
 
 ### Fixed

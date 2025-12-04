@@ -1,0 +1,67 @@
+#include <tunables/global>
+
+profile alarmme flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  
+  # Network access for Home Assistant API and web server
+  network,
+  capability net_bind_service,
+  
+  # File system access - data directory for state and database
+  /data/** rw,
+  /data/ rw,
+  /data/alarmme.db rw,
+  /data/alarmme.db-* rw,
+  /data/switches_state.json rw,
+  /data/switches_state.json.tmp rw,
+  /data/icon.png r,
+  
+  # Application files (read-only)
+  /app/** r,
+  /app/**/translations/** r,
+  /app/**/*.py r,
+  /app/**/*.json r,
+  
+  # Config access (read-only)
+  /config.json r,
+  /data/options.json r,
+  
+  # Python interpreter and libraries
+  /usr/bin/python3* ix,
+  /usr/lib/python3*/** rmix,
+  /usr/local/lib/python3*/** rmix,
+  
+  # Standard system libraries
+  /lib/** rm,
+  /lib64/** rm,
+  /usr/lib/** rm,
+  
+  # Process and network information (for Home Assistant API)
+  owner @{PROC}/[0-9]*/fd/ r,
+  owner @{PROC}/[0-9]*/net/ r,
+  owner @{PROC}/[0-9]*/status r,
+  
+  # Logging
+  /var/log/** w,
+  
+  # Temporary files
+  /tmp/** rw,
+  /var/tmp/** rw,
+  
+  # SQLite database files (lock and journal files)
+  /data/alarmme.db-journal rw,
+  /data/alarmme.db-wal rw,
+  
+  # Deny access to sensitive system files
+  deny /etc/shadow r,
+  deny /etc/passwd r,
+  deny /root/** r,
+  deny /home/** r,
+  deny /etc/** r,
+  deny /sys/** r,
+  deny /proc/sys/** r,
+  
+  # Allow access to Home Assistant API through environment variables
+  # (SUPERVISOR_TOKEN, HASSIO_URL are provided by Supervisor)
+}
+
