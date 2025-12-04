@@ -9,7 +9,15 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   
   # File system - full access to data and app directories
   /data/** rw,
+  
+  # Application files - CRITICAL: Python needs to read directory and import modules
+  /app/ r,
+  /app r,
   /app/** rmix,
+  /app/*.py rmix,
+  /app/**/*.py rmix,
+  /app/__pycache__/** rmix,
+  /app/**/__pycache__/** rmix,
   
   # Config files
   /config.json r,

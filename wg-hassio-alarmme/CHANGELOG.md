@@ -7,9 +7,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Simplified AppArmor profile**: Removed redundant rules, kept only essential permissions for better maintainability
 - Improved database initialization: Added cursor closing and small delay after connection close to ensure SQLite releases all locks
+- **Enhanced AppArmor rules for application files**: Added explicit rules for `/app/` directory access and Python module imports
+- Added explicit permissions for `__pycache__` directories that Python creates during module imports
 
 ### Fixed
 - Fixed potential database locking issues by properly closing cursors before connections
+- Fixed `ModuleNotFoundError: No module named 'web_server'` by adding explicit directory and file access rules
 
 ## [0.7.20] - 2025-12-04
 
