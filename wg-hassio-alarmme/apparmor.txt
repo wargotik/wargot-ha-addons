@@ -16,11 +16,12 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /data/switches_state.json.tmp rw,
   /data/icon.png r,
   
-  # Application files (read-only)
+  # Application files
   /app/** r,
   /app/**/translations/** r,
   /app/**/*.py r,
   /app/**/*.json r,
+  /app/**/*.txt r,
   
   # Config access (read-only)
   /config.json r,
@@ -70,9 +71,25 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   deny /etc/passwd r,
   deny /root/** r,
   deny /home/** r,
-  deny /etc/** r,
-  deny /sys/** r,
-  deny /proc/sys/** r,
+  
+  # Allow minimal /etc access for system configuration
+  /etc/passwd r,
+  /etc/group r,
+  /etc/nsswitch.conf r,
+  /etc/hosts r,
+  /etc/resolv.conf r,
+  
+  # Allow /sys read access (needed for some Python operations)
+  /sys/** r,
+  
+  # Deny write access to /sys
+  deny /sys/** w,
+  
+  # Allow /proc read access (needed for process information)
+  /proc/** r,
+  
+  # Deny write access to /proc/sys
+  deny /proc/sys/** w,
   
   # Allow access to Home Assistant API through environment variables
   # (SUPERVISOR_TOKEN, HASSIO_URL are provided by Supervisor)
