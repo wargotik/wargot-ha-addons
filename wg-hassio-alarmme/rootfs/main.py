@@ -36,7 +36,20 @@ async def main():
     """Main function."""
     global virtual_switches, sensor_monitor
     
-    _LOGGER.info("Starting AlarmMe add-on")
+    # Print startup banner
+    startup_banner = """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    🚨  ALARMME ADD-ON STARTING  🚨                          ║
+║                                                                              ║
+║                          New Session Started                                 ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+    print(startup_banner)
+    _LOGGER.info("=" * 80)
+    _LOGGER.info("🚨 ALARMME ADD-ON STARTING - NEW SESSION 🚨")
+    _LOGGER.info("=" * 80)
     
     # Setup signal handlers
     signal.signal(signal.SIGINT, signal_handler)

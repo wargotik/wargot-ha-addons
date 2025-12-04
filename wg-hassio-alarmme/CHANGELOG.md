@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.6] - 2025-01-30
+
+### Added
+- **Startup banner**: Added ASCII graphics banner to clearly mark new add-on session start in logs
+- Visual separator in logs makes it easy to identify logs from the latest startup
+- Banner includes emoji and clear "NEW SESSION STARTED" message
+
+### Fixed
+- **Python shared libraries access**: Fixed `libpython3.11.so.1.0: cannot open shared object file` error
+- Added comprehensive access rules for Python shared libraries across all architectures
+- Added support for all Python library paths (x86_64, aarch64, arm, i386)
+- Added support for both `.so` and `.so.*` library file patterns
+- AppArmor profile now allows Python to load all required shared libraries
+- Fixed `[FATAL tini (7)] exec python failed: Permission denied` error
+
 ## [0.7.5] - 2025-01-30
 
 ### Fixed
