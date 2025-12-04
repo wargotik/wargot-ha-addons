@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2025-01-30
+
+### Added
+- **Major language support expansion**: Added 13 new languages to the add-on UI
+- Added German (de), French (fr), Spanish (es), Italian (it), Dutch (nl), Portuguese (pt), Czech (cs), Swedish (sv), Norwegian (no), Danish (da), Turkish (tr), Japanese (ja), and Chinese (zh) translations
+- Total supported languages: 18 (English, German, French, Spanish, Italian, Dutch, Polish, Portuguese, Czech, Swedish, Norwegian, Danish, Turkish, Belarusian, Ukrainian, Russian, Japanese, Chinese)
+- Updated README with all new language badges and navigation links
+- Complete UI translation coverage for all major Home Assistant user communities
+
+## [0.6.36] - 2025-01-30
+
 ## [0.6.35] - 2025-01-30
 
 ### Fixed

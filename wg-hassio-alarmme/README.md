@@ -2,13 +2,13 @@
 
 ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports armv7 Architecture][armv7-shield] ![Supports i386 Architecture][i386-shield]
 
-![English Language][en-shield] ![Polish Language][pl-shield] ![Belarusian Language][be-shield] ![Ukrainian Language][uk-shield] ![Russian Language][ru-shield]
+![English Language][en-shield] ![German Language][de-shield] ![French Language][fr-shield] ![Spanish Language][es-shield] ![Italian Language][it-shield] ![Dutch Language][nl-shield] ![Polish Language][pl-shield] ![Portuguese Language][pt-shield] ![Czech Language][cs-shield] ![Swedish Language][sv-shield] ![Norwegian Language][no-shield] ![Danish Language][da-shield] ![Turkish Language][tr-shield] ![Belarusian Language][be-shield] ![Ukrainian Language][uk-shield] ![Russian Language][ru-shield] ![Japanese Language][ja-shield] ![Chinese Language][zh-shield]
 
 ---
 
 ## 🌐 Languages / Языки
 
-[**English**](#-english) | [**Polski**](#-polish) | [**Беларуская**](#-belarusian) | [**Українська**](#-ukrainian) | [**Русский**](#-russian)
+[**English**](#-english) | [**Deutsch**](#-german) | [**Français**](#-french) | [**Español**](#-spanish) | [**Italiano**](#-italian) | [**Nederlands**](#-dutch) | [**Polski**](#-polish) | [**Português**](#-portuguese) | [**Čeština**](#-czech) | [**Svenska**](#-swedish) | [**Norsk**](#-norwegian) | [**Dansk**](#-danish) | [**Türkçe**](#-turkish) | [**Беларуская**](#-belarusian) | [**Українська**](#-ukrainian) | [**Русский**](#-russian) | [**日本語**](#-japanese) | [**中文**](#-chinese)
 
 ---
 
@@ -1668,8 +1668,21 @@ AlarmMe — это комплексный аддон для управления
 [armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
 [en-shield]: https://img.shields.io/badge/🇬🇧%20English-supported-blue.svg
+[de-shield]: https://img.shields.io/badge/🇩🇪%20German-supported-blue.svg
+[fr-shield]: https://img.shields.io/badge/🇫🇷%20French-supported-blue.svg
+[es-shield]: https://img.shields.io/badge/🇪🇸%20Spanish-supported-blue.svg
+[it-shield]: https://img.shields.io/badge/🇮🇹%20Italian-supported-blue.svg
+[nl-shield]: https://img.shields.io/badge/🇳🇱%20Dutch-supported-blue.svg
 [pl-shield]: https://img.shields.io/badge/🇵🇱%20Polish-supported-blue.svg
+[pt-shield]: https://img.shields.io/badge/🇵🇹%20Portuguese-supported-blue.svg
+[cs-shield]: https://img.shields.io/badge/🇨🇿%20Czech-supported-blue.svg
+[sv-shield]: https://img.shields.io/badge/🇸🇪%20Swedish-supported-blue.svg
+[no-shield]: https://img.shields.io/badge/🇳🇴%20Norwegian-supported-blue.svg
+[da-shield]: https://img.shields.io/badge/🇩🇰%20Danish-supported-blue.svg
+[tr-shield]: https://img.shields.io/badge/🇹🇷%20Turkish-supported-blue.svg
 [be-shield]: https://img.shields.io/badge/🇧🇾%20Belarusian-supported-blue.svg
 [uk-shield]: https://img.shields.io/badge/🇺🇦%20Ukrainian-supported-blue.svg
 [ru-shield]: https://img.shields.io/badge/🇷🇺%20Russian-supported-blue.svg
+[ja-shield]: https://img.shields.io/badge/🇯🇵%20Japanese-supported-blue.svg
+[zh-shield]: https://img.shields.io/badge/🇨🇳%20Chinese-supported-blue.svg
 [repository]: https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-alarmme
