@@ -2,15 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.20] - 2025-01-30
+## [0.7.20] - 2025-12-04
+
+### Changed
+- **Simplified AppArmor profile**: Removed redundant rules, kept only essential permissions for better maintainability
+- Improved database initialization: Added cursor closing and small delay after connection close to ensure SQLite releases all locks
 
 ### Fixed
-- **Application files access (enhanced)**: Added explicit permissions for all application Python files
-- Added explicit rules for key Python modules: `web_server.py`, `main.py`, `database.py`, `switches.py`, `sensor_monitor.py`
-- Added access to `/app/` directory itself for Python to read directory listings
-- Added both `/usr/bin/python3*` and `/usr/local/bin/python3*` paths
-- Enhanced `/app/** rmix` rule with additional explicit file permissions
-- This should fix `ModuleNotFoundError: No module named 'web_server'` error
+- Fixed potential database locking issues by properly closing cursors before connections
 
 ## [0.7.19] - 2025-01-30
 
