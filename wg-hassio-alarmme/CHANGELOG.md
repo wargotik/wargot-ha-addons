@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.21] - 2025-12-04
+
+### Changed
+- **Simplified AppArmor profile**: Removed redundant rules, kept only essential permissions for better maintainability
+- Improved database initialization: Added cursor closing and small delay after connection close to ensure SQLite releases all locks
+
+### Fixed
+- Fixed potential database locking issues by properly closing cursors before connections
+
 ## [0.7.20] - 2025-12-04
 
 ### Changed
