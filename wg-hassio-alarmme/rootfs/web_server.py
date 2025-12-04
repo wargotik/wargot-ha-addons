@@ -751,17 +751,17 @@ async def index_handler(request):
             const translations = {translations_js};
             
             // Translation function
-            function t(key, params) {{
+            function t(key, params) {
                 let text = translations[key] || key;
-                if (params) {{
-                    for (const [k, v] of Object.entries(params)) {{
-                        // Replace {{key}} with value
-                        const regex = new RegExp('{{' + k + '}}', 'g');
+                if (params) {
+                    for (const [k, v] of Object.entries(params)) {
+                        // Replace {key} with value
+                        const regex = new RegExp('{' + k + '}', 'g');
                         text = text.replace(regex, v);
-                    }}
-                }}
+                    }
+                }
                 return text;
-            }}
+            }
             async function loadSensors() {
                 try {
                     console.log('Loading sensors...');
@@ -771,7 +771,7 @@ async def index_handler(request):
                     const response = await fetch(apiPath);
                     console.log('Response status:', response.status);
                     
-                    if (!response.ok) {{
+                    if (!response.ok) {
                         const errorText = await response.text();
                         console.error('Error response:', response.status, errorText);
                         const errorMsg = '<div class="empty-state">' + t('loadingError', {{'status': response.status}}) + '</div>';
@@ -780,43 +780,43 @@ async def index_handler(request):
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                         document.getElementById('presence-sensors').innerHTML = errorMsg;
                         return;
-                    }}
+                    }
                     
                     const data = await response.json();
                     console.log('Received data:', data);
                     
-                    if (data.success) {{
+                    if (data.success) {
                         renderSensors('motion-sensors', data.motion_sensors || []);
                         renderSensors('moving-sensors', data.moving_sensors || []);
                         renderSensors('occupancy-sensors', data.occupancy_sensors || []);
                         renderSensors('presence-sensors', data.presence_sensors || []);
-                    }} else {{
+                    } else {
                         console.error('API returned success=false:', data.error);
                         const errorMsg = '<div class="empty-state">' + t('error', {{'error': data.error || t('unknownError')}}) + '</div>';
                         document.getElementById('motion-sensors').innerHTML = errorMsg;
                         document.getElementById('moving-sensors').innerHTML = errorMsg;
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                         document.getElementById('presence-sensors').innerHTML = errorMsg;
-                    }}
-                }} catch (error) {{
+                    }
+                } catch (error) {
                     console.error('Error loading sensors:', error);
                     const errorMsg = '<div class="empty-state">' + t('error', {{'error': error.message}}) + '</div>';
                     document.getElementById('motion-sensors').innerHTML = errorMsg;
                     document.getElementById('moving-sensors').innerHTML = errorMsg;
                     document.getElementById('occupancy-sensors').innerHTML = errorMsg;
                     document.getElementById('presence-sensors').innerHTML = errorMsg;
-                }}
+                }
             }
             
             function renderSensors(containerId, sensors) {
                 const container = document.getElementById(containerId);
                 
-                if (sensors.length === 0) {{
+                if (sensors.length === 0) {
                     container.innerHTML = '<div class="empty-state">' + t('noSensors') + '</div>';
                     return;
-                }}
+                }
                 
-                container.innerHTML = sensors.map(sensor => {{
+                container.innerHTML = sensors.map(sensor => {
                     const stateClass = sensor.state === 'on' ? 'on' : 
                                       sensor.state === 'off' ? 'off' : 'unknown';
                     // All sensors are auto-saved, so always show saved icon
@@ -849,8 +849,8 @@ async def index_handler(request):
                     
                     // Format last triggered time
                     let lastTriggeredHtml = '';
-                    if (sensor.last_triggered_at) {{
-                        try {{
+                    if (sensor.last_triggered_at) {
+                        try {
                             const triggerDate = new Date(sensor.last_triggered_at);
                             const hours = String(triggerDate.getHours()).padStart(2, '0');
                             const minutes = String(triggerDate.getMinutes()).padStart(2, '0');
@@ -862,13 +862,13 @@ async def index_handler(request):
                             const dateStr = day + '.' + month + '.' + year;
                             
                             lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{'date': dateStr, 'time': timeStr}}) + '</div>';
-                        }} catch (e) {{
+                        } catch (e) {
                             // If date parsing fails, show raw value
                             lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{'date': sensor.last_triggered_at, 'time': ''}}) + '</div>';
-                        }}
-                    }} else {{
+                        }
+                    } else {
                         lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('noTriggers') + '</div>';
-                    }}
+                    }
                     
                     const areaHtml = sensor.area ? `<div class="sensor-area" style="font-size: 10px; color: #95a5a6; margin-top: 2px;">📍 ${sensor.area}</div>` : '';
                     
@@ -908,17 +908,17 @@ async def index_handler(request):
                         if (data.success) {
                             // Reload sensors to update UI
                             await loadSensors();
-                        }} else {{
+                        } else {
                             alert(t('saveSensorError') + ': ' + (data.error || ''));
-                        }}
-                    }} else {{
+                        }
+                    } else {
                         const errorData = await response.json().catch(() => ({{ 'error': t('serverError') }}));
                         alert(t('saveSensorError') + ': ' + (errorData.error || ''));
-                    }}
-                }} catch (error) {{
+                    }
+                } catch (error) {
                     console.error('Error saving sensor:', error);
                     alert(t('error', {{'error': error.message}}));
-                }}
+                }
             }
             
             async function toggleSensorMode(entityId, mode, enabled) {
@@ -948,16 +948,16 @@ async def index_handler(request):
                     const data = await response.json();
                     console.log('Response data:', data);
                     
-                    if (response.ok && data.success) {{
+                    if (response.ok && data.success) {
                         // Reload sensors to update UI
                         await loadSensors();
-                    }} else {{
+                    } else {
                         alert(t('updateModeError') + ': ' + (data.error || ''));
-                    }}
-                }} catch (error) {{
+                    }
+                } catch (error) {
                     console.error('Error toggling sensor mode:', error);
                     alert(t('error', {{'error': error.message}}));
-                }}
+                }
             }
             
             async function loadSwitches() {
@@ -988,11 +988,11 @@ async def index_handler(request):
                 const element = document.getElementById('current-mode');
                 if (!element) return;
                 
-                const modeLabels = {{
+                const modeLabels = {
                     'off': t('modeOff'),
                     'away': t('modeAway'),
                     'night': t('modeNight')
-                }};
+                };
                 
                 const modeColors = {
                     'off': '#7f8c8d',
@@ -1054,23 +1054,23 @@ async def index_handler(request):
                             updateCurrentMode(data.mode || mode);
                             // Reload switches to get latest state
                             await loadSwitches();
-                        }} else {{
+                        } else {
                             alert(t('changeModeError') + ': ' + (data.error || ''));
                             // Reload to restore correct state
                             await loadSwitches();
-                        }}
-                    }} else {{
+                        }
+                    } else {
                         const errorData = await response.json().catch(() => ({{ 'error': t('serverError') }}));
                         alert(t('changeModeError') + ': ' + (errorData.error || ''));
                         // Reload to restore correct state
                         await loadSwitches();
-                    }}
-                }} catch (error) {{
+                    }
+                } catch (error) {
                     console.error('Error setting mode:', error);
                     alert(t('error', {{'error': error.message}}));
                     // Reload to restore correct state
                     await loadSwitches();
-                }} finally {
+                } finally {
                     // Re-enable buttons
                     buttons.forEach(btn => {
                         if (btn) btn.disabled = false;
@@ -1082,26 +1082,26 @@ async def index_handler(request):
                 const element = document.getElementById('switches-installed');
                 if (!element) return;
                 
-                if (installed) {{
+                if (installed) {
                     element.textContent = t('switchesInstalled');
                     element.style.color = '#27ae60';
-                }} else {{
+                } else {
                     element.textContent = t('switchesNotInstalled');
                     element.style.color = '#e74c3c';
-                }}
+                }
             }
             
             function updateConnectionBadge(connected) {
                 const badge = document.getElementById('connection-badge');
                 if (!badge) return;
                 
-                if (connected) {{
+                if (connected) {
                     badge.textContent = t('restApiConnected');
                     badge.className = 'connection-badge connected';
-                }} else {{
+                } else {
                     badge.textContent = t('restApiDisconnected');
                     badge.className = 'connection-badge disconnected';
-                }}
+                }
             }
             
             async function loadBackgroundPollTime() {
@@ -1126,12 +1126,12 @@ async def index_handler(request):
                 const badge = document.getElementById('background-poll-badge');
                 if (!badge) return;
                 
-                if (!lastPollTime) {{
+                if (!lastPollTime) {
                     badge.textContent = t('backgroundUpdateNoData');
                     return;
-                }}
+                }
                 
-                try {{
+                try {
                     const pollDate = new Date(lastPollTime);
                     const now = new Date();
                     const diffMs = now - pollDate;
@@ -1140,13 +1140,13 @@ async def index_handler(request):
                     const diffHour = Math.floor(diffMin / 60);
                     
                     let timeAgo = '';
-                    if (diffSec < 60) {{
+                    if (diffSec < 60) {
                         timeAgo = t('secAgo', {{'n': diffSec}});
-                    }} else if (diffMin < 60) {{
+                    } else if (diffMin < 60) {
                         timeAgo = t('minAgo', {{'n': diffMin}});
-                    }} else {{
+                    } else {
                         timeAgo = t('hourAgo', {{'n': diffHour}});
-                    }}
+                    }
                     
                     // Format time as HH:MM:SS
                     const hours = String(pollDate.getHours()).padStart(2, '0');
@@ -1155,9 +1155,9 @@ async def index_handler(request):
                     const timeStr = hours + ':' + minutes + ':' + seconds;
                     
                     badge.textContent = t('backgroundUpdate', {{'timeAgo': timeAgo, 'time': timeStr}});
-                }} catch (e) {{
+                } catch (e) {
                     badge.textContent = t('backgroundUpdateError');
-                }}
+                }
             }
             
             // Event delegation for sensor mode buttons
@@ -1207,37 +1207,37 @@ async def index_handler(request):
             const modalClose = document.getElementById('modal-close');
             const jsonContent = document.getElementById('json-content');
             
-            helpIcon.addEventListener('click', async function() {{
+            helpIcon.addEventListener('click', async function() {
                 modal.style.display = 'block';
                 jsonContent.className = 'json-loading';
                 jsonContent.textContent = 'Загрузка...';
                 
-                try {{
+                try {
                     const apiPath = window.location.pathname.replace(/\/$/, '') + '/api/state-json?format=json';
                     const response = await fetch(apiPath);
                     
-                    if (!response.ok) {{
+                    if (!response.ok) {
                         throw new Error('HTTP ' + response.status);
-                    }}
+                    }
                     
                     const data = await response.json();
                     jsonContent.className = 'json-content';
                     jsonContent.textContent = JSON.stringify(data, null, 2);
-                }} catch (error) {{
+                } catch (error) {
                     jsonContent.className = 'json-error';
                     jsonContent.textContent = 'Ошибка загрузки: ' + error.message;
-                }}
-            }});
+                }
+            });
             
-            modalClose.addEventListener('click', function() {{
+            modalClose.addEventListener('click', function() {
                 modal.style.display = 'none';
-            }});
+            });
             
-            window.addEventListener('click', function(event) {{
-                if (event.target === modal) {{
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
                     modal.style.display = 'none';
-                }}
-            }});
+                }
+            });
         </script>
     </body>
     </html>

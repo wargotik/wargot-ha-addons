@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2025-01-30
+
+### Fixed
+- **JavaScript syntax errors**: Fixed all remaining `{{` and `}}` double braces in JavaScript code
+- Replaced all double braces with single braces in JavaScript control structures (if, try, catch, else, finally, function)
+- JavaScript code should now execute without syntax errors
+- Fixed `Uncaught SyntaxError: Unexpected token '{'` error
+
 ## [0.7.1] - 2025-01-30
 
 ### Added
