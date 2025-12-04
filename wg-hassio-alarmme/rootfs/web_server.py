@@ -50,7 +50,6 @@ def get_sensor_states_cache():
 async def get_and_save_ha_language():
     """Get language from Home Assistant and save it to JSON file."""
     import aiohttp
-    from pathlib import Path
     
     STATE_FILE = "/data/switches_state.json"
     state_file = Path(STATE_FILE)
@@ -272,17 +271,17 @@ async def index_handler(request):
                 font-weight: 500;
                 font-family: monospace;
             }
-            .sensors-grid {
+            .sensors-grid {{
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
                 margin-top: 30px;
-            }
-            @media (min-width: 1200px) {
-                .sensors-grid {
+            }}
+            @media (min-width: 1200px) {{
+                .sensors-grid {{
                     grid-template-columns: repeat(4, 1fr);
-                }
-            }
+                }}
+            }}
             .sensor-column {
                 background-color: #f8f9fa;
                 padding: 20px;
