@@ -27,14 +27,27 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /data/options.json r,
   
   # Python interpreter and libraries
+  /usr/bin/python* ix,
   /usr/bin/python3* ix,
+  /usr/local/bin/python* ix,
+  /usr/local/bin/python3* ix,
   /usr/lib/python3*/** rmix,
   /usr/local/lib/python3*/** rmix,
+  /usr/lib/python*/** rmix,
+  /usr/local/lib/python*/** rmix,
+  
+  # Python scripts execution
+  /app/main.py ix,
+  /app/*.py ix,
   
   # Standard system libraries
   /lib/** rm,
   /lib64/** rm,
   /usr/lib/** rm,
+  
+  # Tini (init system used by Docker)
+  /usr/bin/tini ix,
+  /sbin/tini ix,
   
   # Process and network information (for Home Assistant API)
   owner @{PROC}/[0-9]*/fd/ r,
