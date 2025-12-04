@@ -774,7 +774,7 @@ async def index_handler(request):
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('Error response:', response.status, errorText);
-                        const errorMsg = '<div class="empty-state">' + t('loadingError', {{'status': response.status}}) + '</div>';
+                        const errorMsg = '<div class="empty-state">' + t('loadingError', {'status': response.status}) + '</div>';
                         document.getElementById('motion-sensors').innerHTML = errorMsg;
                         document.getElementById('moving-sensors').innerHTML = errorMsg;
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
@@ -792,7 +792,7 @@ async def index_handler(request):
                         renderSensors('presence-sensors', data.presence_sensors || []);
                     } else {
                         console.error('API returned success=false:', data.error);
-                        const errorMsg = '<div class="empty-state">' + t('error', {{'error': data.error || t('unknownError')}}) + '</div>';
+                        const errorMsg = '<div class="empty-state">' + t('error', {'error': data.error || t('unknownError')}) + '</div>';
                         document.getElementById('motion-sensors').innerHTML = errorMsg;
                         document.getElementById('moving-sensors').innerHTML = errorMsg;
                         document.getElementById('occupancy-sensors').innerHTML = errorMsg;
@@ -800,7 +800,7 @@ async def index_handler(request):
                     }
                 } catch (error) {
                     console.error('Error loading sensors:', error);
-                    const errorMsg = '<div class="empty-state">' + t('error', {{'error': error.message}}) + '</div>';
+                    const errorMsg = '<div class="empty-state">' + t('error', {'error': error.message}) + '</div>';
                     document.getElementById('motion-sensors').innerHTML = errorMsg;
                     document.getElementById('moving-sensors').innerHTML = errorMsg;
                     document.getElementById('occupancy-sensors').innerHTML = errorMsg;
@@ -861,10 +861,10 @@ async def index_handler(request):
                             const timeStr = hours + ':' + minutes + ':' + seconds;
                             const dateStr = day + '.' + month + '.' + year;
                             
-                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{'date': dateStr, 'time': timeStr}}) + '</div>';
+                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {'date': dateStr, 'time': timeStr}) + '</div>';
                         } catch (e) {
                             // If date parsing fails, show raw value
-                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {{'date': sensor.last_triggered_at, 'time': ''}}) + '</div>';
+                            lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('lastTriggered', {'date': sensor.last_triggered_at, 'time': ''}) + '</div>';
                         }
                     } else {
                         lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('noTriggers') + '</div>';
@@ -917,7 +917,7 @@ async def index_handler(request):
                     }
                 } catch (error) {
                     console.error('Error saving sensor:', error);
-                    alert(t('error', {{'error': error.message}}));
+                    alert(t('error', {'error': error.message}));
                 }
             }
             
@@ -956,7 +956,7 @@ async def index_handler(request):
                     }
                 } catch (error) {
                     console.error('Error toggling sensor mode:', error);
-                    alert(t('error', {{'error': error.message}}));
+                    alert(t('error', {'error': error.message}));
                 }
             }
             
@@ -1060,14 +1060,14 @@ async def index_handler(request):
                             await loadSwitches();
                         }
                     } else {
-                        const errorData = await response.json().catch(() => ({{ 'error': t('serverError') }}));
+                        const errorData = await response.json().catch(() => ({ 'error': t('serverError') }));
                         alert(t('changeModeError') + ': ' + (errorData.error || ''));
                         // Reload to restore correct state
                         await loadSwitches();
                     }
                 } catch (error) {
                     console.error('Error setting mode:', error);
-                    alert(t('error', {{'error': error.message}}));
+                    alert(t('error', {'error': error.message}));
                     // Reload to restore correct state
                     await loadSwitches();
                 } finally {
@@ -1141,11 +1141,11 @@ async def index_handler(request):
                     
                     let timeAgo = '';
                     if (diffSec < 60) {
-                        timeAgo = t('secAgo', {{'n': diffSec}});
+                        timeAgo = t('secAgo', {'n': diffSec});
                     } else if (diffMin < 60) {
-                        timeAgo = t('minAgo', {{'n': diffMin}});
+                        timeAgo = t('minAgo', {'n': diffMin});
                     } else {
-                        timeAgo = t('hourAgo', {{'n': diffHour}});
+                        timeAgo = t('hourAgo', {'n': diffHour});
                     }
                     
                     // Format time as HH:MM:SS
@@ -1154,7 +1154,7 @@ async def index_handler(request):
                     const seconds = String(pollDate.getSeconds()).padStart(2, '0');
                     const timeStr = hours + ':' + minutes + ':' + seconds;
                     
-                    badge.textContent = t('backgroundUpdate', {{'timeAgo': timeAgo, 'time': timeStr}});
+                    badge.textContent = t('backgroundUpdate', {'timeAgo': timeAgo, 'time': timeStr});
                 } catch (e) {
                     badge.textContent = t('backgroundUpdateError');
                 }
