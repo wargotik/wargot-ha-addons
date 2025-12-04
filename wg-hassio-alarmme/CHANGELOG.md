@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.13] - 2025-01-30
+
+### Fixed
+- **Database initialization timing**: Changed database initialization from module import to lazy initialization
+- Database is now initialized only when `get_db()` is called, not during module import
+- This prevents database locking issues during module import phase
+- Reduced stale lock file cleanup threshold from 60 to 10 seconds for faster recovery
+- Added commit after setting WAL mode to ensure it's properly applied
+- Database initialization is now deferred until it's actually needed
+
 ## [0.7.12] - 2025-01-30
 
 ### Fixed
