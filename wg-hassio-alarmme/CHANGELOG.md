@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.4] - 2025-01-30
+
+### Fixed
+- **JavaScript object literal syntax**: Fixed all remaining double braces `{{` and `}}` in JavaScript function calls
+- Replaced `{{'key': value}}` with `{'key': value}` in all `t()` translation function calls
+- Fixed `Uncaught SyntaxError: Unexpected token '{'` error in translation function parameters
+- All JavaScript object literals now use correct single brace syntax
+
 ## [0.7.3] - 2025-01-30
 
 ### Added

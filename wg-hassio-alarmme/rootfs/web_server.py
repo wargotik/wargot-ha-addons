@@ -912,7 +912,7 @@ async def index_handler(request):
                             alert(t('saveSensorError') + ': ' + (data.error || ''));
                         }
                     } else {
-                        const errorData = await response.json().catch(() => ({{ 'error': t('serverError') }}));
+                        const errorData = await response.json().catch(() => ({ 'error': t('serverError') }));
                         alert(t('saveSensorError') + ': ' + (errorData.error || ''));
                     }
                 } catch (error) {
