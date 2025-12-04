@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.27] - 2025-01-30
+
+### Added
+- **State JSON endpoint**: Added `/api/state-json` endpoint to view `switches_state.json` file content
+- Endpoint supports both JSON and HTML formats (add `?format=html` for HTML view)
+- Configuration tab now shows information about state JSON file location
+- JSON can be viewed in web UI at `/api/state-json` or `/api/state-json?format=html`
+
+### Changed
+- Configuration schema updated to include information about state JSON file
+
 ## [0.6.26] - 2025-01-30
 
 ### Added

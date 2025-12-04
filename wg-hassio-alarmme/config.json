@@ -1,6 +1,6 @@
 {
   "name": "AlarmMe",
-  "version": "0.6.26",
+  "version": "0.6.27",
   "slug": "wg-hassio-alarmme",
   "description": "AlarmMe add-on for Home Assistant",
   "url": "https://github.com/wargotik/wargot-ha-addons/tree/master/wg-hassio-alarmme",
@@ -14,6 +14,14 @@
   "ingress": true,
   "ingress_port": 8099,
   "options": {},
-  "schema": {}
+  "schema": {
+    "state_json_info": {
+      "name": "State JSON",
+      "description": "Current state JSON (switches_state.json) can be viewed at /api/state-json endpoint in the add-on web interface. File path: /data/switches_state.json",
+      "type": "str",
+      "required": false,
+      "default": "View JSON at: /api/state-json in web UI"
+    }
+  }
 }
 

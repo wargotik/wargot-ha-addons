@@ -1630,6 +1630,95 @@ async def logging_middleware(request, handler):
         raise
 
 
+async def get_state_json_handler(request):
+    """Get switches_state.json content."""
+    STATE_FILE = "/data/switches_state.json"
+    state_file = Path(STATE_FILE)
+    
+    try:
+        if not state_file.exists():
+            return web.json_response({
+                "success": False,
+                "error": "State file not found",
+                "data": {},
+                "file_path": STATE_FILE
+            })
+        
+        with open(state_file, 'r', encoding='utf-8') as f:
+            state_data = json.load(f)
+        
+        # Format JSON with indentation for better readability
+        json_str = json.dumps(state_data, indent=2, ensure_ascii=False)
+        
+        # Check if client wants HTML view
+        accept_header = request.headers.get('Accept', '')
+        if 'text/html' in accept_header or request.query.get('format') == 'html':
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>AlarmMe - State JSON</title>
+                <style>
+                    body {{
+                        font-family: monospace;
+                        padding: 20px;
+                        background-color: #f5f5f5;
+                    }}
+                    .container {{
+                        background: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }}
+                    h1 {{
+                        color: #333;
+                        margin-bottom: 20px;
+                    }}
+                    pre {{
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 4px;
+                        overflow-x: auto;
+                        border: 1px solid #e0e0e0;
+                    }}
+                    .file-path {{
+                        color: #666;
+                        font-size: 12px;
+                        margin-bottom: 10px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>AlarmMe State JSON</h1>
+                    <div class="file-path">File: {STATE_FILE}</div>
+                    <pre><code>{json_str}</code></pre>
+                </div>
+            </body>
+            </html>
+            """
+            return web.Response(text=html_content, content_type='text/html')
+        
+        return web.json_response({
+            "success": True,
+            "data": state_data,
+            "file_path": STATE_FILE,
+            "json_string": json_str
+        })
+    except Exception as err:
+        _LOGGER.error("[web_server] Error reading state file: %s", err, exc_info=True)
+        return web.json_response({
+            "success": False,
+            "error": str(err),
+            "data": {},
+            "file_path": STATE_FILE
+        }, status=500)
+
+
 async def not_found_handler(request):
     """Handle 404 errors."""
     _LOGGER.warning("[web_server] 404 Not Found: %s %s", request.method, request.path_qs)
@@ -1653,6 +1742,7 @@ async def run_web_server(port: int = 8099):
     app.router.add_get("/api/background-poll-time", get_background_poll_time_handler)
     app.router.add_get("/api/switches", get_switches_handler)
     app.router.add_post("/api/switches", update_switches_handler)
+    app.router.add_get("/api/state-json", get_state_json_handler)
     
     # 404 handler
     app.router.add_route("*", "/{path:.*}", not_found_handler)
