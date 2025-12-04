@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.15] - 2025-01-30
+
+### Added
+- **Log clearing on startup**: Added automatic log clearing when add-on starts
+- Clears local log files if they exist (`/var/log/alarmme.log`, `/data/alarmme.log`, `/tmp/alarmme.log`)
+- Adds visual separation (50 newlines) in Supervisor logs to create clear break between sessions
+- Each new session now starts with a clean log view
+- Log clearing happens before startup banner is displayed
+
 ## [0.7.14] - 2025-01-30
 
 ### Fixed

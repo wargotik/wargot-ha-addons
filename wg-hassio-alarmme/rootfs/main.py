@@ -4,6 +4,7 @@ import asyncio
 import logging
 import sys
 import signal
+import os
 
 from web_server import run_web_server, send_notification, set_virtual_switches, set_sensor_monitor, get_db, get_sensor_states_cache
 from switches import VirtualSwitches
@@ -32,9 +33,43 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+def clear_logs():
+    """Clear log files on startup."""
+    import os
+    log_files = [
+        "/var/log/alarmme.log",
+        "/data/alarmme.log",
+        "/tmp/alarmme.log",
+    ]
+    
+    cleared = False
+    for log_file in log_files:
+        if os.path.exists(log_file):
+            try:
+                # Clear the log file by truncating it
+                with open(log_file, 'w') as f:
+                    f.write("")
+                _LOGGER.info("Cleared log file: %s", log_file)
+                cleared = True
+            except Exception as e:
+                _LOGGER.debug("Could not clear log file %s: %s", log_file, e)
+    
+    # Also try to clear stdout/stderr if possible (for Supervisor logs)
+    # Note: In Home Assistant, logs are managed by Supervisor, so we can't directly clear them
+    # But we can add a clear separator
+    if not cleared:
+        # Print many newlines to create visual separation in Supervisor logs
+        print("\n" * 50)
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+
 async def main():
     """Main function."""
     global virtual_switches, sensor_monitor
+    
+    # Clear logs on startup
+    clear_logs()
     
     # Print startup banner
     startup_banner = """
@@ -47,6 +82,7 @@ async def main():
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
     print(startup_banner)
+    sys.stdout.flush()
     _LOGGER.info("=" * 80)
     _LOGGER.info("🚨 ALARMME ADD-ON STARTING - NEW SESSION 🚨")
     _LOGGER.info("=" * 80)
