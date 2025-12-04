@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.17] - 2025-01-30
+
+### Changed
+- **AppArmor profile simplified**: Reduced AppArmor restrictions to improve compatibility
+- Simplified file access rules - removed overly specific rules that might cause conflicts
+- Changed `/data/** rw` to allow full read/write access to data directory (covers all database files)
+- Simplified Python library access rules - using wildcards instead of specific paths
+- Removed redundant deny rules that might interfere with normal operations
+- Simplified `/proc` access - now allows read access to all process files
+- Removed specific SQLite lock file rules (covered by `/data/** rw`)
+- Profile is now more permissive while still maintaining basic security
+- This should resolve database locking issues that might be caused by overly strict AppArmor rules
+
 ## [0.7.16] - 2025-01-30
 
 ### Fixed

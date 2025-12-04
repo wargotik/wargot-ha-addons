@@ -7,100 +7,44 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   network,
   capability net_bind_service,
   
-  # File system access - data directory for state and database
+  # File system access - data directory (full read/write access)
   /data/** rw,
   /data/ rw,
-  /data/alarmme.db rw,
-  /data/alarmme.db-* rw,
-  /data/alarmme.db-shm rw,
-  /data/alarmme.db-wal rw,
-  /data/alarmme.db-journal rw,
-  /data/switches_state.json rw,
-  /data/switches_state.json.tmp rw,
-  /data/icon.png r,
   
-  # Application files - Python needs read, map, and execute for imports
-  # Full access to /app directory (including __pycache__ directories created by Python)
+  # Application files - full access for Python
   /app/** rmix,
-  /app/ r,
-  /app r,
   
-  # Config access (read-only)
+  # Config access
   /config.json r,
   /data/options.json r,
   
-  # Python interpreter and libraries
+  # Python interpreter and libraries - simplified, more permissive
   /usr/bin/python* ix,
-  /usr/bin/python3* ix,
   /usr/local/bin/python* ix,
-  /usr/local/bin/python3* ix,
   
-  # Python standard library - CRITICAL: Must come BEFORE general /usr/lib rules
-  # Full access to Python standard library (read, map, execute)
-  /usr/local/lib/python3.*/** rmix,
-  /usr/local/lib/python3.*/ r,
-  /usr/lib/python3.*/** rmix,
-  /usr/lib/python3.*/ r,
-  
-  # Python zip archives (stdlib can be packaged in zip files like python311.zip)
+  # Python standard library and all Python files - broad access
+  /usr/local/lib/python3*/** rmix,
+  /usr/lib/python3*/** rmix,
   /usr/local/lib/python3*.zip rm,
   /usr/lib/python3*.zip rm,
   
-  # Python shared libraries (critical for Python execution)
-  # Support for all Python versions and architectures
-  /usr/lib/python3.*/libpython*.so* rm,
-  /usr/lib/python3.*/libpython*.so.* rm,
-  /usr/lib/x86_64-linux-gnu/libpython*.so* rm,
-  /usr/lib/x86_64-linux-gnu/libpython*.so.* rm,
-  /usr/lib/aarch64-linux-gnu/libpython*.so* rm,
-  /usr/lib/aarch64-linux-gnu/libpython*.so.* rm,
-  /usr/lib/arm-linux-gnueabihf/libpython*.so* rm,
-  /usr/lib/arm-linux-gnueabihf/libpython*.so.* rm,
-  /usr/lib/arm-linux-gnueabi/libpython*.so* rm,
-  /usr/lib/arm-linux-gnueabi/libpython*.so.* rm,
-  /usr/lib/i386-linux-gnu/libpython*.so* rm,
-  /usr/lib/i386-linux-gnu/libpython*.so.* rm,
-  /usr/local/lib/python3.*/libpython*.so* rm,
-  /usr/local/lib/python3.*/libpython*.so.* rm,
-  /usr/local/lib/libpython*.so* rm,
-  /usr/local/lib/libpython*.so.* rm,
-  /lib/x86_64-linux-gnu/libpython*.so* rm,
-  /lib/aarch64-linux-gnu/libpython*.so* rm,
-  /lib/arm-linux-gnueabihf/libpython*.so* rm,
-  /lib/arm-linux-gnueabi/libpython*.so* rm,
+  # Python shared libraries - all architectures
+  /usr/lib/**/libpython*.so* rm,
+  /usr/local/lib/**/libpython*.so* rm,
+  /lib/**/libpython*.so* rm,
   
-  # Python site-packages (installed packages)
-  /usr/lib/python3.*/site-packages/** rmix,
-  /usr/local/lib/python3.*/site-packages/** rmix,
-  
-  # Python scripts execution and module imports
-  # Explicit permissions for Python files (redundant but ensures clarity)
-  /app/*.py rmix,
-  /app/**/*.py rmix,
-  
-  # Standard system libraries (needed for Python) - must come AFTER Python-specific rules
+  # Standard system libraries
   /lib/** rm,
   /lib64/** rm,
   /usr/lib/** rm,
   
-  # Additional library paths for different architectures
-  /usr/lib/x86_64-linux-gnu/** rm,
-  /usr/lib/aarch64-linux-gnu/** rm,
-  /usr/lib/arm-linux-gnueabihf/** rm,
-  /usr/lib/arm-linux-gnueabi/** rm,
-  /usr/lib/i386-linux-gnu/** rm,
-  
-  # Tini (init system used by Docker)
+  # Tini (init system)
   /usr/bin/tini ix,
   /sbin/tini ix,
   
-  # Process and network information (for Home Assistant API)
-  # Note: /proc/** r already covers most /proc access above
-  owner @{PROC}/[0-9]*/fd/ r,
-  owner @{PROC}/[0-9]*/net/ r,
-  owner @{PROC}/[0-9]*/status r,
-  owner @{PROC}/[0-9]*/cmdline r,
-  owner @{PROC}/[0-9]*/exe r,
+  # Process and network information
+  owner @{PROC}/[0-9]*/** r,
+  /proc/** r,
   
   # Logging
   /var/log/** w,
@@ -109,39 +53,18 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /tmp/** rw,
   /var/tmp/** rw,
   
-  # SQLite database files (lock and journal files)
-  /data/alarmme.db-journal rw,
-  /data/alarmme.db-wal rw,
-  /data/alarmme.db-shm rw,
-  /data/*.db-shm rw,
-  /data/*.db-wal rw,
-  /data/*.db-journal rw,
-  
-  # Allow minimal /etc access for system configuration (needed for Python)
+  # System configuration (minimal)
   /etc/passwd r,
   /etc/group r,
   /etc/nsswitch.conf r,
   /etc/hosts r,
   /etc/resolv.conf r,
   
-  # Deny access to sensitive system files
-  deny /etc/shadow r,
-  deny /root/** r,
-  deny /home/** r,
-  
-  # Allow /sys read access (needed for some Python operations)
+  # System information (read-only)
   /sys/** r,
   
-  # Deny write access to /sys
-  deny /sys/** w,
-  
-  # Allow /proc read access (needed for process information)
-  /proc/** r,
-  
-  # Deny write access to /proc/sys
-  deny /proc/sys/** w,
-  
-  # Allow access to Home Assistant API through environment variables
-  # (SUPERVISOR_TOKEN, HASSIO_URL are provided by Supervisor)
+  # Deny only most sensitive files
+  deny /etc/shadow r,
+  deny /root/** r,
 }
 
