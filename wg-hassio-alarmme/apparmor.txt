@@ -62,6 +62,27 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /usr/lib/python*/** rmix,
   /usr/local/lib/python*/** rmix,
   
+  # Python standard library files (critical for Python to work)
+  # Full access to Python standard library directories
+  /usr/local/lib/python3.*/** rmix,
+  /usr/local/lib/python3.*/lib-dynload/** rmix,
+  /usr/lib/python3.*/** rmix,
+  /usr/lib/python3.*/lib-dynload/** rmix,
+  
+  # Python zip files (stdlib can be in zip format)
+  /usr/local/lib/python3*.zip r,
+  /usr/lib/python3*.zip r,
+  
+  # Explicit access to encodings module (most critical)
+  /usr/local/lib/python3.*/encodings/** rmix,
+  /usr/local/lib/python3.*/encodings/*.py r,
+  /usr/local/lib/python3.*/encodings/*.pyc r,
+  /usr/local/lib/python3.*/encodings/*.pyo r,
+  /usr/lib/python3.*/encodings/** rmix,
+  /usr/lib/python3.*/encodings/*.py r,
+  /usr/lib/python3.*/encodings/*.pyc r,
+  /usr/lib/python3.*/encodings/*.pyo r,
+  
   # Python site-packages
   /usr/lib/python3.*/site-packages/** rmix,
   /usr/local/lib/python3.*/site-packages/** rmix,

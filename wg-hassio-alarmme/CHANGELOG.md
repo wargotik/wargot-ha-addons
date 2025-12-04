@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.7] - 2025-01-30
+
+### Fixed
+- **Python standard library access**: Fixed `ModuleNotFoundError: No module named 'encodings'` error
+- Added comprehensive access rules for Python standard library files
+- Added access to Python zip archives (`python3*.zip`) which contain standard library modules
+- Added explicit access to `encodings` module and `lib-dynload` directory
+- Added access to all Python standard library files (`.py`, `.pyc`, `.pyo`) in `/usr/local/lib/python3.*/` and `/usr/lib/python3.*/`
+- AppArmor profile now allows Python to import all standard library modules
+- Fixed `Fatal Python error: init_fs_encoding: failed to get the Python codec` error
+
 ## [0.7.6] - 2025-01-30
 
 ### Added
