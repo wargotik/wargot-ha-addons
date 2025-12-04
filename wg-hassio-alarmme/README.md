@@ -8,7 +8,7 @@
 
 ## 🌐 Languages / Языки
 
-**English** | [Русский](#-русский)
+[**English**](#-english) | [**Polski**](#-polish) | [**Беларуская**](#-belarusian) | [**Українська**](#-ukrainian) | [**Русский**](#-russian)
 
 ---
 
@@ -345,6 +345,984 @@ For issues, questions, or contributions, please visit the [GitHub repository][re
 ## License
 
 This add-on is provided as-is.
+
+---
+
+<a name="polish"></a>
+# 🇵🇱 Polski
+
+Dodatek AlarmMe dla Home Assistant.
+
+## Opis
+
+AlarmMe to kompleksowy dodatek do zarządzania alarmem dla Home Assistant, który zapewnia inteligentne wykrywanie włamań, monitorowanie czujników i powiadomienia. Dodatek automatycznie monitoruje czujniki ruchu, zajętości i obecności, wykrywa włamania, gdy system jest uzbrojony, i wysyła alerty na wszystkie urządzenia mobilne.
+
+## Instalacja
+
+1. Dodaj repozytorium do Home Assistant:
+   - Przejdź do **Ustawienia** → **Dodatki** → **Repozytoria**
+   - Dodaj: `https://github.com/wargotik/wargot-ha-addons`
+   - Kliknij **Dodaj**
+
+2. Zainstaluj dodatek:
+   - Przejdź do **Ustawienia** → **Dodatki**
+   - Znajdź **AlarmMe** na liście
+   - Kliknij **Zainstaluj**
+
+## Konfiguracja
+
+Po instalacji dodatek jest gotowy do użycia. Nie jest wymagana dodatkowa konfiguracja.
+
+## Użycie
+
+1. Uruchom dodatek przez zakładkę **Informacje**
+2. Otwórz interfejs internetowy przez zakładkę **Otwórz interfejs internetowy** lub przez Ingress
+
+## Funkcje
+
+### Podstawowa funkcjonalność
+
+- **🖥️ Nowoczesny interfejs internetowy**: Czysty, responsywny interfejs internetowy do zarządzania systemem alarmowym
+- **🔄 Monitorowanie czujników w tle**: Automatycznie odpytywanie czujników co 5 sekund, nawet gdy strona internetowa jest zamknięta
+- **📊 Baza danych SQLite**: Trwałe przechowywanie konfiguracji czujników, historii wyzwalania i ustawień
+- **🏠 Integracja z Home Assistant**: Bezproblemowa integracja z Home Assistant przez REST API i niestandardową integrację
+
+### Tryby alarmu
+
+Dodatek obsługuje dwa wzajemnie wykluczające się tryby alarmu, każdy zaprojektowany dla różnych scenariuszy bezpieczeństwa:
+
+#### 🚪 Tryb nieobecności (Away Mode)
+
+**Cel**: Aktywuj, gdy jesteś poza domem (praca, wakacje, sprawunki).
+
+**Przypadki użycia**:
+- Jesteś w pracy w ciągu dnia
+- Jesteś na wakacjach
+- Robisz sprawunki
+- Za każdym razem, gdy dom powinien być całkowicie pusty
+
+**Typowa konfiguracja czujników**:
+- ✅ **Włącz wszystkie czujniki** w trybie nieobecności (czujniki ruchu, zajętości, obecności we wszystkich pomieszczeniach)
+- ✅ **Włącz czujniki we wszystkich obszarach**: salon, sypialnie, kuchnia, korytarz itp.
+- ✅ **Maksymalne bezpieczeństwo**: Wykryty ruch wyzwala alert
+
+**Przykładowy scenariusz**:
+```
+Wychodzisz do pracy o 8:00:
+1. Aktywuj "Tryb nieobecności" w dodatku
+2. Wszystkie czujniki są teraz aktywne (jeśli włączone dla trybu nieobecności)
+3. Jeśli ktoś wejdzie do domu, wyzwolenie dowolnego czujnika wyśle alert:
+   "⚠️ WŁAMANIE Salon! Wyzwolony czujnik: Czujnik ruchu w salonie"
+```
+
+#### 🌙 Tryb nocny (Night Mode)
+
+**Cel**: Aktywuj, gdy jesteś w domu w nocy i śpisz.
+
+**Przypadki użycia**:
+- Noc, gdy śpisz
+- Chcesz monitorować punkty wejścia, ale nie ruch wewnętrzny
+- Chcesz uniknąć fałszywych alarmów od zwierząt domowych lub członków rodziny
+
+**Typowa konfiguracja czujników**:
+- ✅ **Włącz czujniki punktów wejścia**: drzwi wejściowe, drzwi tylne, okna, korytarz
+- ❌ **Wyłącz czujniki w sypialni**: aby uniknąć fałszywych alarmów podczas poruszania się w łóżku
+- ❌ **Wyłącz czujniki w łazience**: aby uniknąć fałszywych alarmów w nocy
+- ✅ **Włącz czujniki obwodowe**: drzwi, okna, główne obszary
+
+**Przykładowy scenariusz**:
+```
+Kładziesz się spać o 23:00:
+1. Aktywuj "Tryb nocny" w dodatku
+2. Aktywne są tylko czujniki włączone dla trybu nocnego
+3. Czujnik w sypialni jest wyłączony (nie wyzwoli się, jeśli się poruszysz)
+4. Czujnik na drzwiach wejściowych jest włączony (wyzwoli się, jeśli drzwi się otworzą)
+5. Jeśli ktoś włamie się przez drzwi wejściowe:
+   "⚠️ WŁAMANIE Przedpokój! Wyzwolony czujnik: Czujnik na drzwiach wejściowych"
+```
+
+#### ⚙️ Zachowanie trybów
+
+- **Wzajemnie wykluczające się**: Tylko jeden tryb może być aktywny jednocześnie (Wyłączony, Nieobecność lub Noc)
+- **Automatyczne przełączanie**: Aktywacja jednego trybu automatycznie dezaktywuje drugi
+- **Trzy stany**: 
+  - **Wyłączony**: Oba tryby wyłączone, brak wykrywania włamań
+  - **Nieobecność**: Tryb nieobecności aktywny, tryb nocny wyłączony
+  - **Noc**: Tryb nocny aktywny, tryb nieobecności wyłączony
+- **💾 Lokalne przechowywanie stanu**: Stany przełączników są zachowywane po restarcie w `/data/switches_state.json`
+
+#### 🎯 Konfiguracja trybu dla każdego czujnika
+
+Każdy czujnik może być indywidualnie skonfigurowany dla każdego trybu:
+
+- **Czujnik A**: Włączony w trybie nieobecności ✅, Wyłączony w trybie nocnym ❌
+  - Będzie wyzwalał alerty tylko wtedy, gdy tryb nieobecności jest aktywny
+  
+- **Czujnik B**: Wyłączony w trybie nieobecności ❌, Włączony w trybie nocnym ✅
+  - Będzie wyzwalał alerty tylko wtedy, gdy tryb nocny jest aktywny
+  
+- **Czujnik C**: Włączony w obu trybach ✅ ✅
+  - Będzie wyzwalał alerty zarówno w trybie nieobecności, jak i nocnym
+
+**Przykład konfiguracji**:
+```
+Czujnik ruchu w sypialni:
+  - Tryb nieobecności: ✅ Włączony (ważny, gdy jesteś poza domem)
+  - Tryb nocny: ❌ Wyłączony (aby uniknąć fałszywych alarmów podczas snu)
+
+Czujnik na drzwiach wejściowych:
+  - Tryb nieobecności: ✅ Włączony (zawsze ważny)
+  - Tryb nocny: ✅ Włączony (zawsze ważny)
+
+Czujnik w łazience:
+  - Tryb nieobecności: ✅ Włączony (monitoruj wszystkie obszary, gdy jesteś poza domem)
+  - Tryb nocny: ❌ Wyłączony (normalne użycie nocne)
+```
+
+### Zarządzanie czujnikami
+
+- **🔍 Automatyczne wykrywanie czujników**: Automatycznie wykrywa i zapisuje czujniki ruchu, poruszania się, zajętości i obecności
+- **📍 Obsługa obszarów/przestrzeni**: Automatycznie pobiera i wyświetla pokój/obszar, w którym znajduje się każdy czujnik
+- **⚡ Wykrywanie wyzwalania czujników**: Wykrywa, gdy czujniki zmieniają się ze stanu "wyłączony" na "włączony"
+- **📝 Historia wyzwalania**: Śledzi i wyświetla dokładny znacznik czasu ostatniego wyzwolenia czujnika
+- **🎯 Konfiguracja trybu dla każdego czujnika**: Włączanie/wyłączanie poszczególnych czujników dla trybu nieobecności lub nocnego
+- **💾 Auto-zapis**: Nowe czujniki są automatycznie zapisywane do bazy danych po wykryciu
+
+### Wykrywanie włamań
+
+- **🚨 Inteligentne wykrywanie włamań**: Automatycznie wykrywa włamania, gdy:
+  - Dodatek jest w trybie nieobecności lub nocnym
+  - Czujnik się wyzwala (stan = "włączony")
+  - Czujnik jest włączony dla bieżącego trybu
+- **📱 Powiadomienia wielokanałowe**: Wysyła alerty przez:
+  - Wszystkie dostępne urządzenia mobilne (iPhone/Android)
+  - Trwałe powiadomienia w interfejsie Home Assistant
+- **🔘 Interaktywne powiadomienia**: Powiadomienia mobilne zawierają przycisk "Wycisz alarm"
+- **📍 Kontekstowe alerty**: Wiadomości alertowe zawierają obszar/przestrzeń czujnika dla lepszego kontekstu:
+  - Format: "⚠️ WŁAMANIE {obszar}! Wyzwolony czujnik: {nazwa_czujnika}"
+
+### Powiadomienia
+
+- **📱 Automatyczne wykrywanie urządzeń**: Automatycznie wykrywa i wysyła na wszystkie dostępne urządzenia mobilne
+- **🔔 Trwałe powiadomienia**: Opcjonalne trwałe powiadomienia w interfejsie Home Assistant
+- **⚙️ Interaktywne powiadomienia**: Interaktywne przyciski w powiadomieniach mobilnych (iOS/Android)
+- **📊 Logowanie powiadomień**: Szczegółowe logowanie do debugowania dostarczania powiadomień
+
+### Interfejs użytkownika
+
+- **📱 Responsywny design**: Działa na komputerach stacjonarnych, tabletach i urządzeniach mobilnych
+- **🎨 Nowoczesny interfejs**: Czysty, intuicyjny interfejs z kolorowymi wskaźnikami statusu
+- **🔄 Aktualizacje w czasie rzeczywistym**: Aktualizacje na żywo stanów czujników, trybów przełączników i czasów odpytywania w tle
+- **📊 Odznaki statusu**: Wizualne wskaźniki dla:
+  - Statusu połączenia REST API
+  - Czasu odpytywania czujników w tle
+  - Bieżącego trybu alarmu
+- **🖼️ Ikona dodatku**: Obsługa niestandardowej ikony wyświetlanej w nagłówku interfejsu internetowego
+
+### Funkcje techniczne
+
+- **🔌 REST API**: Pełne REST API do programowego sterowania i integracji
+- **📝 Szczegółowe logowanie**: Szczegółowe logowanie wszystkich operacji i błędów
+- **⚡ Zoptymalizowane pod kątem wydajności**: Buforowanie informacji o obszarach, wydajne zapytania do bazy danych
+- **🔄 Synchronizacja stanu**: Automatyczna synchronizacja między Home Assistant a lokalnym przechowywaniem
+- **🌐 Obsługa Ingress**: Dostępny przez Home Assistant Ingress (nie wymaga przekierowania portów)
+
+## Roadmap
+
+Ten roadmap opisuje obecne funkcje i planowane ulepszenia, posortowane według priorytetu i ważności.
+
+### ✅ Zaimplementowane funkcje
+
+#### Podstawowa funkcjonalność (Wysoki priorytet)
+- ✅ **Nowoczesny interfejs internetowy** - Czysty, responsywny interfejs internetowy do zarządzania systemem alarmowym
+- ✅ **Monitorowanie czujników w tle** - Automatyczne odpytywanie czujników co 5 sekund, działa nawet gdy strona internetowa jest zamknięta
+- ✅ **Baza danych SQLite** - Trwałe przechowywanie konfiguracji czujników, historii wyzwalania i ustawień
+- ✅ **Integracja z Home Assistant** - Bezproblemowa integracja przez REST API i niestandardową integrację
+- ✅ **REST API** - Pełne REST API do programowego sterowania i integracji
+- ✅ **Obsługa Ingress** - Dostępny przez Home Assistant Ingress (nie wymaga przekierowania portów)
+
+#### Tryby alarmu (Wysoki priorytet)
+- ✅ **Dwa tryby alarmu** - Tryb nieobecności i Tryb nocny z wzajemnie wykluczającą się pracą
+- ✅ **Trwałość stanu trybu** - Stany przełączników są zachowywane po restarcie w `/data/switches_state.json`
+- ✅ **Automatyczne przełączanie trybu** - Aktywacja jednego trybu automatycznie dezaktywuje drugi
+- ✅ **Lokalne przechowywanie stanu** - Działa nawet gdy Home Assistant jest niedostępny
+
+#### Zarządzanie czujnikami (Wysoki priorytet)
+- ✅ **Automatyczne wykrywanie czujników** - Automatycznie wykrywa i zapisuje czujniki ruchu, poruszania się, zajętości i obecności
+- ✅ **Obsługa obszarów/przestrzeni** - Automatycznie pobiera i wyświetla pokój/obszar, w którym znajduje się każdy czujnik
+- ✅ **Wykrywanie wyzwalania czujników** - Wykrywa, gdy czujniki zmieniają się ze stanu "wyłączony" na "włączony"
+- ✅ **Historia wyzwalania** - Śledzi i wyświetla dokładny znacznik czasu ostatniego wyzwolenia czujnika
+- ✅ **Konfiguracja trybu dla każdego czujnika** - Włączanie/wyłączanie poszczególnych czujników dla trybu nieobecności lub nocnego
+- ✅ **Auto-zapis** - Nowe czujniki są automatycznie zapisywane do bazy danych po wykryciu
+
+#### Wykrywanie włamań (Wysoki priorytet)
+- ✅ **Inteligentne wykrywanie włamań** - Automatycznie wykrywa włamania na podstawie trybu i konfiguracji czujników
+- ✅ **Kontekstowe alerty** - Wiadomości alertowe zawierają obszar/przestrzeń czujnika dla lepszego kontekstu
+- ✅ **Powiadomienia wielokanałowe** - Wysyła alerty na wszystkie dostępne urządzenia mobilne i trwałe powiadomienia
+
+#### Powiadomienia (Wysoki priorytet)
+- ✅ **Automatyczne wykrywanie urządzeń** - Automatycznie wykrywa i wysyła na wszystkie dostępne urządzenia mobilne
+- ✅ **Trwałe powiadomienia** - Opcjonalne trwałe powiadomienia w interfejsie Home Assistant
+- ✅ **Interaktywne powiadomienia** - Interaktywne przyciski w powiadomieniach mobilnych (iOS/Android) z akcją "Wycisz alarm"
+- ✅ **Logowanie powiadomień** - Szczegółowe logowanie do debugowania dostarczania powiadomień
+
+#### Interfejs użytkownika (Średni priorytet)
+- ✅ **Responsywny design** - Działa na komputerach stacjonarnych, tabletach i urządzeniach mobilnych
+- ✅ **Aktualizacje w czasie rzeczywistym** - Aktualizacje na żywo stanów czujników, trybów przełączników i czasów odpytywania w tle
+- ✅ **Odznaki statusu** - Wizualne wskaźniki dla statusu połączenia REST API, czasu odpytywania czujników w tle i bieżącego trybu alarmu
+- ✅ **Ikona dodatku** - Obsługa niestandardowej ikony wyświetlanej w nagłówku interfejsu internetowego
+
+#### Funkcje techniczne (Średni priorytet)
+- ✅ **Szczegółowe logowanie** - Szczegółowe logowanie wszystkich operacji i błędów
+- ✅ **Zoptymalizowane pod kątem wydajności** - Buforowanie informacji o obszarach, wydajne zapytania do bazy danych
+- ✅ **Synchronizacja stanu** - Automatyczna synchronizacja między Home Assistant a lokalnym przechowywaniem
+
+---
+
+### 🚧 Planowane funkcje
+
+#### Wysoki priorytet
+
+**Automatyzacja harmonogramu trybów**
+- Aktywacja na podstawie harmonogramu dla trybu nieobecności i nocnego
+- Obsługa kalendarza z wyjątkami (weekendy, święta)
+- Reguły automatyzacji oparte na czasie
+
+**Integracja z geofencingiem**
+- Automatyczna aktywacja trybu nieobecności przy opuszczaniu domu
+- Automatyczna dezaktywacja przy powrocie do domu
+- Integracja z encjami `device_tracker` Home Assistant
+
+**Opóźnienie wejścia/wyjścia**
+- Opóźnienie przed wyzwoleniem alarmu (czas na wyjście)
+- Opóźnienie po wyzwoleniu czujnika (czas na rozbrojenie)
+- Konfigurowalne timery dla każdego trybu
+
+**Strefy bezpieczeństwa**
+- Grupowanie czujników w strefy bezpieczeństwa (piętro 1, piętro 2, obwód)
+- Konfiguracja trybów na strefę
+- Wizualizacja stref w interfejsie
+
+**Historia zdarzeń i logowanie**
+- Pełny dziennik zdarzeń (wyzwolenia, zmiany trybów, rozbrojenia)
+- Filtrowanie według daty, typu zdarzenia, czujnika
+- Eksport do CSV/JSON
+
+#### Średni priorytet
+
+**Integracja z kamerami**
+- Automatyczne przechwytywanie zdjęć przy wyzwoleniu czujnika
+- Wysyłanie zdjęć w powiadomieniach
+- Nagrywanie wideo podczas alarmu
+
+**Dźwiękowe alerty**
+- Sterowanie syrenami/głośnikami przez Home Assistant
+- Różne dźwięki dla różnych typów alarmów
+- Głosowe ogłoszenia
+
+**Zaawansowane powiadomienia**
+- Konfigurowalne szablony wiadomości
+- Poziomy powiadomień (informacja, ostrzeżenie, krytyczne)
+- Integracja z Telegram, Email, SMS
+
+**Statystyki i analityka**
+- Wykresy wyzwaleń czujników w czasie
+- Raport o najbardziej aktywnych czujnikach
+- Śledzenie częstotliwości fałszywych alarmów
+- Czas spędzony w każdym trybie
+
+**Poziomy priorytetu czujników**
+- Krytyczne czujniki (natychmiastowy alarm)
+- Normalne czujniki (z opóźnieniem lub potwierdzeniem)
+- Ignorowane czujniki (tylko logowanie)
+
+**Kopia zapasowa i przywracanie**
+- Automatyczna kopia zapasowa konfiguracji
+- Eksport/import ustawień
+- Przywracanie z kopii zapasowej
+
+**Operacje grupowe**
+- Masowe włączanie/wyłączanie czujników dla trybów
+- Szablony konfiguracji do szybkiej konfiguracji
+
+#### Niski priorytet
+
+**Pulpit nawigacyjny i wizualizacja**
+- Panel statusu systemu
+- Mapa domu z lokalizacjami czujników
+- Przegląd statusu stref
+
+**Obsługa wielu użytkowników**
+- Różne poziomy dostępu
+- Historia działań użytkowników
+- Kody PIN do rozbrojenia
+
+**Testowanie czujników**
+- Ręczny test czujników z interfejsu
+- Zaplanowane automatyczne testowanie
+- Raporty o stanie zdrowia
+
+**Integracje zewnętrzne**
+- Webhooks do integracji z aplikacjami stron trzecich
+- Rozszerzone tematy MQTT
+- API dla aplikacji zewnętrznych
+
+**Uczenie maszynowe**
+- Uczenie się na fałszywych alarmach
+- Automatyczna filtracja znanych wzorców
+- Przewidywanie prawdopodobieństwa rzeczywistego włamania
+
+---
+
+<a name="belarusian"></a>
+# 🇧🇾 Беларуская
+
+Дадатак AlarmMe для Home Assistant.
+
+## Апісанне
+
+AlarmMe — гэта комплексны дадатак для кіравання сігналізацыяй для Home Assistant, які забяспечвае інтэлектуальнае выяўленне ўзломаў, маніторынг датчыкаў і апавяшчэнні. Дадатак аўтаматычна адсочвае датчыкі руху, занятасці і прысутнасці, выяўляе ўзломы, калі сістэма ўзброена, і адпраўляе папярэджанні на ўсе мабільныя прылады.
+
+## Устаноўка
+
+1. Дадайце рэпазіторый у Home Assistant:
+   - Перайдзіце ў **Налады** → **Дадаткі** → **Рэпазіторыі**
+   - Дадайце: `https://github.com/wargotik/wargot-ha-addons`
+   - Націсніце **Дадаць**
+
+2. Усталюйце дадатак:
+   - Перайдзіце ў **Налады** → **Дадаткі**
+   - Знайдзіце **AlarmMe** у спісе
+   - Націсніце **Усталяваць**
+
+## Канфігурацыя
+
+Пасля ўстаноўкі дадатак гатовы да выкарыстання. Дадатковая канфігурацыя не патрабуецца.
+
+## Выкарыстанне
+
+1. Запусціце дадатак праз укладку **Інфармацыя**
+2. Адкрыйце вэб-інтэрфейс праз укладку **Адкрыць вэб-інтэрфейс** або праз Ingress
+
+## Магчымасці
+
+### Асноўная функцыянальнасць
+
+- **🖥️ Сучасны вэб-інтэрфейс**: Чысты, адаптыўны вэб-інтэрфейс для кіравання сістэмай сігналізацыі
+- **🔄 Фонавы маніторынг датчыкаў**: Аўтаматычна апытвае датчыкі кожныя 5 секунд, нават калі вэб-старонка закрыта
+- **📊 База даных SQLite**: Пастаяннае сховішча для канфігурацый датчыкаў, гісторыі спрацоўванняў і налад
+- **🏠 Інтэграцыя з Home Assistant**: Бесшовная інтэграцыя з Home Assistant праз REST API і карыстацкую інтэграцыю
+
+### Рэжымы працы сігналізацыі
+
+Дадатак падтрымлівае два ўзаемавыключальныя рэжымы працы сігналізацыі, кожны з якіх прызначаны для розных сцэнарыяў бяспекі:
+
+#### 🚪 Рэжым адсутнасці (Away Mode)
+
+**Прызначэнне**: Актывуецца, калі вы пайшлі з дому (праца, адпачынак, справы).
+
+**Сцэнарыі выкарыстання**:
+- Вы на працы ў працягу дня
+- Вы ў адпачынку
+- Вы выконваеце справы
+- Любы час, калі дом павінен быць цалкам пустым
+
+**Тыповая канфігурацыя датчыкаў**:
+- ✅ **Уключыце ўсе датчыкі** у рэжыме адсутнасці (датчыкі руху, занятасці, прысутнасці ва ўсіх пакоях)
+- ✅ **Уключыце датчыкі ва ўсіх зонах**: гасціная, спальні, кухня, калідор і г.д.
+- ✅ **Максімальная бяспека**: Любое выяўленае рух выклікае трывогу
+
+**Прыклад сцэнарыя**:
+```
+Вы ідзеце на працу а 8:00:
+1. Актывуйце "Рэжым адсутнасці" ў дадатку
+2. Усе датчыкі цяпер актыўныя (калі ўключаны для рэжыму адсутнасці)
+3. Калі хто-небудзь увойдзе ў дом, спрацоўванне любога датчыка адправіць папярэджанне:
+   "⚠️ ПРАРЫЎ Гасціная! Спрацаваў датчык: Датчык руху ў гасцінай"
+```
+
+#### 🌙 Начны рэжым (Night Mode)
+
+**Прызначэнне**: Актывуецца, калі вы дома ўначы і спіце.
+
+**Сцэнарыі выкарыстання**:
+- Начны час, калі вы спіце
+- Вы хочаце кантраляваць кропкі ўваходу, але не ўнутраны рух
+- Вы хочаце пазбегнуць ілжывых трывог ад хатніх жывёл або членаў сям'і
+
+**Тыповая канфігурацыя датчыкаў**:
+- ✅ **Уключыце датчыкі кропак ўваходу**: ўваходныя дзверы, заднія дзверы, вокны, калідор
+- ❌ **Выключыце датчыкі ў спальні**: каб пазбегнуць ілжывых трывог пры руху ў ложку
+- ❌ **Выключыце датчыкі ў ваннай**: каб пазбегнуць ілжывых трывог уначы
+- ✅ **Уключыце перыметральныя датчыкі**: дзверы, вокны, асноўныя зоны
+
+**Прыклад сцэнарыя**:
+```
+Вы кладзецеся спаць а 23:00:
+1. Актывуйце "Начны рэжым" ў дадатку
+2. Актыўныя толькі датчыкі, уключаныя для начнага рэжыму
+3. Датчык у спальні выключаны (не спрацуе, калі вы парушыцеся)
+4. Датчык на ўваходных дзвярах уключаны (спрацуе, калі дзверы адкрыюцца)
+5. Калі хто-небудзь прарвецца праз ўваходныя дзверы:
+   "⚠️ ПРАРЫЎ Прыхожая! Спрацаваў датчык: Датчык на ўваходных дзвярах"
+```
+
+#### ⚙️ Паводзіны рэжымаў
+
+- **Узаемавыключальныя**: Толькі адзін рэжым можа быць актыўным адначасова (Выключаны, Адсутнасць або Ноч)
+- **Аўтаматычнае пераключэнне**: Актывацыя аднаго рэжыму аўтаматычна дэактывуе другі
+- **Тры станы**: 
+  - **Выключаны**: Абодва рэжымы выключаны, выяўленне ўзломаў не працуе
+  - **Адсутнасць**: Рэжым адсутнасці актыўны, начны рэжым выключаны
+  - **Ноч**: Начны рэжым актыўны, рэжым адсутнасці выключаны
+- **💾 Лакальнае захоўванне станаў**: Станы пераключальнікаў захоўваюцца пасля перазапускаў у `/data/switches_state.json`
+
+#### 🎯 Індывідуальная канфігурацыя датчыкаў для кожнага рэжыму
+
+Кожны датчык можа быць індывідуальна настроены для кожнага рэжыму:
+
+- **Датчык A**: Уключаны ў рэжыме адсутнасці ✅, Выключаны ў начным рэжыме ❌
+  - Будзе выклікаць трывогі толькі калі актыўны рэжым адсутнасці
+  
+- **Датчык B**: Выключаны ў рэжыме адсутнасці ❌, Уключаны ў начным рэжыме ✅
+  - Будзе выклікаць трывогі толькі калі актыўны начны рэжым
+  
+- **Датчык C**: Уключаны ў абодвух рэжымах ✅ ✅
+  - Будзе выклікаць трывогі як у рэжыме адсутнасці, так і ў начным рэжыме
+
+**Прыклад канфігурацыі**:
+```
+Датчык руху ў спальні:
+  - Рэжым адсутнасці: ✅ Уключаны (важны, калі вас няма)
+  - Начны рэжым: ❌ Выключаны (каб пазбегнуць ілжывых трывог падчас сну)
+
+Датчык на ўваходных дзвярах:
+  - Рэжым адсутнасці: ✅ Уключаны (заўсёды важны)
+  - Начны рэжым: ✅ Уключаны (заўсёды важны)
+
+Датчык у ваннай:
+  - Рэжым адсутнасці: ✅ Уключаны (кантралюйце ўсе зоны, калі вас няма)
+  - Начны рэжым: ❌ Выключаны (нармальнае начнае выкарыстанне)
+```
+
+### Кіраванне датчыкамі
+
+- **🔍 Аўтаматычнае выяўленне датчыкаў**: Аўтаматычна выяўляе і захоўвае датчыкі руху, перамяшчэння, занятасці і прысутнасці
+- **📍 Падтрымка зон/прастораў**: Аўтаматычна атрымлівае і адлюстроўвае пакой/зону, дзе знаходзіцца кожны датчык
+- **⚡ Выяўленне спрацоўванняў датчыкаў**: Выяўляе, калі датчыкі пераходзяць са стану "выключаны" у "уключаны"
+- **📝 Гісторыя спрацоўванняў**: Адсочвае і адлюстроўвае дакладны час апошняга спрацоўвання датчыка
+- **🎯 Індывідуальная канфігурацыя рэжымаў для кожнага датчыка**: Уключэнне/выключэнне асобных датчыкаў для рэжыму адсутнасці або начнага рэжыму
+- **💾 Аўтазахаванне**: Новыя датчыкі аўтаматычна захоўваюцца ў базу даных пры выяўленні
+
+### Выяўленне ўзломаў
+
+- **🚨 Інтэлектуальнае выяўленне ўзломаў**: Аўтаматычна выяўляе ўзломы, калі:
+  - Дадатак знаходзіцца ў рэжыме адсутнасці або начным рэжыме
+  - Датчык спрацоўвае (стан = "уключаны")
+  - Датчык уключаны для бягучага рэжыму
+- **📱 Шматканальныя апавяшчэнні**: Адпраўляе папярэджанні праз:
+  - Усе даступныя мабільныя прылады (iPhone/Android)
+  - Пастаянныя апавяшчэнні ў інтэрфейсе Home Assistant
+- **🔘 Інтэрактыўныя апавяшчэнні**: Мабільныя апавяшчэнні ўключаюць кнопку "Выключыць трывогу"
+- **📍 Кантэкстныя папярэджанні**: Паведамленні аб трывозе ўключаюць зону/прастору датчыка для лепшага кантэксту:
+  - Фармат: "⚠️ ПРАРЫЎ {зона}! Спрацаваў датчык: {назва_датчыка}"
+
+### Апавяшчэнні
+
+- **📱 Аўтаматычнае выяўленне прылад**: Аўтаматычна выяўляе і адпраўляе на ўсе даступныя мабільныя прылады
+- **🔔 Пастаянныя апавяшчэнні**: Апцыянальныя пастаянныя апавяшчэнні ў інтэрфейсе Home Assistant
+- **⚙️ Інтэрактыўныя апавяшчэнні**: Інтэрактыўныя кнопкі ў мабільных апавяшчэннях (iOS/Android)
+- **📊 Лагаванне апавяшчэнняў**: Падрабязнае лагаванне для адладкі дастаўкі апавяшчэнняў
+
+### Інтэрфейс карыстальніка
+
+- **📱 Адаптыўны дызайн**: Працуе на настольных камп'ютарах, планшэтах і мабільных прыладах
+- **🎨 Сучасны інтэрфейс**: Чысты, інтуітыўны інтэрфейс з каляровымі індыкатарамі статусу
+- **🔄 Абнаўленні ў рэальным часе**: Жывыя абнаўленні станаў датчыкаў, рэжымаў пераключальнікаў і часу фонавага апытання
+- **📊 Значкі статусу**: Візуальныя індыкатары для:
+  - Статусу падлучэння REST API
+  - Часу фонавага апытання датчыкаў
+  - Бягучага рэжыму сігналізацыі
+- **🖼️ Іконка дадатку**: Падтрымка карыстацкай іконкі, якая адлюстроўваецца ў загалоўку вэб-інтэрфейсу
+
+### Тэхнічныя магчымасці
+
+- **🔌 REST API**: Поўнае REST API для праграмнага кіравання і інтэграцыі
+- **📝 Падрабязнае лагаванне**: Падрабязнае лагаванне ўсіх аперацый і памылак
+- **⚡ Аптымізацыя прадукцыйнасці**: Кэшаванне інфармацыі пра зоны, эфектыўныя запыты да базы даных
+- **🔄 Сінхранізацыя станаў**: Аўтаматычная сінхранізацыя паміж Home Assistant і лакальным сховішчам
+- **🌐 Падтрымка Ingress**: Даступны праз Home Assistant Ingress (не патрабуе праброс портаў)
+
+## Roadmap
+
+Гэты roadmap апісвае бягучыя функцыі і запланаваныя паляпшэнні, адсартаваныя па прыярытэце і важнасці.
+
+### ✅ Рэалізаваныя функцыі
+
+#### Асноўная функцыянальнасць (Высокі прыярытэт)
+- ✅ **Сучасны вэб-інтэрфейс** - Чысты, адаптыўны вэб-інтэрфейс для кіравання сістэмай сігналізацыі
+- ✅ **Фонавы маніторынг датчыкаў** - Аўтаматычна апытвае датчыкі кожныя 5 секунд, працуе нават калі вэб-старонка закрыта
+- ✅ **База даных SQLite** - Пастаяннае сховішча для канфігурацый датчыкаў, гісторыі спрацоўванняў і налад
+- ✅ **Інтэграцыя з Home Assistant** - Бесшовная інтэграцыя праз REST API і карыстацкую інтэграцыю
+- ✅ **REST API** - Поўнае REST API для праграмнага кіравання і інтэграцыі
+- ✅ **Падтрымка Ingress** - Даступны праз Home Assistant Ingress (не патрабуе праброс портаў)
+
+#### Рэжымы працы сігналізацыі (Высокі прыярытэт)
+- ✅ **Два рэжымы працы** - Рэжым адсутнасці і Начны рэжым з узаемавыключальнай працай
+- ✅ **Захаванне станаў рэжымаў** - Станы пераключальнікаў захоўваюцца пасля перазапускаў у `/data/switches_state.json`
+- ✅ **Аўтаматычнае пераключэнне рэжымаў** - Актывацыя аднаго рэжыму аўтаматычна дэактывуе другі
+- ✅ **Лакальнае захоўванне станаў** - Працуе нават калі Home Assistant недаступны
+
+#### Кіраванне датчыкамі (Высокі прыярытэт)
+- ✅ **Аўтаматычнае выяўленне датчыкаў** - Аўтаматычна выяўляе і захоўвае датчыкі руху, перамяшчэння, занятасці і прысутнасці
+- ✅ **Падтрымка зон/прастораў** - Аўтаматычна атрымлівае і адлюстроўвае пакой/зону, дзе знаходзіцца кожны датчык
+- ✅ **Выяўленне спрацоўванняў датчыкаў** - Выяўляе, калі датчыкі пераходзяць са стану "выключаны" у "уключаны"
+- ✅ **Гісторыя спрацоўванняў** - Адсочвае і адлюстроўвае дакладны час апошняга спрацоўвання датчыка
+- ✅ **Індывідуальная канфігурацыя рэжымаў для кожнага датчыка** - Уключэнне/выключэнне асобных датчыкаў для рэжыму адсутнасці або начнага рэжыму
+- ✅ **Аўтазахаванне** - Новыя датчыкі аўтаматычна захоўваюцца ў базу даных пры выяўленні
+
+#### Выяўленне ўзломаў (Высокі прыярытэт)
+- ✅ **Інтэлектуальнае выяўленне ўзломаў** - Аўтаматычна выяўляе ўзломы на аснове рэжыму і канфігурацыі датчыкаў
+- ✅ **Кантэкстныя папярэджанні** - Паведамленні аб трывозе ўключаюць зону/прастору датчыка для лепшага кантэксту
+- ✅ **Шматканальныя апавяшчэнні** - Адпраўляе папярэджанні на ўсе даступныя мабільныя прылады і пастаянныя апавяшчэнні
+
+#### Апавяшчэнні (Высокі прыярытэт)
+- ✅ **Аўтаматычнае выяўленне прылад** - Аўтаматычна выяўляе і адпраўляе на ўсе даступныя мабільныя прылады
+- ✅ **Пастаянныя апавяшчэнні** - Апцыянальныя пастаянныя апавяшчэнні ў інтэрфейсе Home Assistant
+- ✅ **Інтэрактыўныя апавяшчэнні** - Інтэрактыўныя кнопкі ў мабільных апавяшчэннях (iOS/Android) з дзеяннем "Выключыць трывогу"
+- ✅ **Лагаванне апавяшчэнняў** - Падрабязнае лагаванне для адладкі дастаўкі апавяшчэнняў
+
+#### Інтэрфейс карыстальніка (Сярэдні прыярытэт)
+- ✅ **Адаптыўны дызайн** - Працуе на настольных камп'ютарах, планшэтах і мабільных прыладах
+- ✅ **Абнаўленні ў рэальным часе** - Жывыя абнаўленні станаў датчыкаў, рэжымаў пераключальнікаў і часу фонавага апытання
+- ✅ **Значкі статусу** - Візуальныя індыкатары для статусу падлучэння REST API, часу фонавага апытання датчыкаў і бягучага рэжыму сігналізацыі
+- ✅ **Іконка дадатку** - Падтрымка карыстацкай іконкі, якая адлюстроўваецца ў загалоўку вэб-інтэрфейсу
+
+#### Тэхнічныя магчымасці (Сярэдні прыярытэт)
+- ✅ **Падрабязнае лагаванне** - Падрабязнае лагаванне ўсіх аперацый і памылак
+- ✅ **Аптымізацыя прадукцыйнасці** - Кэшаванне інфармацыі пра зоны, эфектыўныя запыты да базы даных
+- ✅ **Сінхранізацыя станаў** - Аўтаматычная сінхранізацыя паміж Home Assistant і лакальным сховішчам
+
+---
+
+### 🚧 Запланаваныя функцыі
+
+#### Высокі прыярытэт
+
+**Аўтаматызацыя па распісанні**
+- Актывацыя па распісанні для рэжыму адсутнасці і начнага рэжыму
+- Падтрымка календара з выключэннямі (выхадныя, святы)
+- Правілы аўтаматызацыі на аснове часу
+
+**Інтэграцыя з геазонай**
+- Аўтаматычная актывацыя рэжыму адсутнасці пры выхадзе з дому
+- Аўтаматычнае адключэнне пры вяртанні дадому
+- Інтэграцыя з сутнасцямі `device_tracker` Home Assistant
+
+**Затрымка на ўваход/выхад**
+- Затрымка перад спрацоўваннем трывогі (час на выхад)
+- Затрымка пасля спрацоўвання датчыка (час на адключэнне)
+- Наладжваемыя таймеры для кожнага рэжыму
+
+**Зоны бяспекі**
+- Групаванне датчыкаў у зоны бяспекі (1-ы паверх, 2-і паверх, перыметр)
+- Канфігурацыя рэжымаў па зонах
+- Візуалізацыя зон у інтэрфейсе
+
+**Гісторыя падзей і лагаванне**
+- Поўны журнал падзей (спрацоўванні, змены рэжымаў, адключэнні)
+- Фільтрацыя па даце, тыпу падзеі, датчыку
+- Экспарт у CSV/JSON
+
+#### Сярэдні прыярытэт
+
+**Інтэграцыя з камерамі**
+- Аўтаматычны здымак пры спрацоўванні датчыка
+- Адпраўка фота ў апавяшчэннях
+- Запіс відэа падчас трывогі
+
+**Гукавыя сігналы**
+- Кіраванне сірэнамі/дынамікамі праз Home Assistant
+- Розныя гукі для розных тыпаў трывог
+- Галасавыя аб'явы
+
+**Пашыраныя апавяшчэнні**
+- Наладжваемыя шаблоны паведамленняў
+- Узроўні апавяшчэнняў (інфармацыя, папярэджанне, крытычна)
+- Інтэграцыя з Telegram, Email, SMS
+
+**Статыстыка і аналітыка**
+- Графікі спрацоўванняў датчыкаў па часе
+- Справаздача пра найбольш актыўныя датчыкі
+- Адсочванне частаты ілжывых спрацоўванняў
+- Час працы ў кожным рэжыме
+
+**Узроўні прыярытэту датчыкаў**
+- Крытычныя датчыкі (неадкладная трывога)
+- Звычайныя датчыкі (з затрымкай або пацвярджэннем)
+- Ігнараваныя датчыкі (толькі лагаванне)
+
+**Рэзервовае капіраванне і аднаўленне**
+- Аўтаматычнае рэзервовае капіраванне канфігурацыі
+- Экспарт/імпарт налад
+- Аднаўленне з рэзервовай копіі
+
+**Групавыя аперацыі**
+- Масавае ўключэнне/выключэнне датчыкаў для рэжымаў
+- Шаблоны канфігурацыі для хуткай наладкі
+
+#### Нізкі прыярытэт
+
+**Панэль кіравання і візуалізацыя**
+- Панэль стану сістэмы
+- Карта дома з размяшчэннем датчыкаў
+- Агляд статусу зон
+
+**Падтрымка некалькіх карыстальнікаў**
+- Розныя ўзроўні доступу
+- Гісторыя дзеянняў карыстальнікаў
+- PIN-коды для адключэння
+
+**Тэставанне датчыкаў**
+- Ручное тэставанне датчыкаў з інтэрфейсу
+- Запланаванае аўтаматычнае тэставанне
+- Справаздачы пра стану здароўя
+
+**Знешнія інтэграцыі**
+- Webhooks для інтэграцый са староннімі прыкладаннямі
+- Пашыраныя MQTT тэмы
+- API для знешніх прыкладанняў
+
+**Машыннае навучанне**
+- Навучанне на ілжывых спрацоўваннях
+- Аўтаматычная фільтрацыя вядомых узораў
+- Прадказанне верагоднасці рэальнага ўзлому
+
+---
+
+<a name="ukrainian"></a>
+# 🇺🇦 Українська
+
+Додаток AlarmMe для Home Assistant.
+
+## Опис
+
+AlarmMe — це комплексний додаток для керування сигналізацією для Home Assistant, який забезпечує інтелектуальне виявлення проникнень, моніторинг датчиків та сповіщення. Додаток автоматично відстежує датчики руху, зайнятості та присутності, виявляє проникнення, коли система активована, і надсилає сповіщення на всі ваші мобільні пристрої.
+
+## Встановлення
+
+1. Додайте репозиторій до Home Assistant:
+   - Перейдіть у **Налаштування** → **Додатки** → **Репозиторії**
+   - Додайте: `https://github.com/wargotik/wargot-ha-addons`
+   - Натисніть **Додати**
+
+2. Встановіть додаток:
+   - Перейдіть у **Налаштування** → **Додатки**
+   - Знайдіть **AlarmMe** у списку
+   - Натисніть **Встановити**
+
+## Конфігурація
+
+Після встановлення додаток готовий до використання. Додаткова конфігурація не потрібна.
+
+## Використання
+
+1. Запустіть додаток через вкладку **Інформація**
+2. Відкрийте веб-інтерфейс через вкладку **Відкрити веб-інтерфейс** або через Ingress
+
+## Можливості
+
+### Основна функціональність
+
+- **🖥️ Сучасний веб-інтерфейс**: Чистий, адаптивний веб-інтерфейс для керування системою сигналізації
+- **🔄 Фоновий моніторинг датчиків**: Автоматично опитує датчики кожні 5 секунд, навіть коли веб-сторінка закрита
+- **📊 База даних SQLite**: Постійне сховище для конфігурацій датчиків, історії спрацювань та налаштувань
+- **🏠 Інтеграція з Home Assistant**: Безшовна інтеграція з Home Assistant через REST API та користувацьку інтеграцію
+
+### Режими роботи сигналізації
+
+Додаток підтримує два взаємовиключні режими роботи сигналізації, кожен з яких призначений для різних сценаріїв безпеки:
+
+#### 🚪 Режим відсутності (Away Mode)
+
+**Призначення**: Активується, коли ви пішли з дому (робота, відпустка, справи).
+
+**Сценарії використання**:
+- Ви на роботі протягом дня
+- Ви у відпустці
+- Ви виконуєте справи
+- Будь-який час, коли будинок має бути повністю порожнім
+
+**Типова конфігурація датчиків**:
+- ✅ **Увімкніть усі датчики** у режимі відсутності (датчики руху, зайнятості, присутності у всіх кімнатах)
+- ✅ **Увімкніть датчики у всіх зонах**: вітальня, спальні, кухня, коридор тощо
+- ✅ **Максимальна безпека**: Будь-який виявлений рух викликає тривогу
+
+**Приклад сценарію**:
+```
+Ви йдете на роботу о 8:00:
+1. Активуйте "Режим відсутності" у додатку
+2. Усі датчики тепер активні (якщо увімкнені для режиму відсутності)
+3. Якщо хтось увійде до будинку, спрацювання будь-якого датчика надішле сповіщення:
+   "⚠️ ПРОНИКНЕННЯ Вітальня! Спрацював датчик: Датчик руху у вітальні"
+```
+
+#### 🌙 Нічний режим (Night Mode)
+
+**Призначення**: Активується, коли ви вдома вночі та спите.
+
+**Сценарії використання**:
+- Нічний час, коли ви спите
+- Ви хочете контролювати точки входу, але не внутрішній рух
+- Ви хочете уникнути хибних тривог від домашніх тварин або членів сім'ї
+
+**Типова конфігурація датчиків**:
+- ✅ **Увімкніть датчики точок входу**: вхідні двері, задні двері, вікна, коридор
+- ❌ **Вимкніть датчики у спальні**: щоб уникнути хибних тривог при русі в ліжку
+- ❌ **Вимкніть датчики у ванній**: щоб уникнути хибних тривог вночі
+- ✅ **Увімкніть периметральні датчики**: двері, вікна, основні зони
+
+**Приклад сценарію**:
+```
+Ви лягаєте спати о 23:00:
+1. Активуйте "Нічний режим" у додатку
+2. Активні лише датчики, увімкнені для нічного режиму
+3. Датчик у спальні вимкнений (не спрацює, якщо ви порушитеся)
+4. Датчик на вхідних дверах увімкнений (спрацює, якщо двері відкриються)
+5. Якщо хтось проникне через вхідні двері:
+   "⚠️ ПРОНИКНЕННЯ Передпокій! Спрацював датчик: Датчик на вхідних дверах"
+```
+
+#### ⚙️ Поведінка режимів
+
+- **Взаємовиключні**: Лише один режим може бути активним одночасно (Вимкнено, Режим відсутності або Нічний режим)
+- **Автоматичне перемикання**: Активування одного режиму автоматично деактивує інший
+- **Три стани**: 
+  - **Вимкнено**: Обидва режими вимкнені, виявлення проникнень не працює
+  - **Режим відсутності**: Режим відсутності активний, нічний режим вимкнений
+  - **Нічний режим**: Нічний режим активний, режим відсутності вимкнений
+- **💾 Локальне зберігання станів**: Стани перемикачів зберігаються після перезапусків у `/data/switches_state.json`
+
+#### 🎯 Індивідуальна конфігурація датчиків для кожного режиму
+
+Кожен датчик може бути індивідуально налаштований для кожного режиму:
+
+- **Датчик A**: Увімкнений у режимі відсутності ✅, Вимкнений у нічному режимі ❌
+  - Буде викликати тривоги лише коли активний режим відсутності
+  
+- **Датчик B**: Вимкнений у режимі відсутності ❌, Увімкнений у нічному режимі ✅
+  - Буде викликати тривоги лише коли активний нічний режим
+  
+- **Датчик C**: Увімкнений у обох режимах ✅ ✅
+  - Буде викликати тривоги як у режимі відсутності, так і у нічному режимі
+
+**Приклад конфігурації**:
+```
+Датчик руху у спальні:
+  - Режим відсутності: ✅ Увімкнений (важливий, коли вас немає)
+  - Нічний режим: ❌ Вимкнений (щоб уникнути хибних тривог під час сну)
+
+Датчик на вхідних дверах:
+  - Режим відсутності: ✅ Увімкнений (завжди важливий)
+  - Нічний режим: ✅ Увімкнений (завжди важливий)
+
+Датчик у ванній:
+  - Режим відсутності: ✅ Увімкнений (контролюйте всі зони, коли вас немає)
+  - Нічний режим: ❌ Вимкнений (нормальне нічне використання)
+```
+
+### Керування датчиками
+
+- **🔍 Автоматичне виявлення датчиків**: Автоматично виявляє та зберігає датчики руху, переміщення, зайнятості та присутності
+- **📍 Підтримка зон/просторів**: Автоматично отримує та відображає кімнату/зону, де знаходиться кожен датчик
+- **⚡ Виявлення спрацювань датчиків**: Виявляє, коли датчики переходять зі стану "вимкнено" у "увімкнено"
+- **📝 Історія спрацювань**: Відстежує та відображає точний час останнього спрацювання датчика
+- **🎯 Індивідуальна конфігурація режимів для кожного датчика**: Увімкнення/вимкнення окремих датчиків для режиму відсутності або нічного режиму
+- **💾 Автозбереження**: Нові датчики автоматично зберігаються до бази даних при виявленні
+
+### Виявлення проникнень
+
+- **🚨 Інтелектуальне виявлення проникнень**: Автоматично виявляє проникнення, коли:
+  - Додаток знаходиться у режимі відсутності або нічному режимі
+  - Датчик спрацював (стан = "увімкнено")
+  - Датчик увімкнений для поточного режиму
+- **📱 Багатоканальні сповіщення**: Надсилає попередження через:
+  - Всі доступні мобільні пристрої (iPhone/Android)
+  - Постійні сповіщення в інтерфейсі Home Assistant
+- **🔘 Інтерактивні сповіщення**: Мобільні сповіщення включають кнопку "Вимкнути тривогу"
+- **📍 Контекстні попередження**: Повідомлення про тривогу включають зону/простір датчика для кращого контексту:
+  - Формат: "⚠️ ПРОНИКНЕННЯ {зона}! Спрацював датчик: {назва_датчика}"
+
+### Сповіщення
+
+- **📱 Автоматичне виявлення пристроїв**: Автоматично виявляє та надсилає на всі доступні мобільні пристрої
+- **🔔 Постійні сповіщення**: Опціональні постійні сповіщення в інтерфейсі Home Assistant
+- **⚙️ Інтерактивні сповіщення**: Інтерактивні кнопки у мобільних сповіщеннях (iOS/Android)
+- **📊 Логування сповіщень**: Детальне логування для відлагодження доставки сповіщень
+
+### Інтерфейс користувача
+
+- **📱 Адаптивний дизайн**: Працює на настільних комп'ютерах, планшетах та мобільних пристроях
+- **🎨 Сучасний інтерфейс**: Чистий, інтуїтивний інтерфейс з кольоровими індикаторами статусу
+- **🔄 Оновлення в реальному часі**: Живі оновлення станів датчиків, режимів перемикачів та часу фонового опитування
+- **📊 Значки статусу**: Візуальні індикатори для:
+  - Статусу підключення REST API
+  - Часу фонового опитування датчиків
+  - Поточного режиму сигналізації
+- **🖼️ Іконка додатку**: Підтримка користувацької іконки, що відображається у заголовку веб-інтерфейсу
+
+### Технічні можливості
+
+- **🔌 REST API**: Повне REST API для програмного керування та інтеграції
+- **📝 Детальне логування**: Детальне логування всіх операцій та помилок
+- **⚡ Оптимізація продуктивності**: Кешування інформації про зони, ефективні запити до бази даних
+- **🔄 Синхронізація станів**: Автоматична синхронізація між Home Assistant та локальним сховищем
+- **🌐 Підтримка Ingress**: Доступний через Home Assistant Ingress (не потрібен проброс портів)
+
+## Roadmap
+
+Цей roadmap описує поточні функції та заплановані покращення, відсортовані за пріоритетом та важливістю.
+
+### ✅ Реалізовані функції
+
+#### Основна функціональність (Високий пріоритет)
+- ✅ **Сучасний веб-інтерфейс** - Чистий, адаптивний веб-інтерфейс для керування системою сигналізації
+- ✅ **Фоновий моніторинг датчиків** - Автоматично опитує датчики кожні 5 секунд, працює навіть коли веб-сторінка закрита
+- ✅ **База даних SQLite** - Постійне сховище для конфігурацій датчиків, історії спрацювань та налаштувань
+- ✅ **Інтеграція з Home Assistant** - Безшовна інтеграція через REST API та користувацьку інтеграцію
+- ✅ **REST API** - Повне REST API для програмного керування та інтеграції
+- ✅ **Підтримка Ingress** - Доступний через Home Assistant Ingress (не потрібен проброс портів)
+
+#### Режими роботи сигналізації (Високий пріоритет)
+- ✅ **Два режими роботи** - Режим відсутності та Нічний режим з взаємовиключною роботою
+- ✅ **Збереження станів режимів** - Стани перемикачів зберігаються після перезапусків у `/data/switches_state.json`
+- ✅ **Автоматичне перемикання режимів** - Активування одного режиму автоматично деактивує інший
+- ✅ **Локальне зберігання станів** - Працює навіть коли Home Assistant недоступний
+
+#### Керування датчиками (Високий пріоритет)
+- ✅ **Автоматичне виявлення датчиків** - Автоматично виявляє та зберігає датчики руху, переміщення, зайнятості та присутності
+- ✅ **Підтримка зон/просторів** - Автоматично отримує та відображає кімнату/зону, де знаходиться кожен датчик
+- ✅ **Виявлення спрацювань датчиків** - Виявляє, коли датчики переходять зі стану "вимкнено" у "увімкнено"
+- ✅ **Історія спрацювань** - Відстежує та відображає точний час останнього спрацювання датчика
+- ✅ **Індивідуальна конфігурація режимів для кожного датчика** - Увімкнення/вимкнення окремих датчиків для режиму відсутності або нічного режиму
+- ✅ **Автозбереження** - Нові датчики автоматично зберігаються до бази даних при виявленні
+
+#### Виявлення проникнень (Високий пріоритет)
+- ✅ **Інтелектуальне виявлення проникнень** - Автоматично виявляє проникнення на основі режиму та конфігурації датчиків
+- ✅ **Контекстні попередження** - Повідомлення про тривогу включають зону/простір датчика для кращого контексту
+- ✅ **Багатоканальні сповіщення** - Надсилає попередження на всі доступні мобільні пристрої та постійні сповіщення
+
+#### Сповіщення (Високий пріоритет)
+- ✅ **Автоматичне виявлення пристроїв** - Автоматично виявляє та надсилає на всі доступні мобільні пристрої
+- ✅ **Постійні сповіщення** - Опціональні постійні сповіщення в інтерфейсі Home Assistant
+- ✅ **Інтерактивні сповіщення** - Інтерактивні кнопки у мобільних сповіщеннях (iOS/Android) з дією "Вимкнути тривогу"
+- ✅ **Логування сповіщень** - Детальне логування для відлагодження доставки сповіщень
+
+#### Інтерфейс користувача (Середній пріоритет)
+- ✅ **Адаптивний дизайн** - Працює на настільних комп'ютерах, планшетах та мобільних пристроях
+- ✅ **Оновлення в реальному часі** - Живі оновлення станів датчиків, режимів перемикачів та часу фонового опитування
+- ✅ **Значки статусу** - Візуальні індикатори для статусу підключення REST API, часу фонового опитування датчиків та поточного режиму сигналізації
+- ✅ **Іконка додатку** - Підтримка користувацької іконки, що відображається у заголовку веб-інтерфейсу
+
+#### Технічні можливості (Середній пріоритет)
+- ✅ **Детальне логування** - Детальне логування всіх операцій та помилок
+- ✅ **Оптимізація продуктивності** - Кешування інформації про зони, ефективні запити до бази даних
+- ✅ **Синхронізація станів** - Автоматична синхронізація між Home Assistant та локальним сховищем
+
+---
+
+### 🚧 Заплановані функції
+
+#### Високий пріоритет
+
+**Автоматизація за розкладом**
+- Активування за розкладом для режиму відсутності та нічного режиму
+- Підтримка календаря з винятками (вихідні, свята)
+- Правила автоматизації на основі часу
+
+**Інтеграція з геозоною**
+- Автоматична активування режиму відсутності при виході з дому
+- Автоматичне відключення при поверненні додому
+- Інтеграція з сутностями `device_tracker` Home Assistant
+
+**Затримка на вхід/вихід**
+- Затримка перед спрацюванням тривоги (час на вихід)
+- Затримка після спрацювання датчика (час на відключення)
+- Налаштовувані таймери для кожного режиму
+
+**Зони безпеки**
+- Групування датчиків у зони безпеки (1-й поверх, 2-й поверх, периметр)
+- Конфігурація режимів по зонах
+- Візуалізація зон в інтерфейсі
+
+**Історія подій та логування**
+- Повний журнал подій (спрацювання, зміни режимів, відключення)
+- Фільтрація за датою, типом події, датчиком
+- Експорт у CSV/JSON
+
+#### Середній пріоритет
+
+**Інтеграція з камерами**
+- Автоматичний знімок при спрацюванні датчика
+- Надсилання фото у сповіщеннях
+- Запис відео під час тривоги
+
+**Звукові сигнали**
+- Керування сиренами/динаміками через Home Assistant
+- Різні звуки для різних типів тривог
+- Голосові оголошення
+
+**Розширені сповіщення**
+- Налаштовувані шаблони повідомлень
+- Рівні сповіщень (інформація, попередження, критично)
+- Інтеграція з Telegram, Email, SMS
+
+**Статистика та аналітика**
+- Графіки спрацювань датчиків за часом
+- Звіт про найбільш активні датчики
+- Відстеження частоти хибних спрацювань
+- Час роботи в кожному режимі
+
+**Рівні пріоритету датчиків**
+- Критичні датчики (негайна тривога)
+- Звичайні датчики (з затримкою або підтвердженням)
+- Ігноровані датчики (лише логування)
+
+**Резервне копіювання та відновлення**
+- Автоматичне резервне копіювання конфігурації
+- Експорт/імпорт налаштувань
+- Відновлення з резервної копії
+
+**Групові операції**
+- Масове увімкнення/вимкнення датчиків для режимів
+- Шаблони конфігурації для швидкого налаштування
+
+#### Низький пріоритет
+
+**Панель керування та візуалізація**
+- Панель стану системи
+- Карта будинку з розташуванням датчиків
+- Огляд статусу зон
+
+**Підтримка кількох користувачів**
+- Різні рівні доступу
+- Історія дій користувачів
+- PIN-коди для відключення
+
+**Тестування датчиків**
+- Ручне тестування датчиків з інтерфейсу
+- Заплановане автоматичне тестування
+- Звіти про стан здоров'я
+
+**Зовнішні інтеграції**
+- Webhooks для інтеграцій із сторонніми додатками
+- Розширені MQTT теми
+- API для зовнішніх додатків
+
+**Машинне навчання**
+- Навчання на хибних спрацюваннях
+- Автоматична фільтрація відомих патернів
+- Передбачення ймовірності реального проникнення
 
 ---
 
