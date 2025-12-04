@@ -11,16 +11,30 @@ profile alarmme flags=(attach_disconnected,mediate_deleted) {
   /data/** rw,
   /data/ rw,
   
-  # Application files - full access for Python
+  # Application files - CRITICAL: Must have full access for Python imports
+  # Full read, map, and execute access to all files in /app/
   /app/** rmix,
+  /app/ r,
+  /app r,
+  
+  # Explicit Python file execution permissions (redundant but ensures clarity)
+  /app/*.py rmix,
+  /app/**/*.py rmix,
+  /app/web_server.py rmix,
+  /app/main.py rmix,
+  /app/database.py rmix,
+  /app/switches.py rmix,
+  /app/sensor_monitor.py rmix,
   
   # Config access
   /config.json r,
   /data/options.json r,
   
-  # Python interpreter and libraries - simplified, more permissive
+  # Python interpreter and libraries
   /usr/bin/python* ix,
+  /usr/bin/python3* ix,
   /usr/local/bin/python* ix,
+  /usr/local/bin/python3* ix,
   
   # Python standard library - CRITICAL: Must come BEFORE general /usr/lib rules
   # Full access to Python standard library (read, map, execute)

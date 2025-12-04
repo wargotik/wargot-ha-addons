@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.20] - 2025-01-30
+
+### Fixed
+- **Application files access (enhanced)**: Added explicit permissions for all application Python files
+- Added explicit rules for key Python modules: `web_server.py`, `main.py`, `database.py`, `switches.py`, `sensor_monitor.py`
+- Added access to `/app/` directory itself for Python to read directory listings
+- Added both `/usr/bin/python3*` and `/usr/local/bin/python3*` paths
+- Enhanced `/app/** rmix` rule with additional explicit file permissions
+- This should fix `ModuleNotFoundError: No module named 'web_server'` error
+
 ## [0.7.19] - 2025-01-30
 
 ### Fixed
