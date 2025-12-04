@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.9] - 2025-01-30
+
+### Fixed
+- **AppArmor application files access**: Fixed `ModuleNotFoundError: No module named 'web_server'` error
+- Changed `/app/** r` to `/app/** rmix` to allow Python to read, map, and execute files for imports
+- Added explicit execute permissions for all Python files in `/app/` directory
+- Python can now import modules from `/app/` directory (web_server, switches, sensor_monitor, etc.)
+- Fixed application module import errors
+
 ## [0.7.8] - 2025-01-30
 
 ### Fixed
