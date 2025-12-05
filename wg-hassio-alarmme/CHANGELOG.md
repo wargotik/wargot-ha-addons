@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.7] - 2025-12-04
+
+### Added
+- **Documentation**:
+  - Added "Supported Devices" section translations for all remaining languages in README.md
+  - Added German (Deutsch) translation for "Supported Devices" section
+  - Added French (Français) translation for "Supported Devices" section
+  - Added Spanish (Español) translation for "Supported Devices" section
+  - Added Italian (Italiano) translation for "Supported Devices" section
+  - Added Dutch (Nederlands) translation for "Supported Devices" section
+  - Added Portuguese (Português) translation for "Supported Devices" section
+  - Added Czech (Čeština) translation for "Supported Devices" section
+  - Added Swedish (Svenska) translation for "Supported Devices" section
+  - Added Norwegian (Norsk) translation for "Supported Devices" section
+  - Added Danish (Dansk) translation for "Supported Devices" section
+  - Added Turkish (Türkçe) translation for "Supported Devices" section
+  - Added Japanese (日本語) translation for "Supported Devices" section
+  - Added Chinese (中文) translation for "Supported Devices" section
+  - Complete multilingual coverage for all 18 supported languages
+
+### Technical Details
+- All 18 language sections now include detailed device support information
+- Consistent documentation structure across all supported languages
+- Each language section includes translations for binary sensors, cameras, and device requirements
+
+## [0.9.6] - 2025-12-04
+
+### Added
+- **Documentation**:
+  - Added "Supported Devices" section translations for all languages in README.md
+  - Added Polish (Polski) translation for "Supported Devices" section
+  - Added Belarusian (Беларуская) translation for "Supported Devices" section
+  - Added Ukrainian (Українська) translation for "Supported Devices" section
+  - Complete multilingual coverage for device support documentation
+
+### Technical Details
+- All language sections now include detailed device support information
+- Consistent documentation structure across all supported languages
+
+## [0.9.5] - 2025-12-04
+
+### Changed
+- **Documentation**:
+  - Clarified camera motion detection requirements in README.md
+  - Updated camera section to explicitly state that cameras must have `motion_detection = True` and `motion_video_time` attribute
+  - Added note that cameras are treated as `device_class: moving` sensors
+  - Updated Russian translation with same clarifications
+
+### Technical Details
+- Verified camera support implementation: cameras are only processed if they have motion detection enabled and motion_video_time attribute
+- Cameras without motion detection are automatically skipped during sensor polling
+
+## [0.9.4] - 2025-12-04
+
+### Added
+- **Documentation**:
+  - Added "Supported Devices" section to README.md
+  - Documented all supported binary sensor types (motion, moving, occupancy, presence)
+  - Documented camera motion detection support
+  - Added device requirements and examples for each device type
+  - Added Russian translation for the "Supported Devices" section
+
+### Technical Details
+- Documented automatic discovery of binary sensors with device_class: motion, moving, occupancy, presence
+- Documented camera entity support with motion_detection and motion_video_time attributes
+- Clarified that no manual template binary sensors are needed for cameras
+
 ## [0.9.3] - 2025-12-04
 
 ### Changed

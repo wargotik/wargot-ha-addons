@@ -21,6 +21,47 @@ AlarmMe add-on for Home Assistant.
 
 AlarmMe is a comprehensive alarm management add-on for Home Assistant that provides intelligent intrusion detection, sensor monitoring, and notification capabilities. The add-on automatically monitors motion, occupancy, and presence sensors, detects intrusions when the system is armed, and sends alerts to all your mobile devices.
 
+## Supported Devices
+
+The add-on automatically discovers and supports the following device types:
+
+### Binary Sensors
+
+- **Motion Sensors** (`device_class: motion`)
+  - Classic PIR (Passive Infrared) motion detectors
+  - Detects movement in a specific area
+  - Examples: Xiaomi motion sensors, Aqara motion sensors, generic PIR sensors
+
+- **Moving Sensors** (`device_class: moving`)
+  - Detects moving objects (cameras with motion detection, radar sensors)
+  - Examples: Camera motion detection, radar-based motion sensors
+
+- **Occupancy Sensors** (`device_class: occupancy`)
+  - Zone occupancy detection with delay
+  - Combination of motion and presence detection
+  - Examples: mmWave occupancy sensors, advanced presence detectors
+
+- **Presence Sensors** (`device_class: presence`)
+  - Static human presence detection
+  - Can detect breathing and stationary presence (mmWave technology)
+  - Examples: mmWave presence sensors, advanced presence detectors
+
+### Cameras
+
+- **IP Cameras with Motion Detection**
+  - Automatically detects motion from camera entities
+  - **Requirements**: Camera must have `motion_detection = True` and `motion_video_time` attribute
+  - Cameras are treated as `device_class: moving` sensors
+  - No need to create template binary sensors manually
+  - Examples: Any Home Assistant camera entity that exposes motion detection attributes
+
+### Device Requirements
+
+- Devices must be integrated into Home Assistant
+- Binary sensors must have the correct `device_class` attribute set
+- Cameras must expose motion detection attributes (`motion_detection` or `motion_video_time`)
+- All devices are automatically discovered and added to the sensor list
+
 ## Installation
 
 1. Add the repository to Home Assistant:
@@ -388,6 +429,47 @@ Dodatek AlarmMe dla Home Assistant.
 
 AlarmMe to kompleksowy dodatek do zarządzania alarmem dla Home Assistant, który zapewnia inteligentne wykrywanie włamań, monitorowanie czujników i powiadomienia. Dodatek automatycznie monitoruje czujniki ruchu, zajętości i obecności, wykrywa włamania, gdy system jest uzbrojony, i wysyła alerty na wszystkie urządzenia mobilne.
 
+## Obsługiwane urządzenia
+
+Dodatek automatycznie wykrywa i obsługuje następujące typy urządzeń:
+
+### Czujniki binarne
+
+- **Czujniki ruchu** (`device_class: motion`)
+  - Klasyczne czujniki ruchu PIR (pasywne podczerwone)
+  - Wykrywają ruch w określonym obszarze
+  - Przykłady: czujniki ruchu Xiaomi, Aqara, uniwersalne czujniki PIR
+
+- **Czujniki poruszania się** (`device_class: moving`)
+  - Wykrywają poruszające się obiekty (kamery z wykrywaniem ruchu, czujniki radarowe)
+  - Przykłady: wykrywanie ruchu kamer, radarowe czujniki ruchu
+
+- **Czujniki zajętości** (`device_class: occupancy`)
+  - Wykrywanie zajętości strefy z opóźnieniem
+  - Kombinacja wykrywania ruchu i obecności
+  - Przykłady: czujniki zajętości mmWave, zaawansowane czujniki obecności
+
+- **Czujniki obecności** (`device_class: presence`)
+  - Wykrywanie statycznej obecności człowieka
+  - Mogą wykrywać oddychanie i nieruchomą obecność (technologia mmWave)
+  - Przykłady: czujniki obecności mmWave, zaawansowane czujniki obecności
+
+### Kamery
+
+- **Kamery IP z wykrywaniem ruchu**
+  - Automatycznie wykrywa ruch z encji kamer
+  - **Wymagania**: Kamera musi mieć `motion_detection = True` i atrybut `motion_video_time`
+  - Kamery są traktowane jako czujniki `device_class: moving`
+  - Nie ma potrzeby ręcznego tworzenia szablonowych czujników binarnych
+  - Przykłady: dowolne encje kamer Home Assistant, które udostępniają atrybuty wykrywania ruchu
+
+### Wymagania dotyczące urządzeń
+
+- Urządzenia muszą być zintegrowane z Home Assistant
+- Czujniki binarne muszą mieć poprawnie ustawiony atrybut `device_class`
+- Kamery muszą udostępniać atrybuty wykrywania ruchu (`motion_detection` lub `motion_video_time`)
+- Wszystkie urządzenia są automatycznie wykrywane i dodawane do listy czujników
+
 ## Instalacja
 
 1. Dodaj repozytorium do Home Assistant:
@@ -713,6 +795,47 @@ Ten roadmap opisuje obecne funkcje i planowane ulepszenia, posortowane według p
 ## Апісанне
 
 AlarmMe — гэта комплексны дадатак для кіравання сігналізацыяй для Home Assistant, які забяспечвае інтэлектуальнае выяўленне ўзломаў, маніторынг датчыкаў і апавяшчэнні. Дадатак аўтаматычна адсочвае датчыкі руху, занятасці і прысутнасці, выяўляе ўзломы, калі сістэма ўзброена, і адпраўляе папярэджанні на ўсе мабільныя прылады.
+
+## Падтрымліваныя прылады
+
+Дадатак аўтаматычна выяўляе і падтрымлівае наступныя тыпы прылад:
+
+### Бінарныя датчыкі
+
+- **Датчыкі руху** (`device_class: motion`)
+  - Класічныя PIR (пасіўныя інфрачырвоныя) датчыкі руху
+  - Выяўляюць рух у пэўнай зоне
+  - Прыклады: датчыкі руху Xiaomi, Aqara, універсальныя PIR датчыкі
+
+- **Датчыкі перамяшчэння** (`device_class: moving`)
+  - Выяўляюць рухомыя аб'екты (камеры з выяўленнем руху, радарныя датчыкі)
+  - Прыклады: выяўленне руху камер, радарныя датчыкі руху
+
+- **Датчыкі занятасці** (`device_class: occupancy`)
+  - Выяўленне занятасці зоны з затрымкай
+  - Камбінацыя выяўлення руху і прысутнасці
+  - Прыклады: mmWave датчыкі занятасці, прасунутыя датчыкі прысутнасці
+
+- **Датчыкі прысутнасці** (`device_class: presence`)
+  - Выяўленне статычнай прысутнасці чалавека
+  - Могуць выяўляць дыханне і нерухомае прысутнасць (тэхналогія mmWave)
+  - Прыклады: mmWave датчыкі прысутнасці, прасунутыя датчыкі прысутнасці
+
+### Камеры
+
+- **IP-камеры з выяўленнем руху**
+  - Аўтаматычна выяўляе рух ад сутнасцей камер
+  - **Патрабаванні**: Камера павінна мець `motion_detection = True` і атрыбут `motion_video_time`
+  - Камеры апрацоўваюцца як датчыкі `device_class: moving`
+  - Не патрабуецца ствараць шаблонныя бінарныя датчыкі ўручную
+  - Прыклады: любыя сутнасці камер Home Assistant, якія прадастаўляюць атрыбуты выяўлення руху
+
+### Патрабаванні да прылад
+
+- Прылады павінны быць інтэграваны ў Home Assistant
+- Бінарныя датчыкі павінны мець правільны атрыбут `device_class`
+- Камеры павінны прадастаўляць атрыбуты выяўлення руху (`motion_detection` або `motion_video_time`)
+- Усе прылады аўтаматычна выяўляюцца і дадаюцца ў спіс датчыкаў
 
 ## Устаноўка
 
@@ -1040,6 +1163,47 @@ AlarmMe — гэта комплексны дадатак для кіраванн
 
 AlarmMe — це комплексний додаток для керування сигналізацією для Home Assistant, який забезпечує інтелектуальне виявлення проникнень, моніторинг датчиків та сповіщення. Додаток автоматично відстежує датчики руху, зайнятості та присутності, виявляє проникнення, коли система активована, і надсилає сповіщення на всі ваші мобільні пристрої.
 
+## Підтримувані пристрої
+
+Додаток автоматично виявляє та підтримує наступні типи пристроїв:
+
+### Бінарні датчики
+
+- **Датчики руху** (`device_class: motion`)
+  - Класичні PIR (пасивні інфрачервоні) датчики руху
+  - Виявляють рух у певній зоні
+  - Приклади: датчики руху Xiaomi, Aqara, універсальні PIR датчики
+
+- **Датчики переміщення** (`device_class: moving`)
+  - Виявляють рухомі об'єкти (камери з виявленням руху, радарні датчики)
+  - Приклади: виявлення руху камер, радарні датчики руху
+
+- **Датчики зайнятості** (`device_class: occupancy`)
+  - Виявлення зайнятості зони з затримкою
+  - Комбінація виявлення руху та присутності
+  - Приклади: mmWave датчики зайнятості, просунуті датчики присутності
+
+- **Датчики присутності** (`device_class: presence`)
+  - Виявлення статичної присутності людини
+  - Можуть виявляти дихання та нерухому присутність (технологія mmWave)
+  - Приклади: mmWave датчики присутності, просунуті датчики присутності
+
+### Камери
+
+- **IP-камери з виявленням руху**
+  - Автоматично виявляє рух від сутностей камер
+  - **Вимоги**: Камера повинна мати `motion_detection = True` та атрибут `motion_video_time`
+  - Камери обробляються як датчики `device_class: moving`
+  - Не потрібно створювати шаблонні бінарні датчики вручну
+  - Приклади: будь-які сутності камер Home Assistant, які надають атрибути виявлення руху
+
+### Вимоги до пристроїв
+
+- Пристрої повинні бути інтегровані в Home Assistant
+- Бінарні датчики повинні мати правильний атрибут `device_class`
+- Камери повинні надавати атрибути виявлення руху (`motion_detection` або `motion_video_time`)
+- Всі пристрої автоматично виявляються та додаються до списку датчиків
+
 ## Встановлення
 
 1. Додайте репозиторій до Home Assistant:
@@ -1366,6 +1530,47 @@ AlarmMe — це комплексний додаток для керування
 
 AlarmMe — это комплексный аддон для управления сигнализацией в Home Assistant, который обеспечивает интеллектуальное обнаружение проникновений, мониторинг датчиков и уведомления. Аддон автоматически отслеживает датчики движения, занятости и присутствия, обнаруживает проникновения, когда система активирована, и отправляет оповещения на все ваши мобильные устройства.
 
+## Поддерживаемые устройства
+
+Аддон автоматически обнаруживает и поддерживает следующие типы устройств:
+
+### Бинарные датчики
+
+- **Датчики движения** (`device_class: motion`)
+  - Классические PIR (пассивные инфракрасные) датчики движения
+  - Обнаруживают движение в определенной зоне
+  - Примеры: датчики движения Xiaomi, Aqara, универсальные PIR датчики
+
+- **Датчики перемещения** (`device_class: moving`)
+  - Обнаруживают движущиеся объекты (камеры с обнаружением движения, радарные датчики)
+  - Примеры: обнаружение движения камер, радарные датчики движения
+
+- **Датчики занятости** (`device_class: occupancy`)
+  - Обнаружение занятости зоны с задержкой
+  - Комбинация обнаружения движения и присутствия
+  - Примеры: mmWave датчики занятости, продвинутые датчики присутствия
+
+- **Датчики присутствия** (`device_class: presence`)
+  - Обнаружение статического присутствия человека
+  - Могут обнаруживать дыхание и неподвижное присутствие (технология mmWave)
+  - Примеры: mmWave датчики присутствия, продвинутые датчики присутствия
+
+### Камеры
+
+- **IP-камеры с обнаружением движения**
+  - Автоматически обнаруживает движение от сущностей камер
+  - **Требования**: Камера должна иметь `motion_detection = True` и атрибут `motion_video_time`
+  - Камеры обрабатываются как датчики `device_class: moving`
+  - Не требуется создавать шаблонные бинарные датчики вручную
+  - Примеры: любые сущности камер Home Assistant, которые предоставляют атрибуты обнаружения движения
+
+### Требования к устройствам
+
+- Устройства должны быть интегрированы в Home Assistant
+- Бинарные датчики должны иметь правильный атрибут `device_class`
+- Камеры должны предоставлять атрибуты обнаружения движения (`motion_detection` или `motion_video_time`)
+- Все устройства автоматически обнаруживаются и добавляются в список датчиков
+
 ## Установка
 
 1. Добавьте репозиторий в Home Assistant:
@@ -1680,6 +1885,682 @@ AlarmMe — это комплексный аддон для управления
 - Обучение на ложных срабатываниях
 - Автоматическая фильтрация известных паттернов
 - Предсказание вероятности реального проникновения
+
+---
+
+<a name="german"></a>
+# 🇩🇪 Deutsch
+
+AlarmMe Add-on für Home Assistant.
+
+## Beschreibung
+
+AlarmMe ist ein umfassendes Alarmverwaltungs-Add-on für Home Assistant, das intelligente Eindringungserkennung, Sensormonitoring und Benachrichtigungsfunktionen bietet. Das Add-on überwacht automatisch Bewegungs-, Belegungs- und Präsenzsensoren, erkennt Eindringungen, wenn das System scharfgeschaltet ist, und sendet Warnungen an alle Ihre mobilen Geräte.
+
+## Unterstützte Geräte
+
+Das Add-on erkennt und unterstützt automatisch die folgenden Gerätetypen:
+
+### Binäre Sensoren
+
+- **Bewegungssensoren** (`device_class: motion`)
+  - Klassische PIR (Passive Infrarot) Bewegungssensoren
+  - Erfassen Bewegung in einem bestimmten Bereich
+  - Beispiele: Xiaomi Bewegungssensoren, Aqara Bewegungssensoren, universelle PIR Sensoren
+
+- **Bewegungssensoren** (`device_class: moving`)
+  - Erfassen sich bewegende Objekte (Kameras mit Bewegungserkennung, Radarsensoren)
+  - Beispiele: Kamerabewegungserkennung, radarbasierte Bewegungssensoren
+
+- **Belegungssensoren** (`device_class: occupancy`)
+  - Zonenbelegungserkennung mit Verzögerung
+  - Kombination aus Bewegungs- und Präsenzerkennung
+  - Beispiele: mmWave Belegungssensoren, erweiterte Präsenzsensoren
+
+- **Präsenzsensoren** (`device_class: presence`)
+  - Statische menschliche Präsenzerkennung
+  - Können Atmung und stationäre Präsenz erkennen (mmWave-Technologie)
+  - Beispiele: mmWave Präsenzsensoren, erweiterte Präsenzsensoren
+
+### Kameras
+
+- **IP-Kameras mit Bewegungserkennung**
+  - Erkennt automatisch Bewegung von Kameraeinheiten
+  - **Anforderungen**: Kamera muss `motion_detection = True` und das Attribut `motion_video_time` haben
+  - Kameras werden als `device_class: moving` Sensoren behandelt
+  - Keine manuelle Erstellung von Template-Binärsensoren erforderlich
+  - Beispiele: Alle Home Assistant Kameraeinheiten, die Bewegungserkennungsattribute bereitstellen
+
+### Geräteanforderungen
+
+- Geräte müssen in Home Assistant integriert sein
+- Binäre Sensoren müssen das korrekte `device_class` Attribut haben
+- Kameras müssen Bewegungserkennungsattribute (`motion_detection` oder `motion_video_time`) bereitstellen
+- Alle Geräte werden automatisch erkannt und zur Sensorliste hinzugefügt
+
+---
+
+<a name="french"></a>
+# 🇫🇷 Français
+
+Module complémentaire AlarmMe pour Home Assistant.
+
+## Description
+
+AlarmMe est un module complémentaire complet de gestion d'alarme pour Home Assistant qui fournit une détection d'intrusion intelligente, une surveillance des capteurs et des capacités de notification. Le module complémentaire surveille automatiquement les capteurs de mouvement, d'occupation et de présence, détecte les intrusions lorsque le système est armé et envoie des alertes à tous vos appareils mobiles.
+
+## Appareils pris en charge
+
+Le module complémentaire détecte et prend en charge automatiquement les types d'appareils suivants :
+
+### Capteurs binaires
+
+- **Capteurs de mouvement** (`device_class: motion`)
+  - Détecteurs de mouvement PIR (infrarouge passif) classiques
+  - Détectent le mouvement dans une zone spécifique
+  - Exemples : capteurs de mouvement Xiaomi, Aqara, capteurs PIR génériques
+
+- **Capteurs de déplacement** (`device_class: moving`)
+  - Détectent les objets en mouvement (caméras avec détection de mouvement, capteurs radar)
+  - Exemples : détection de mouvement des caméras, capteurs de mouvement basés sur radar
+
+- **Capteurs d'occupation** (`device_class: occupancy`)
+  - Détection d'occupation de zone avec délai
+  - Combinaison de détection de mouvement et de présence
+  - Exemples : capteurs d'occupation mmWave, détecteurs de présence avancés
+
+- **Capteurs de présence** (`device_class: presence`)
+  - Détection de présence humaine statique
+  - Peuvent détecter la respiration et la présence stationnaire (technologie mmWave)
+  - Exemples : capteurs de présence mmWave, détecteurs de présence avancés
+
+### Caméras
+
+- **Caméras IP avec détection de mouvement**
+  - Détecte automatiquement le mouvement des entités de caméra
+  - **Exigences** : La caméra doit avoir `motion_detection = True` et l'attribut `motion_video_time`
+  - Les caméras sont traitées comme des capteurs `device_class: moving`
+  - Aucune création manuelle de capteurs binaires de modèle n'est nécessaire
+  - Exemples : Toutes les entités de caméra Home Assistant qui exposent des attributs de détection de mouvement
+
+### Exigences des appareils
+
+- Les appareils doivent être intégrés à Home Assistant
+- Les capteurs binaires doivent avoir l'attribut `device_class` correct
+- Les caméras doivent exposer des attributs de détection de mouvement (`motion_detection` ou `motion_video_time`)
+- Tous les appareils sont automatiquement détectés et ajoutés à la liste des capteurs
+
+---
+
+<a name="spanish"></a>
+# 🇪🇸 Español
+
+Complemento AlarmMe para Home Assistant.
+
+## Descripción
+
+AlarmMe es un complemento completo de gestión de alarmas para Home Assistant que proporciona detección de intrusiones inteligente, monitoreo de sensores y capacidades de notificación. El complemento monitorea automáticamente sensores de movimiento, ocupación y presencia, detecta intrusiones cuando el sistema está armado y envía alertas a todos sus dispositivos móviles.
+
+## Dispositivos compatibles
+
+El complemento detecta y admite automáticamente los siguientes tipos de dispositivos:
+
+### Sensores binarios
+
+- **Sensores de movimiento** (`device_class: motion`)
+  - Detectores de movimiento PIR (infrarrojo pasivo) clásicos
+  - Detectan movimiento en un área específica
+  - Ejemplos: sensores de movimiento Xiaomi, Aqara, sensores PIR genéricos
+
+- **Sensores en movimiento** (`device_class: moving`)
+  - Detectan objetos en movimiento (cámaras con detección de movimiento, sensores de radar)
+  - Ejemplos: detección de movimiento de cámaras, sensores de movimiento basados en radar
+
+- **Sensores de ocupación** (`device_class: occupancy`)
+  - Detección de ocupación de zona con retraso
+  - Combinación de detección de movimiento y presencia
+  - Ejemplos: sensores de ocupación mmWave, detectores de presencia avanzados
+
+- **Sensores de presencia** (`device_class: presence`)
+  - Detección de presencia humana estática
+  - Pueden detectar respiración y presencia estacionaria (tecnología mmWave)
+  - Ejemplos: sensores de presencia mmWave, detectores de presencia avanzados
+
+### Cámaras
+
+- **Cámaras IP con detección de movimiento**
+  - Detecta automáticamente el movimiento de las entidades de cámara
+  - **Requisitos**: La cámara debe tener `motion_detection = True` y el atributo `motion_video_time`
+  - Las cámaras se tratan como sensores `device_class: moving`
+  - No es necesario crear sensores binarios de plantilla manualmente
+  - Ejemplos: Cualquier entidad de cámara Home Assistant que exponga atributos de detección de movimiento
+
+### Requisitos de dispositivos
+
+- Los dispositivos deben estar integrados en Home Assistant
+- Los sensores binarios deben tener el atributo `device_class` correcto
+- Las cámaras deben exponer atributos de detección de movimiento (`motion_detection` o `motion_video_time`)
+- Todos los dispositivos se detectan automáticamente y se agregan a la lista de sensores
+
+---
+
+<a name="italian"></a>
+# 🇮🇹 Italiano
+
+Add-on AlarmMe per Home Assistant.
+
+## Descrizione
+
+AlarmMe è un add-on completo per la gestione degli allarmi per Home Assistant che fornisce rilevamento intrusioni intelligente, monitoraggio dei sensori e funzionalità di notifica. L'add-on monitora automaticamente sensori di movimento, occupazione e presenza, rileva intrusioni quando il sistema è armato e invia avvisi a tutti i tuoi dispositivi mobili.
+
+## Dispositivi supportati
+
+L'add-on rileva e supporta automaticamente i seguenti tipi di dispositivi:
+
+### Sensori binari
+
+- **Sensori di movimento** (`device_class: motion`)
+  - Rilevatori di movimento PIR (infrarossi passivi) classici
+  - Rilevano il movimento in un'area specifica
+  - Esempi: sensori di movimento Xiaomi, Aqara, sensori PIR generici
+
+- **Sensori in movimento** (`device_class: moving`)
+  - Rilevano oggetti in movimento (telecamere con rilevamento movimento, sensori radar)
+  - Esempi: rilevamento movimento telecamere, sensori di movimento basati su radar
+
+- **Sensori di occupazione** (`device_class: occupancy`)
+  - Rilevamento occupazione zona con ritardo
+  - Combinazione di rilevamento movimento e presenza
+  - Esempi: sensori di occupazione mmWave, rilevatori di presenza avanzati
+
+- **Sensori di presenza** (`device_class: presence`)
+  - Rilevamento presenza umana statica
+  - Possono rilevare respirazione e presenza stazionaria (tecnologia mmWave)
+  - Esempi: sensori di presenza mmWave, rilevatori di presenza avanzati
+
+### Telecamere
+
+- **Telecamere IP con rilevamento movimento**
+  - Rileva automaticamente il movimento dalle entità telecamera
+  - **Requisiti**: La telecamera deve avere `motion_detection = True` e l'attributo `motion_video_time`
+  - Le telecamere sono trattate come sensori `device_class: moving`
+  - Non è necessario creare manualmente sensori binari template
+  - Esempi: Qualsiasi entità telecamera Home Assistant che espone attributi di rilevamento movimento
+
+### Requisiti dei dispositivi
+
+- I dispositivi devono essere integrati in Home Assistant
+- I sensori binari devono avere l'attributo `device_class` corretto
+- Le telecamere devono esporre attributi di rilevamento movimento (`motion_detection` o `motion_video_time`)
+- Tutti i dispositivi vengono rilevati automaticamente e aggiunti all'elenco dei sensori
+
+---
+
+<a name="dutch"></a>
+# 🇳🇱 Nederlands
+
+AlarmMe add-on voor Home Assistant.
+
+## Beschrijving
+
+AlarmMe is een uitgebreide alarmbeheer add-on voor Home Assistant die intelligente inbraakdetectie, sensormonitoring en meldingsmogelijkheden biedt. De add-on monitort automatisch bewegings-, bezettings- en aanwezigheidssensoren, detecteert inbraken wanneer het systeem is ingeschakeld en stuurt waarschuwingen naar al uw mobiele apparaten.
+
+## Ondersteunde apparaten
+
+De add-on detecteert en ondersteunt automatisch de volgende apparaattypen:
+
+### Binaire sensoren
+
+- **Bewegingssensoren** (`device_class: motion`)
+  - Klassieke PIR (passieve infrarood) bewegingsdetectoren
+  - Detecteren beweging in een specifiek gebied
+  - Voorbeelden: Xiaomi bewegingssensoren, Aqara bewegingssensoren, generieke PIR sensoren
+
+- **Bewegingssensoren** (`device_class: moving`)
+  - Detecteren bewegende objecten (camera's met bewegingsdetectie, radarsensoren)
+  - Voorbeelden: camera bewegingsdetectie, radar-gebaseerde bewegingssensoren
+
+- **Bezettingssensoren** (`device_class: occupancy`)
+  - Zone bezettingsdetectie met vertraging
+  - Combinatie van bewegings- en aanwezigheidsdetectie
+  - Voorbeelden: mmWave bezettingssensoren, geavanceerde aanwezigheidsdetectoren
+
+- **Aanwezigheidssensoren** (`device_class: presence`)
+  - Statische menselijke aanwezigheidsdetectie
+  - Kunnen ademhaling en stationaire aanwezigheid detecteren (mmWave technologie)
+  - Voorbeelden: mmWave aanwezigheidssensoren, geavanceerde aanwezigheidsdetectoren
+
+### Camera's
+
+- **IP-camera's met bewegingsdetectie**
+  - Detecteert automatisch beweging van camera-entiteiten
+  - **Vereisten**: Camera moet `motion_detection = True` hebben en het attribuut `motion_video_time`
+  - Camera's worden behandeld als `device_class: moving` sensoren
+  - Geen handmatige aanmaak van template binaire sensoren nodig
+  - Voorbeelden: Elke Home Assistant camera-entiteit die bewegingsdetectie-attributen blootstelt
+
+### Apparaatvereisten
+
+- Apparaten moeten zijn geïntegreerd in Home Assistant
+- Binaire sensoren moeten het juiste `device_class` attribuut hebben
+- Camera's moeten bewegingsdetectie-attributen (`motion_detection` of `motion_video_time`) blootstellen
+- Alle apparaten worden automatisch gedetecteerd en toegevoegd aan de sensorlijst
+
+---
+
+<a name="portuguese"></a>
+# 🇵🇹 Português
+
+Add-on AlarmMe para Home Assistant.
+
+## Descrição
+
+AlarmMe é um add-on completo de gerenciamento de alarme para Home Assistant que fornece detecção de intrusão inteligente, monitoramento de sensores e capacidades de notificação. O add-on monitora automaticamente sensores de movimento, ocupação e presença, detecta intrusões quando o sistema está armado e envia alertas para todos os seus dispositivos móveis.
+
+## Dispositivos suportados
+
+O add-on detecta e suporta automaticamente os seguintes tipos de dispositivos:
+
+### Sensores binários
+
+- **Sensores de movimento** (`device_class: motion`)
+  - Detectores de movimento PIR (infravermelho passivo) clássicos
+  - Detectam movimento em uma área específica
+  - Exemplos: sensores de movimento Xiaomi, Aqara, sensores PIR genéricos
+
+- **Sensores em movimento** (`device_class: moving`)
+  - Detectam objetos em movimento (câmeras com detecção de movimento, sensores de radar)
+  - Exemplos: detecção de movimento de câmeras, sensores de movimento baseados em radar
+
+- **Sensores de ocupação** (`device_class: occupancy`)
+  - Detecção de ocupação de zona com atraso
+  - Combinação de detecção de movimento e presença
+  - Exemplos: sensores de ocupação mmWave, detectores de presença avançados
+
+- **Sensores de presença** (`device_class: presence`)
+  - Detecção de presença humana estática
+  - Podem detectar respiração e presença estacionária (tecnologia mmWave)
+  - Exemplos: sensores de presença mmWave, detectores de presença avançados
+
+### Câmeras
+
+- **Câmeras IP com detecção de movimento**
+  - Detecta automaticamente movimento de entidades de câmera
+  - **Requisitos**: A câmera deve ter `motion_detection = True` e o atributo `motion_video_time`
+  - Câmeras são tratadas como sensores `device_class: moving`
+  - Não é necessário criar sensores binários de template manualmente
+  - Exemplos: Qualquer entidade de câmera Home Assistant que expõe atributos de detecção de movimento
+
+### Requisitos de dispositivos
+
+- Os dispositivos devem estar integrados ao Home Assistant
+- Sensores binários devem ter o atributo `device_class` correto
+- Câmeras devem expor atributos de detecção de movimento (`motion_detection` ou `motion_video_time`)
+- Todos os dispositivos são detectados automaticamente e adicionados à lista de sensores
+
+---
+
+<a name="czech"></a>
+# 🇨🇿 Čeština
+
+Doplněk AlarmMe pro Home Assistant.
+
+## Popis
+
+AlarmMe je komplexní doplněk pro správu alarmů pro Home Assistant, který poskytuje inteligentní detekci vniknutí, monitorování senzorů a možnosti oznámení. Doplněk automaticky monitoruje senzory pohybu, obsazenosti a přítomnosti, detekuje vniknutí, když je systém aktivován, a odesílá upozornění na všechna vaše mobilní zařízení.
+
+## Podporovaná zařízení
+
+Doplněk automaticky detekuje a podporuje následující typy zařízení:
+
+### Binární senzory
+
+- **Senzory pohybu** (`device_class: motion`)
+  - Klasické PIR (pasivní infračervené) detektory pohybu
+  - Detekují pohyb v určité oblasti
+  - Příklady: senzory pohybu Xiaomi, Aqara, univerzální PIR senzory
+
+- **Senzory pohybu** (`device_class: moving`)
+  - Detekují pohybující se objekty (kamery s detekcí pohybu, radarové senzory)
+  - Příklady: detekce pohybu kamer, radarové senzory pohybu
+
+- **Senzory obsazenosti** (`device_class: occupancy`)
+  - Detekce obsazenosti zóny se zpožděním
+  - Kombinace detekce pohybu a přítomnosti
+  - Příklady: mmWave senzory obsazenosti, pokročilé detektory přítomnosti
+
+- **Senzory přítomnosti** (`device_class: presence`)
+  - Detekce statické lidské přítomnosti
+  - Mohou detekovat dýchání a stacionární přítomnost (technologie mmWave)
+  - Příklady: mmWave senzory přítomnosti, pokročilé detektory přítomnosti
+
+### Kamery
+
+- **IP kamery s detekcí pohybu**
+  - Automaticky detekuje pohyb z entit kamer
+  - **Požadavky**: Kamera musí mít `motion_detection = True` a atribut `motion_video_time`
+  - Kamery jsou považovány za senzory `device_class: moving`
+  - Není nutné ručně vytvářet šablonové binární senzory
+  - Příklady: Jakékoli entity kamer Home Assistant, které poskytují atributy detekce pohybu
+
+### Požadavky na zařízení
+
+- Zařízení musí být integrována do Home Assistant
+- Binární senzory musí mít správný atribut `device_class`
+- Kamery musí poskytovat atributy detekce pohybu (`motion_detection` nebo `motion_video_time`)
+- Všechna zařízení jsou automaticky detekována a přidána do seznamu senzorů
+
+---
+
+<a name="swedish"></a>
+# 🇸🇪 Svenska
+
+AlarmMe-tillägg för Home Assistant.
+
+## Beskrivning
+
+AlarmMe är ett omfattande alarmhanterings-tillägg för Home Assistant som ger intelligent intrångsdetektering, sensormonitorering och meddelandefunktioner. Tillägget övervakar automatiskt rörelse-, beläggnings- och närvarosensorer, upptäcker intrång när systemet är aktiverat och skickar varningar till alla dina mobila enheter.
+
+## Stödda enheter
+
+Tillägget upptäcker och stöder automatiskt följande enhetstyper:
+
+### Binära sensorer
+
+- **Rörelsesensorer** (`device_class: motion`)
+  - Klassiska PIR (passiv infraröd) rörelsedetektorer
+  - Upptäcker rörelse i ett specifikt område
+  - Exempel: Xiaomi rörelsesensorer, Aqara rörelsesensorer, generiska PIR-sensorer
+
+- **Rörliga sensorer** (`device_class: moving`)
+  - Upptäcker rörliga objekt (kameror med rörelsedetektering, radarsensorer)
+  - Exempel: kamerarörelsedetektering, radar-baserade rörelsesensorer
+
+- **Beläggningssensorer** (`device_class: occupancy`)
+  - Zonbeläggningsdetektering med fördröjning
+  - Kombination av rörelse- och närvarodetektering
+  - Exempel: mmWave beläggningssensorer, avancerade närvarodetektorer
+
+- **Närvarosensorer** (`device_class: presence`)
+  - Statisk mänsklig närvarodetektering
+  - Kan upptäcka andning och stationär närvaro (mmWave-teknologi)
+  - Exempel: mmWave närvarosensorer, avancerade närvarodetektorer
+
+### Kameror
+
+- **IP-kameror med rörelsedetektering**
+  - Upptäcker automatiskt rörelse från kameraentiteter
+  - **Krav**: Kameran måste ha `motion_detection = True` och attributet `motion_video_time`
+  - Kameror behandlas som `device_class: moving` sensorer
+  - Ingen manuell skapande av mall-binära sensorer behövs
+  - Exempel: Alla Home Assistant kameraentiteter som exponerar rörelsedetekteringsattribut
+
+### Enhetskrav
+
+- Enheter måste vara integrerade i Home Assistant
+- Binära sensorer måste ha rätt `device_class` attribut
+- Kameror måste exponera rörelsedetekteringsattribut (`motion_detection` eller `motion_video_time`)
+- Alla enheter upptäcks automatiskt och läggs till i sensorlistan
+
+---
+
+<a name="norwegian"></a>
+# 🇳🇴 Norsk
+
+AlarmMe-tillegg for Home Assistant.
+
+## Beskrivelse
+
+AlarmMe er et omfattende alarmadministrasjons-tillegg for Home Assistant som gir intelligent inntrengingsdeteksjon, sensormonitorering og varslingsfunksjoner. Tilleggsprogrammet overvåker automatisk bevegelses-, oppholds- og nærværsensorer, oppdager inntrenginger når systemet er aktivert og sender varsler til alle dine mobile enheter.
+
+## Støttede enheter
+
+Tilleggsprogrammet oppdager og støtter automatisk følgende enhetstyper:
+
+### Binære sensorer
+
+- **Bevegelsessensorer** (`device_class: motion`)
+  - Klassiske PIR (passiv infrarød) bevegelsesdetektorer
+  - Oppdager bevegelse i et spesifikt område
+  - Eksempler: Xiaomi bevegelsessensorer, Aqara bevegelsessensorer, generiske PIR-sensorer
+
+- **Bevegelige sensorer** (`device_class: moving`)
+  - Oppdager bevegelige objekter (kameraer med bevegelsesdeteksjon, radarsensorer)
+  - Eksempler: kamerabevegelsesdeteksjon, radar-baserte bevegelsessensorer
+
+- **Oppholdssensorer** (`device_class: occupancy`)
+  - Soneoppholdsdeteksjon med forsinkelse
+  - Kombinasjon av bevegelses- og nærværsdeteksjon
+  - Eksempler: mmWave oppholdssensorer, avanserte nærværsdetektorer
+
+- **Nærværsensorer** (`device_class: presence`)
+  - Statisk menneskelig nærværsdeteksjon
+  - Kan oppdage pusting og stasjonær nærvær (mmWave-teknologi)
+  - Eksempler: mmWave nærværssensorer, avanserte nærværsdetektorer
+
+### Kameraer
+
+- **IP-kameraer med bevegelsesdeteksjon**
+  - Oppdager automatisk bevegelse fra kameraenheter
+  - **Krav**: Kameraet må ha `motion_detection = True` og attributtet `motion_video_time`
+  - Kameraer behandles som `device_class: moving` sensorer
+  - Ingen manuell opprettelse av mal-binære sensorer nødvendig
+  - Eksempler: Alle Home Assistant kameraenheter som eksponerer bevegelsesdeteksjonsattributter
+
+### Enhetskrav
+
+- Enheter må være integrert i Home Assistant
+- Binære sensorer må ha riktig `device_class` attributt
+- Kameraer må eksponere bevegelsesdeteksjonsattributter (`motion_detection` eller `motion_video_time`)
+- Alle enheter oppdages automatisk og legges til sensorlisten
+
+---
+
+<a name="danish"></a>
+# 🇩🇰 Dansk
+
+AlarmMe-tilføjelse til Home Assistant.
+
+## Beskrivelse
+
+AlarmMe er en omfattende alarmadministrations-tilføjelse til Home Assistant, der giver intelligent indtrængningsdetektering, sensormonitorering og notifikationsfunktioner. Tilføjelsen overvåger automatisk bevægelses-, besættelses- og nærværsensorer, opdager indtrængninger, når systemet er aktiveret, og sender advarsler til alle dine mobile enheder.
+
+## Understøttede enheder
+
+Tilføjelsen opdager og understøtter automatisk følgende enhedstyper:
+
+### Binære sensorer
+
+- **Bevægelsessensorer** (`device_class: motion`)
+  - Klassiske PIR (passiv infrarød) bevægelsesdetektorer
+  - Opdager bevægelse i et specifikt område
+  - Eksempler: Xiaomi bevægelsessensorer, Aqara bevægelsessensorer, generiske PIR-sensorer
+
+- **Bevægelige sensorer** (`device_class: moving`)
+  - Opdager bevægelige objekter (kameraer med bevægelsesdetektering, radarsensorer)
+  - Eksempler: kamerabevægelsesdetektering, radar-baserede bevægelsessensorer
+
+- **Besættelsessensorer** (`device_class: occupancy`)
+  - Zonebesættelsesdetektering med forsinkelse
+  - Kombination af bevægelses- og nærværsdetektering
+  - Eksempler: mmWave besættelsessensorer, avancerede nærværsdetektorer
+
+- **Nærværsensorer** (`device_class: presence`)
+  - Statisk menneskelig nærværsdetektering
+  - Kan opdage vejrtrækning og stationær nærvær (mmWave-teknologi)
+  - Eksempler: mmWave nærværsensorer, avancerede nærværsdetektorer
+
+### Kameraer
+
+- **IP-kameraer med bevægelsesdetektering**
+  - Opdager automatisk bevægelse fra kameraenheder
+  - **Krav**: Kameraet skal have `motion_detection = True` og attributtet `motion_video_time`
+  - Kameraer behandles som `device_class: moving` sensorer
+  - Ingen manuel oprettelse af skabelon-binære sensorer nødvendig
+  - Eksempler: Alle Home Assistant kameraenheder, der eksponerer bevægelsesdetekteringsattributter
+
+### Enhedskrav
+
+- Enheder skal være integreret i Home Assistant
+- Binære sensorer skal have det korrekte `device_class` attribut
+- Kameraer skal eksponere bevægelsesdetekteringsattributter (`motion_detection` eller `motion_video_time`)
+- Alle enheder opdages automatisk og tilføjes til sensorlisten
+
+---
+
+<a name="turkish"></a>
+# 🇹🇷 Türkçe
+
+Home Assistant için AlarmMe eklentisi.
+
+## Açıklama
+
+AlarmMe, akıllı izinsiz giriş tespiti, sensör izleme ve bildirim özellikleri sağlayan Home Assistant için kapsamlı bir alarm yönetim eklentisidir. Eklenti, hareket, doluluk ve varlık sensörlerini otomatik olarak izler, sistem aktifken izinsiz girişleri tespit eder ve tüm mobil cihazlarınıza uyarılar gönderir.
+
+## Desteklenen cihazlar
+
+Eklenti aşağıdaki cihaz türlerini otomatik olarak algılar ve destekler:
+
+### İkili sensörler
+
+- **Hareket sensörleri** (`device_class: motion`)
+  - Klasik PIR (pasif kızılötesi) hareket dedektörleri
+  - Belirli bir alanda hareketi algılar
+  - Örnekler: Xiaomi hareket sensörleri, Aqara hareket sensörleri, genel PIR sensörleri
+
+- **Hareketli sensörler** (`device_class: moving`)
+  - Hareket eden nesneleri algılar (hareket algılamalı kameralar, radar sensörleri)
+  - Örnekler: kamera hareket algılama, radar tabanlı hareket sensörleri
+
+- **Doluluk sensörleri** (`device_class: occupancy`)
+  - Gecikmeli bölge doluluk algılama
+  - Hareket ve varlık algılamanın kombinasyonu
+  - Örnekler: mmWave doluluk sensörleri, gelişmiş varlık dedektörleri
+
+- **Varlık sensörleri** (`device_class: presence`)
+  - Statik insan varlığı algılama
+  - Nefes alma ve sabit varlığı algılayabilir (mmWave teknolojisi)
+  - Örnekler: mmWave varlık sensörleri, gelişmiş varlık dedektörleri
+
+### Kameralar
+
+- **Hareket algılamalı IP kameralar**
+  - Kamera varlıklarından hareketi otomatik olarak algılar
+  - **Gereksinimler**: Kameranın `motion_detection = True` ve `motion_video_time` özniteliğine sahip olması gerekir
+  - Kameralar `device_class: moving` sensörleri olarak işlenir
+  - Şablon ikili sensörlerin manuel olarak oluşturulması gerekmez
+  - Örnekler: Hareket algılama özniteliklerini açığa çıkaran herhangi bir Home Assistant kamera varlığı
+
+### Cihaz gereksinimleri
+
+- Cihazlar Home Assistant'a entegre edilmelidir
+- İkili sensörler doğru `device_class` özniteliğine sahip olmalıdır
+- Kameralar hareket algılama özniteliklerini (`motion_detection` veya `motion_video_time`) açığa çıkarmalıdır
+- Tüm cihazlar otomatik olarak algılanır ve sensör listesine eklenir
+
+---
+
+<a name="japanese"></a>
+# 🇯🇵 日本語
+
+Home Assistant用のAlarmMeアドオン。
+
+## 説明
+
+AlarmMeは、インテリジェントな侵入検出、センサー監視、通知機能を提供するHome Assistant用の包括的なアラーム管理アドオンです。アドオンは、モーション、占有、存在センサーを自動的に監視し、システムが有効な場合に侵入を検出し、すべてのモバイルデバイスにアラートを送信します。
+
+## サポートされているデバイス
+
+アドオンは、次のデバイスタイプを自動的に検出してサポートします：
+
+### バイナリセンサー
+
+- **モーションセンサー** (`device_class: motion`)
+  - クラシックなPIR（パッシブ赤外線）モーション検出器
+  - 特定のエリアで動きを検出
+  - 例：Xiaomiモーションセンサー、Aqaraモーションセンサー、汎用PIRセンサー
+
+- **移動センサー** (`device_class: moving`)
+  - 移動するオブジェクトを検出（モーション検出付きカメラ、レーダーセンサー）
+  - 例：カメラモーション検出、レーダーベースのモーションセンサー
+
+- **占有センサー** (`device_class: occupancy`)
+  - 遅延付きゾーン占有検出
+  - モーション検出と存在検出の組み合わせ
+  - 例：mmWave占有センサー、高度な存在検出器
+
+- **存在センサー** (`device_class: presence`)
+  - 静的な人間の存在検出
+  - 呼吸と静止存在を検出可能（mmWave技術）
+  - 例：mmWave存在センサー、高度な存在検出器
+
+### カメラ
+
+- **モーション検出付きIPカメラ**
+  - カメラエンティティからの動きを自動的に検出
+  - **要件**：カメラは`motion_detection = True`と`motion_video_time`属性が必要です
+  - カメラは`device_class: moving`センサーとして扱われます
+  - テンプレートバイナリセンサーを手動で作成する必要はありません
+  - 例：モーション検出属性を公開する任意のHome Assistantカメラエンティティ
+
+### デバイス要件
+
+- デバイスはHome Assistantに統合されている必要があります
+- バイナリセンサーは正しい`device_class`属性を持っている必要があります
+- カメラはモーション検出属性（`motion_detection`または`motion_video_time`）を公開する必要があります
+- すべてのデバイスは自動的に検出され、センサーリストに追加されます
+
+---
+
+<a name="chinese"></a>
+# 🇨🇳 中文
+
+Home Assistant的AlarmMe插件。
+
+## 描述
+
+AlarmMe是Home Assistant的综合警报管理插件，提供智能入侵检测、传感器监控和通知功能。该插件自动监控运动、占用和存在传感器，在系统激活时检测入侵，并向所有移动设备发送警报。
+
+## 支持的设备
+
+插件自动检测并支持以下设备类型：
+
+### 二进制传感器
+
+- **运动传感器** (`device_class: motion`)
+  - 经典PIR（被动红外）运动检测器
+  - 在特定区域检测运动
+  - 示例：Xiaomi运动传感器、Aqara运动传感器、通用PIR传感器
+
+- **移动传感器** (`device_class: moving`)
+  - 检测移动物体（带运动检测的摄像头、雷达传感器）
+  - 示例：摄像头运动检测、基于雷达的运动传感器
+
+- **占用传感器** (`device_class: occupancy`)
+  - 带延迟的区域占用检测
+  - 运动检测和存在检测的组合
+  - 示例：mmWave占用传感器、高级存在检测器
+
+- **存在传感器** (`device_class: presence`)
+  - 静态人体存在检测
+  - 可以检测呼吸和静止存在（mmWave技术）
+  - 示例：mmWave存在传感器、高级存在检测器
+
+### 摄像头
+
+- **带运动检测的IP摄像头**
+  - 自动检测摄像头实体的运动
+  - **要求**：摄像头必须具有`motion_detection = True`和`motion_video_time`属性
+  - 摄像头被视为`device_class: moving`传感器
+  - 无需手动创建模板二进制传感器
+  - 示例：公开运动检测属性的任何Home Assistant摄像头实体
+
+### 设备要求
+
+- 设备必须集成到Home Assistant中
+- 二进制传感器必须具有正确的`device_class`属性
+- 摄像头必须公开运动检测属性（`motion_detection`或`motion_video_time`）
+- 所有设备都会自动检测并添加到传感器列表
 
 ---
 
