@@ -194,20 +194,44 @@ class SensorMonitor:
                             )
                             saved_sensor = self._db.get_sensor(entity_id)
                             new_sensors_count += 1
-                        elif area_name and (not saved_sensor.get("area") or saved_sensor.get("area") != area_name):
-                            # Update area if it changed or wasn't set before
-                            _LOGGER.debug("[sensor_monitor] Updating area for sensor %s: %s -> %s", 
-                                        entity_id, saved_sensor.get("area"), area_name)
-                            # Update area in database
-                            conn = self._db._db_path  # Access db_path
-                            import sqlite3
-                            try:
-                                conn_db = sqlite3.connect(self._db.db_path)
-                                cursor = conn_db.cursor()
-                                cursor.execute("UPDATE sensors SET area = ?, updated_at = CURRENT_TIMESTAMP WHERE entity_id = ?", 
-                                              (area_name, entity_id))
-                                conn_db.commit()
-                                conn_db.close()
+                        else:
+                            # Sensor exists - check if name or area needs updating
+                            name_changed = saved_sensor.get("name") != friendly_name
+                            area_changed = area_name and (not saved_sensor.get("area") or saved_sensor.get("area") != area_name)
+                            
+                            if name_changed or area_changed:
+                                # Update name and/or area in database
+                                import sqlite3
+                                try:
+                                    conn_db = sqlite3.connect(self._db.db_path)
+                                    cursor = conn_db.cursor()
+                                    
+                                    updates = []
+                                    params = []
+                                    
+                                    if name_changed:
+                                        updates.append("name = ?")
+                                        params.append(friendly_name)
+                                        _LOGGER.info("[sensor_monitor] Updating name for sensor %s: %s -> %s", 
+                                                   entity_id, saved_sensor.get("name"), friendly_name)
+                                    
+                                    if area_changed:
+                                        updates.append("area = ?")
+                                        params.append(area_name)
+                                        _LOGGER.debug("[sensor_monitor] Updating area for sensor %s: %s -> %s", 
+                                                    entity_id, saved_sensor.get("area"), area_name)
+                                    
+                                    if updates:
+                                        updates.append("updated_at = CURRENT_TIMESTAMP")
+                                        params.append(entity_id)
+                                        
+                                        query = f"UPDATE sensors SET {', '.join(updates)} WHERE entity_id = ?"
+                                        cursor.execute(query, params)
+                                        conn_db.commit()
+                                        conn_db.close()
+                                        _LOGGER.info("[sensor_monitor] ✅ Updated sensor %s: %s", entity_id, ', '.join(updates[:-1]))
+                                except Exception as update_err:
+                                    _LOGGER.error("[sensor_monitor] Error updating sensor %s: %s", entity_id, update_err, exc_info=True)
                             except Exception as update_err:
                                 _LOGGER.debug("[sensor_monitor] Error updating area: %s", update_err)
                         

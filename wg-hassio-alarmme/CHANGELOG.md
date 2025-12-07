@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.6] - 2025-12-04
+
+### Changed
+- **Data Synchronization**:
+  - Added automatic update of sensor friendly_name (name) when it changes in Home Assistant
+  - Sensor name and area are now kept in sync with Home Assistant during background polling
+  - If sensor name changes in HA, it will be automatically updated in the database
+  - If sensor area changes in HA, it will be automatically updated in the database
+  - Improved data consistency between Home Assistant and add-on database
+
+### Technical Details
+- Updated `_poll_sensors()` method in `sensor_monitor.py` to check for name changes
+- Added logic to update both `name` and `area` fields when they differ from Home Assistant
+- Uses efficient SQL UPDATE queries to update only changed fields
+- Maintains existing sensor mode settings (enabled_in_away_mode, etc.) when updating name/area
+- Added detailed logging for name and area updates
+
 ## [0.10.5] - 2025-12-04
 
 ### Changed
