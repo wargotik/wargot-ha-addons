@@ -45,6 +45,7 @@
   "saveSensorError": "Error: No se pudo guardar el sensor",
   "updateModeError": "Error: No se pudo actualizar el modo del sensor",
   "changeModeError": "Error: No se pudo cambiar el modo",
+  "noSensorsForMode": "No se puede activar {mode}: No hay sensores habilitados para este modo. Por favor, habilite al menos un sensor para este modo antes de activarlo.",
   "serverError": "Error del servidor",
   "unknown": "Desconocido",
   "secAgo": "hace {n} seg",

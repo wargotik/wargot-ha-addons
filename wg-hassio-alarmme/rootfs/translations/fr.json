@@ -45,6 +45,7 @@
   "saveSensorError": "Erreur: Impossible d'enregistrer le capteur",
   "updateModeError": "Erreur: Impossible de mettre à jour le mode du capteur",
   "changeModeError": "Erreur: Impossible de changer le mode",
+  "noSensorsForMode": "Impossible d'activer {mode}: Aucun capteur activé pour ce mode. Veuillez activer au moins un capteur pour ce mode avant de l'activer.",
   "serverError": "Erreur serveur",
   "unknown": "Inconnu",
   "secAgo": "il y a {n} sec",

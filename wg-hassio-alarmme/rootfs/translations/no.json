@@ -45,6 +45,7 @@
   "saveSensorError": "Feil: Kunne ikke lagre sensoren",
   "updateModeError": "Feil: Kunne ikke oppdatere sensormodus",
   "changeModeError": "Feil: Kunne ikke endre modus",
+  "noSensorsForMode": "Kan ikke aktivere {mode}: Ingen sensorer er aktivert for denne modusen. Vennligst aktiver minst én sensor for denne modusen før du aktiverer den.",
   "serverError": "Serverfeil",
   "unknown": "Ukjent",
   "secAgo": "{n} sek siden",

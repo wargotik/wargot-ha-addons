@@ -45,6 +45,7 @@
   "saveSensorError": "Chyba: Nepodařilo se uložit senzor",
   "updateModeError": "Chyba: Nepodařilo se aktualizovat režim senzoru",
   "changeModeError": "Chyba: Nepodařilo se změnit režim",
+  "noSensorsForMode": "Nelze aktivovat {mode}: Pro tento režim nejsou povoleny žádné senzory. Před aktivací prosím povolte alespoň jeden senzor pro tento režim.",
   "serverError": "Chyba serveru",
   "unknown": "Neznámé",
   "secAgo": "před {n} sek",

@@ -45,6 +45,7 @@
   "saveSensorError": "错误: 无法保存传感器",
   "updateModeError": "错误: 无法更新传感器模式",
   "changeModeError": "错误: 无法更改模式",
+  "noSensorsForMode": "无法启用 {mode}: 此模式没有启用的传感器。请在激活之前至少为此模式启用一个传感器。",
   "serverError": "服务器错误",
   "unknown": "未知",
   "secAgo": "{n}秒前",

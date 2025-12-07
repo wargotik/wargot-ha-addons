@@ -1135,13 +1135,25 @@ async def index_handler(request):
                             // Reload switches to get latest state
                             await loadSwitches();
                         } else {
-                            alert(t('changeModeError') + ': ' + (data.error || ''));
+                            // Check if it's a "no sensors" error
+                            if (data.error_code === 'NO_SENSORS_FOR_MODE') {
+                                // Use the error message directly (already translated on server)
+                                alert(data.error || t('noSensorsForMode', {'mode': t('modeAway')}));
+                            } else {
+                                alert(t('changeModeError') + ': ' + (data.error || ''));
+                            }
                             // Reload to restore correct state
                             await loadSwitches();
                         }
                     } else {
                         const errorData = await response.json().catch(() => ({ 'error': t('serverError') }));
-                        alert(t('changeModeError') + ': ' + (errorData.error || ''));
+                        // Check if it's a "no sensors" error
+                        if (errorData.error_code === 'NO_SENSORS_FOR_MODE') {
+                            // Use the error message directly (already translated on server)
+                            alert(errorData.error || t('noSensorsForMode', {'mode': t('modeAway')}));
+                        } else {
+                            alert(t('changeModeError') + ': ' + (errorData.error || ''));
+                        }
                         // Reload to restore correct state
                         await loadSwitches();
                     }
@@ -1945,6 +1957,39 @@ async def update_switches_handler(request):
             }, status=400)
         
         _LOGGER.info("[web_server] Updating mode to: %s", mode)
+        
+        # Check if there are sensors enabled for the mode (except for "off")
+        if mode != "off":
+            global _db
+            all_sensors = _db.get_all_sensors()
+            
+            # Check which sensors are enabled for this mode
+            enabled_sensors = []
+            if mode == "away":
+                enabled_sensors = [s for s in all_sensors if s.get("enabled_in_away_mode")]
+            elif mode == "night":
+                enabled_sensors = [s for s in all_sensors if s.get("enabled_in_night_mode")]
+            elif mode == "perimeter":
+                enabled_sensors = [s for s in all_sensors if s.get("enabled_in_perimeter_mode")]
+            
+            if not enabled_sensors:
+                # No sensors enabled for this mode
+                lang = _get_ha_language()
+                translations = _load_translations(lang)
+                
+                mode_name = _t("modeAway", translations) if mode == "away" else \
+                           _t("modeNight", translations) if mode == "night" else \
+                           _t("modePerimeter", translations) if mode == "perimeter" else mode
+                
+                error_message = _t("noSensorsForMode", translations).format(mode=mode_name) if "noSensorsForMode" in translations else \
+                               f"Cannot enable {mode_name}: No sensors enabled for this mode"
+                
+                _LOGGER.warning("[web_server] Cannot enable %s mode: No sensors enabled", mode)
+                return web.json_response({
+                    "success": False,
+                    "error": error_message,
+                    "error_code": "NO_SENSORS_FOR_MODE"
+                }, status=400)
         
         # Update switches based on mode
         if mode == "off":

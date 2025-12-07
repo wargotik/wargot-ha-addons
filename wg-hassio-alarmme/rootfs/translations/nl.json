@@ -45,6 +45,7 @@
   "saveSensorError": "Fout: Sensor kon niet worden opgeslagen",
   "updateModeError": "Fout: Sensormodus kon niet worden bijgewerkt",
   "changeModeError": "Fout: Modus kon niet worden gewijzigd",
+  "noSensorsForMode": "Kan {mode} niet activeren: Geen sensoren ingeschakeld voor deze modus. Schakel ten minste één sensor in voor deze modus voordat u deze activeert.",
   "serverError": "Serverfout",
   "unknown": "Onbekend",
   "secAgo": "{n} sec geleden",

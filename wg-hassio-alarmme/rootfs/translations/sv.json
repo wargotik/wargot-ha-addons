@@ -45,6 +45,7 @@
   "saveSensorError": "Fel: Kunde inte spara sensorn",
   "updateModeError": "Fel: Kunde inte uppdatera sensorns läge",
   "changeModeError": "Fel: Kunde inte ändra läge",
+  "noSensorsForMode": "Kan inte aktivera {mode}: Inga sensorer är aktiverade för detta läge. Vänligen aktivera minst en sensor för detta läge innan du aktiverar det.",
   "serverError": "Serverfel",
   "unknown": "Okänt",
   "secAgo": "{n} sek sedan",

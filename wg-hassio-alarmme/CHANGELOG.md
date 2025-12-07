@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.8] - 2025-12-04
+
+### Added
+- **Mode Activation Validation**:
+  - Added validation to prevent activating alarm modes without enabled sensors
+  - System now checks if at least one sensor is enabled for the selected mode before activation
+  - Shows localized error message (popup) when trying to activate mode without sensors
+  - Applies to Away Mode, Night Mode, and Perimeter Mode (not Off mode)
+
+### Changed
+- **User Experience**:
+  - Improved error handling with specific error code `NO_SENSORS_FOR_MODE`
+  - Error messages are now properly localized in all 18 supported languages
+  - Clear user feedback when mode activation is not possible
+
+### Technical Details
+- Added sensor count validation in `update_switches_handler()` before mode activation
+- Checks `enabled_in_away_mode`, `enabled_in_night_mode`, and `enabled_in_perimeter_mode` flags
+- Returns HTTP 400 with error code and localized message if no sensors are enabled
+- Frontend JavaScript updated to handle `NO_SENSORS_FOR_MODE` error code
+- Added translation key `noSensorsForMode` to all 18 language files
+
 ## [0.10.7] - 2025-12-04
 
 ### Fixed

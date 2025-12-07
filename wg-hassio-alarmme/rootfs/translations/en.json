@@ -45,6 +45,7 @@
   "saveSensorError": "Error: Failed to save sensor",
   "updateModeError": "Error: Failed to update sensor mode",
   "changeModeError": "Error: Failed to change mode",
+  "noSensorsForMode": "Cannot enable {mode}: No sensors enabled for this mode. Please enable at least one sensor for this mode before activating it.",
   "serverError": "Server error",
   "unknown": "Unknown",
   "secAgo": "{n} sec ago",

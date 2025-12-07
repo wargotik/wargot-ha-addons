@@ -45,6 +45,7 @@
   "saveSensorError": "Hata: Sensör kaydedilemedi",
   "updateModeError": "Hata: Sensör modu güncellenemedi",
   "changeModeError": "Hata: Mod değiştirilemedi",
+  "noSensorsForMode": "{mode} etkinleştirilemez: Bu mod için etkinleştirilmiş sensör yok. Lütfen etkinleştirmeden önce bu mod için en az bir sensörü etkinleştirin.",
   "serverError": "Sunucu hatası",
   "unknown": "Bilinmeyen",
   "secAgo": "{n} sn önce",

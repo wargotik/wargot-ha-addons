@@ -45,6 +45,7 @@
   "saveSensorError": "Błąd: Nie udało się zapisać czujnika",
   "updateModeError": "Błąd: Nie udało się zaktualizować trybu czujnika",
   "changeModeError": "Błąd: Nie udało się zmienić trybu",
+  "noSensorsForMode": "Nie można włączyć {mode}: Brak włączonych czujników dla tego trybu. Proszę włączyć co najmniej jeden czujnik dla tego trybu przed jego aktywacją.",
   "serverError": "Błąd serwera",
   "unknown": "Nieznane",
   "secAgo": "{n} sek temu",

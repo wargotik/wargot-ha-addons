@@ -45,6 +45,7 @@
   "saveSensorError": "エラー: センサーを保存できませんでした",
   "updateModeError": "エラー: センサーモードを更新できませんでした",
   "changeModeError": "エラー: モードを変更できませんでした",
+  "noSensorsForMode": "{mode}を有効にできません: このモードで有効になっているセンサーがありません。有効にする前に、このモードで少なくとも1つのセンサーを有効にしてください。",
   "serverError": "サーバーエラー",
   "unknown": "不明",
   "secAgo": "{n}秒前",
