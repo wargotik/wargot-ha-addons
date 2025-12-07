@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.7] - 2025-12-04
+
+### Fixed
+- **Critical Bug Fix**:
+  - Fixed SyntaxError in `sensor_monitor.py` caused by duplicate `except` block
+  - Removed leftover exception handler that prevented add-on from starting
+  - Add-on now starts correctly without syntax errors
+
+### Technical Details
+- Removed duplicate `except Exception as update_err:` block on line 235
+- Fixed try-except structure in sensor update logic
+- Code now compiles and runs without syntax errors
+
 ## [0.10.6] - 2025-12-04
 
 ### Changed
