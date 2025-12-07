@@ -373,6 +373,32 @@ async def index_handler(request):
                 object-fit: contain;
                 margin-right: 12px;
             }
+            .top-app-bar-mode {
+                margin-left: 16px;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                background-color: rgba(255, 255, 255, 0.2);
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .top-app-bar-mode .material-icons {
+                font-size: 16px;
+            }
+            .top-app-bar-mode.off {
+                background-color: rgba(127, 127, 127, 0.3);
+            }
+            .top-app-bar-mode.away {
+                background-color: rgba(39, 174, 96, 0.3);
+            }
+            .top-app-bar-mode.night {
+                background-color: rgba(155, 89, 182, 0.3);
+            }
+            .top-app-bar-mode.perimeter {
+                background-color: rgba(230, 126, 34, 0.3);
+            }
             .container {
                 background-color: white;
                 padding: 30px;
@@ -552,6 +578,14 @@ async def index_handler(request):
                 cursor: pointer;
                 transition: all 0.2s;
                 text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            .mode-button .material-icons {
+                font-size: 20px;
+                line-height: 1;
             }
             .mode-button:hover {
                 border-color: #3498db;
@@ -684,6 +718,10 @@ async def index_handler(request):
                 <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
                     <img src="/icon.png" alt="{title_text}" class="top-app-bar-icon" onerror="this.style.display='none'">
                     <span class="mdc-top-app-bar__title">{title_text}</span>
+                    <span class="top-app-bar-mode off" id="top-app-bar-mode">
+                        <span class="material-icons">power_settings_new</span>
+                        <span id="top-app-bar-mode-text">{loading_text}</span>
+                    </span>
                 </section>
                 <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
                     <button class="mdc-icon-button material-icons" id="help-icon" title="Показать конфигурацию" aria-label="Показать конфигурацию">help_outline</button>
@@ -707,12 +745,15 @@ async def index_handler(request):
                             {mode_off_text}
                         </button>
                         <button class="mode-button away" id="mode-button-away" onclick="setMode('away')">
+                            <span class="material-icons">lock</span>
                             {mode_away_text}
                         </button>
                         <button class="mode-button night" id="mode-button-night" onclick="setMode('night')">
+                            <span class="material-icons">dark_mode</span>
                             {mode_night_text}
                         </button>
                         <button class="mode-button perimeter" id="mode-button-perimeter" onclick="setMode('perimeter')">
+                            <span class="material-icons">security</span>
                             {mode_perimeter_text}
                         </button>
                     </div>
@@ -1013,11 +1054,36 @@ async def index_handler(request):
                     'perimeter': '#e67e22'
                 };
                 
+                const modeIcons = {
+                    'off': 'power_settings_new',
+                    'away': 'lock',
+                    'night': 'dark_mode',
+                    'perimeter': 'security'
+                };
+                
                 const label = modeLabels[mode] || t('unknown');
                 const color = modeColors[mode] || '#7f8c8d';
+                const icon = modeIcons[mode] || 'power_settings_new';
                 
                 element.textContent = label;
                 element.style.backgroundColor = color;
+                
+                // Update top app bar mode indicator
+                const topBarMode = document.getElementById('top-app-bar-mode');
+                const topBarModeText = document.getElementById('top-app-bar-mode-text');
+                if (topBarMode && topBarModeText) {
+                    // Remove all mode classes
+                    topBarMode.classList.remove('off', 'away', 'night', 'perimeter');
+                    // Add current mode class
+                    topBarMode.classList.add(mode);
+                    // Update icon
+                    const iconElement = topBarMode.querySelector('.material-icons');
+                    if (iconElement) {
+                        iconElement.textContent = icon;
+                    }
+                    // Update text
+                    topBarModeText.textContent = label;
+                }
                 
                 // Update button states
                 updateModeButtons(mode);

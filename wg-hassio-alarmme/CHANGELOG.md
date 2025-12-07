@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.4] - 2025-12-04
+
+### Added
+- **UI Enhancement**:
+  - Added active mode indicator in top app bar (header)
+  - Current alarm mode is now displayed in the header with icon and label
+  - Mode indicator shows:
+    - **Off Mode**: Power icon with gray background
+    - **Away Mode**: Lock icon with green background
+    - **Night Mode**: Moon icon with purple background
+    - **Perimeter Mode**: Security icon with orange background
+  - Real-time updates when mode changes
+  - Visual consistency with mode button colors
+
+### Changed
+- **UI/UX**:
+  - Top app bar now shows current system state at a glance
+  - Mode indicator uses semi-transparent colored backgrounds matching mode colors
+  - Improved information hierarchy - users can see active mode without scrolling
+
+### Technical Details
+- Added `.top-app-bar-mode` CSS class with mode-specific color variants
+- Updated `updateCurrentMode()` JavaScript function to sync header indicator
+- Mode indicator uses Material Icons matching mode buttons
+- Responsive design maintained for all screen sizes
+
+## [0.10.3] - 2025-12-04
+
+### Added
+- **UI Enhancement**:
+  - Added Material Icons to alarm mode buttons for better visual identification
+  - **Away Mode**: Lock icon (`lock`) - represents security and protection
+  - **Night Mode**: Moon icon (`dark_mode`) - represents nighttime and sleep
+  - **Perimeter Mode**: Security/Shield icon (`security`) - represents perimeter defense
+  - Icons are displayed alongside mode labels for improved UX
+
+### Changed
+- **UI/UX**:
+  - Updated mode button layout to use flexbox with icon-text alignment
+  - Added gap spacing between icons and text (8px)
+  - Icons are properly sized (20px) and aligned with text
+  - Improved visual hierarchy and mode recognition
+
+### Technical Details
+- Added `.mode-button .material-icons` CSS styling
+- Updated mode buttons to use flexbox layout with `display: flex`, `align-items: center`, `justify-content: center`
+- Icons use Material Icons font (already integrated)
+- All three active alarm modes now have distinctive visual identifiers
+
 ## [0.10.2] - 2025-12-04
 
 ### Changed
