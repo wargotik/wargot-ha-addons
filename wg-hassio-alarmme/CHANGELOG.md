@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.8] - 2025-12-04
+
+### Added
+- **UI Enhancement**:
+  - Added Material Design Components (MDC) top app bar in Home Assistant brand blue color (#03a9f4)
+  - Implemented fixed top app bar with `mdc-top-app-bar` and `mdc-top-app-bar--fixed` classes
+  - Integrated MDC icon button for help/configuration access
+  - Added responsive design support for mobile devices (56px height on mobile, 64px on desktop)
+
+### Changed
+- **UI/UX**:
+  - Moved main title and icon to top app bar for better navigation consistency
+  - Updated page layout to accommodate fixed top app bar (added padding-top to body)
+  - Improved visual hierarchy with Material Design styling
+
+### Technical Details
+- Integrated Material Components Web library (CSS and JS)
+- Added Material Icons font for consistent iconography
+- Responsive breakpoints for mobile and desktop viewports
+- Maintained all existing functionality while improving visual design
+
 ## [0.9.7] - 2025-12-04
 
 ### Added

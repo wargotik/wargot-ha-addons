@@ -334,6 +334,8 @@ async def index_handler(request):
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{title_text}</title>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
         <style>
             * {
                 margin: 0;
@@ -343,7 +345,34 @@ async def index_handler(request):
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
                 background-color: #f5f5f5;
-                padding: 20px;
+                padding-top: 64px;
+            }
+            .mdc-top-app-bar {
+                background-color: #03a9f4;
+                color: white;
+                box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+            }
+            .mdc-top-app-bar__title {
+                color: white;
+                font-weight: 500;
+            }
+            .mdc-top-app-bar__section--align-start {
+                padding-left: 16px;
+            }
+            .mdc-top-app-bar__section--align-end {
+                padding-right: 16px;
+            }
+            .mdc-icon-button {
+                color: white;
+            }
+            .mdc-icon-button:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            .top-app-bar-icon {
+                width: 32px;
+                height: 32px;
+                object-fit: contain;
+                margin-right: 12px;
             }
             .container {
                 background-color: white;
@@ -352,42 +381,6 @@ async def index_handler(request):
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 max-width: 1200px;
                 margin: 0 auto;
-            }
-            h1 {
-                color: #333;
-                margin-bottom: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-            }
-            .header-left {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .help-icon {
-                width: 24px;
-                height: 24px;
-                cursor: pointer;
-                color: #7f8c8d;
-                transition: color 0.2s;
-                font-size: 20px;
-                line-height: 24px;
-                text-align: center;
-                border: 1px solid #e0e0e0;
-                border-radius: 50%;
-                background-color: #f8f9fa;
-            }
-            .help-icon:hover {
-                color: #3498db;
-                border-color: #3498db;
-                background-color: #f0f8ff;
-            }
-            .addon-icon {
-                width: 32px;
-                height: 32px;
-                object-fit: contain;
             }
             .sensors-grid {
                 display: grid;
@@ -591,6 +584,12 @@ async def index_handler(request):
                 cursor: not-allowed;
             }
             @media (max-width: 768px) {
+                body {
+                    padding-top: 56px;
+                }
+                .mdc-top-app-bar {
+                    height: 56px;
+                }
                 .sensors-grid {
                     grid-template-columns: 1fr;
                 }
@@ -599,6 +598,9 @@ async def index_handler(request):
                 }
                 .mode-button {
                     width: 100%;
+                }
+                .container {
+                    padding: 15px;
                 }
             }
             /* Modal styles */
@@ -681,14 +683,18 @@ async def index_handler(request):
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>
-                <div class="header-left">
-                    <img src="/icon.png" alt="{title_text}" class="addon-icon" onerror="this.style.display='none'">
-                    {title_text}
-                </div>
-                <div class="help-icon" id="help-icon" title="Показать конфигурацию">?</div>
-            </h1>
+        <header class="mdc-top-app-bar mdc-top-app-bar--fixed">
+            <div class="mdc-top-app-bar__row">
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                    <img src="/icon.png" alt="{title_text}" class="top-app-bar-icon" onerror="this.style.display='none'">
+                    <span class="mdc-top-app-bar__title">{title_text}</span>
+                </section>
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+                    <button class="mdc-icon-button material-icons" id="help-icon" title="Показать конфигурацию" aria-label="Показать конфигурацию">help_outline</button>
+                </section>
+            </div>
+        </header>
+        <div class="container" style="padding: 20px;">
             <p>{addon_running_text} 
                 <span id="connection-badge" class="connection-badge unknown">{rest_api_checking_text}</span>
                 <span id="background-poll-badge" class="update-badge" style="margin-left: 10px;">{background_update_checking_text}</span>
@@ -741,7 +747,11 @@ async def index_handler(request):
                 </div>
             </div>
         </div>
+        <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
         <script>
+            // Initialize MDC components
+            mdc.autoInit();
+            
             // Translations object
             const translations = {translations_js};
             
