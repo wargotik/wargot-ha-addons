@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.5] - 2025-12-04
+
+### Changed
+- **UI/UX**:
+  - Moved sensor area (room/space) display to be inline with sensor name
+  - Area now appears next to sensor name with location icon (📍)
+  - Improved visibility and readability of sensor location information
+  - Area is displayed in the same line as sensor name for better space utilization
+
+### Technical Details
+- Updated `renderSensors()` function to display area inline with sensor name
+- Changed area display from separate div to inline span element
+- Improved styling for better visual hierarchy
+
 ## [0.10.4] - 2025-12-04
 
 ### Added

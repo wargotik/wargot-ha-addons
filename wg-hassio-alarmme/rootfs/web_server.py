@@ -919,14 +919,14 @@ async def index_handler(request):
                         lastTriggeredHtml = '<div class="sensor-last-triggered">' + t('noTriggers') + '</div>';
                     }
                     
-                    const areaHtml = sensor.area ? `<div class="sensor-area" style="font-size: 10px; color: #95a5a6; margin-top: 2px;">📍 ${sensor.area}</div>` : '';
+                    const areaHtml = sensor.area ? `<span class="sensor-area" style="font-size: 11px; color: #7f8c8d; font-weight: 400; margin-left: 8px;">📍 ${sensor.area}</span>` : '';
                     
                     return `
                         <div class="sensor-item">
                             <div class="sensor-name">
                                 ${sensor.name || sensor.entity_id}
+                                ${areaHtml}
                             </div>
-                            ${areaHtml}
                             <div class="sensor-id">${sensor.entity_id}</div>
                             <div class="sensor-state ${stateClass}">${sensor.state}</div>
                             ${lastTriggeredHtml}
