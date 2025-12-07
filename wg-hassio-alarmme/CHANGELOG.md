@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.2] - 2025-12-04
+
+### Changed
+- **UI/Color Scheme**:
+  - Changed Away Mode color from blue (#3498db) to dark green (#27ae60)
+  - Resolves visual conflict with Home Assistant's brand blue color (#03a9f4)
+  - Improved color differentiation between all three alarm modes:
+    - **Away Mode**: Dark green (#27ae60) - represents safety and security
+    - **Night Mode**: Purple (#9b59b6) - unchanged
+    - **Perimeter Mode**: Orange (#e67e22) - unchanged
+  - Better visual harmony and color contrast across the interface
+
+### Technical Details
+- Updated CSS classes: `.sensor-mode-btn.active.away` and `.mode-button.active.away`
+- Updated JavaScript `modeColors` object for dynamic color assignment
+- All mode-specific styling now uses consistent color scheme
+
+## [0.10.1] - 2025-12-04
+
+### 🎉 Major Release: Home Assistant Design System Integration
+
+This release marks a significant milestone in the add-on's evolution with a complete transition to Home Assistant's native design system and Material Design Components.
+
+### Changed
+- **UI/UX Redesign**:
+  - **Complete visual overhaul** to match Home Assistant's native design language
+  - Removed top padding from body to allow seamless integration with fixed top app bar
+  - Top app bar now sits flush at the top of the viewport without spacing
+  - Improved visual consistency with Home Assistant core interface
+
+### Technical Details
+- Removed `padding-top: 64px` from body element (desktop)
+- Removed `padding-top: 56px` from body element (mobile)
+- Top app bar now uses full viewport width without content offset
+- Maintains all Material Design Components functionality
+- Preserves responsive design for all screen sizes
+
+### Migration Notes
+- This is a **major version update** (0.9.x → 0.10.x) indicating significant UI changes
+- The visual appearance now closely matches Home Assistant's native add-on interfaces
+- All existing functionality remains unchanged
+- No configuration changes required
+
 ## [0.9.8] - 2025-12-04
 
 ### Added

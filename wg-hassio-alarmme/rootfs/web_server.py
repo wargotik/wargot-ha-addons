@@ -345,7 +345,6 @@ async def index_handler(request):
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
                 background-color: #f5f5f5;
-                padding-top: 64px;
             }
             .mdc-top-app-bar {
                 background-color: #03a9f4;
@@ -457,8 +456,8 @@ async def index_handler(request):
                 color: white;
             }
             .sensor-mode-btn.active.away {
-                border-color: #3498db;
-                background-color: #3498db;
+                border-color: #27ae60;
+                background-color: #27ae60;
             }
             .sensor-mode-btn.active.night {
                 border-color: #9b59b6;
@@ -568,8 +567,8 @@ async def index_handler(request):
                 background-color: #7f8c8d;
             }
             .mode-button.active.away {
-                border-color: #3498db;
-                background-color: #3498db;
+                border-color: #27ae60;
+                background-color: #27ae60;
             }
             .mode-button.active.night {
                 border-color: #9b59b6;
@@ -584,9 +583,6 @@ async def index_handler(request):
                 cursor: not-allowed;
             }
             @media (max-width: 768px) {
-                body {
-                    padding-top: 56px;
-                }
                 .mdc-top-app-bar {
                     height: 56px;
                 }
@@ -1012,7 +1008,7 @@ async def index_handler(request):
                 
                 const modeColors = {
                     'off': '#7f8c8d',
-                    'away': '#3498db',
+                    'away': '#27ae60',
                     'night': '#9b59b6',
                     'perimeter': '#e67e22'
                 };
