@@ -232,8 +232,6 @@ class SensorMonitor:
                                         _LOGGER.info("[sensor_monitor] ✅ Updated sensor %s: %s", entity_id, ', '.join(updates[:-1]))
                                 except Exception as update_err:
                                     _LOGGER.error("[sensor_monitor] Error updating sensor %s: %s", entity_id, update_err, exc_info=True)
-                            except Exception as update_err:
-                                _LOGGER.debug("[sensor_monitor] Error updating area: %s", update_err)
                         
                         # Detect trigger: sensor is in "on" state
                         # For cameras, we already set current_state above
